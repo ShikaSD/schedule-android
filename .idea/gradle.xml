@@ -9,10 +9,10 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/MAMKSchedule" />
+            <option value="$PROJECT_DIR$/SlidingColors" />
           </set>
         </option>
       </GradleProjectSettings>
     </option>
   </component>
 </project>
-

@@ -1,31 +1,31 @@
 package ru.shika.mamkschedule.mamkschedule;
 
-import java.util.Locale;
-
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
+import android.graphics.Color;
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.os.Bundle;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+import ru.shika.android.SlidingTabLayout;
+
+import java.util.ArrayList;
+import java.util.Locale;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity
+{
 
 
-    SectionsPagerAdapter mSectionsPagerAdapter;
+    WeekPagerAdapter sectionsPagerAdapter;
+    ViewPager viewPager;
+    String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri"};
+    SlidingTabLayout tabLayout;
 
-    ViewPager mViewPager;
+    ArrayList <Fragment> fragments = new ArrayList <Fragment>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,15 +35,15 @@ public class MainActivity extends ActionBarActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //Init viewpager with adapter
+        sectionsPagerAdapter = new WeekPagerAdapter(getSupportFragmentManager());
+        viewPager = (ViewPager) findViewById(R.id.pager);
+        viewPager.setAdapter(sectionsPagerAdapter);
 
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.pager);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-
+        //Init tabs
+        tabLayout = (SlidingTabLayout) findViewById(R.id.tabs);
+        tabLayout.setViewPager(viewPager);
+        tabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.light_blue));
     }
 
 
@@ -66,23 +66,22 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    
 
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
-     */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
-
-        public SectionsPagerAdapter(FragmentManager fm) {
+    public class WeekPagerAdapter extends FragmentPagerAdapter
+    {
+        public WeekPagerAdapter(FragmentManager fm)
+        {
             super(fm);
+            for(int i = 0; i < days.length; i++)
+            {
+                fragments.add(ScheduleFragment.newInstance(days[i]));
+            }
         }
 
         @Override
-        public Fragment getItem(int position) {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+        public Fragment getItem(int position)
+        {
+            return fragments.get(position);
         }
 
         @Override
@@ -94,17 +93,7 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public CharSequence getPageTitle(int position)
         {
-            Locale l = Locale.getDefault();
-            switch (position)
-            {
-                case 0:
-                    return getString(R.string.title_section1).toUpperCase(l);
-                case 1:
-                    return getString(R.string.title_section2).toUpperCase(l);
-                case 2:
-                    return getString(R.string.title_section3).toUpperCase(l);
-            }
-            return null;
+            return days[position];
         }
     }
 
