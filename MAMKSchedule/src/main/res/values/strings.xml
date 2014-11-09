@@ -2,10 +2,21 @@
 <resources>
 
     <string name="app_name">MAMKSchedule</string>
-    <string name="title_section1">Section 1</string>
-    <string name="title_section2">Section 2</string>
-    <string name="title_section3">Section 3</string>
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <array name = "days">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+    </array>
+
+    
+    <string name="schedule">My schedule</string>
+    <string name="teachers">Teachers</string>
+    <string name="edit">Edit schedule</string>
+
+    <string name="open">Open</string>
+    <string name="close">Close</string>
 
 </resources>

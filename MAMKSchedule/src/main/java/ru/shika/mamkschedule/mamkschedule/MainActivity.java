@@ -1,100 +1,88 @@
 package ru.shika.mamkschedule.mamkschedule;
 
-import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.view.Menu;
 import android.view.MenuItem;
-import ru.shika.android.SlidingTabLayout;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import java.util.ArrayList;
-import java.util.Locale;
 
 
 public class MainActivity extends ActionBarActivity
 {
 
+    private ArrayList<Lesson.DrawerItem> drawerItems = new ArrayList<Lesson.DrawerItem>();
+    private DrawerLayout drawerLayout;
+    private ListView drawerList;
 
-    WeekPagerAdapter sectionsPagerAdapter;
-    ViewPager viewPager;
-    String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri"};
-    SlidingTabLayout tabLayout;
-
-    ArrayList <Fragment> fragments = new ArrayList <Fragment>();
+    private ActionBarDrawerToggle toggle;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        //Init viewpager with adapter
-        sectionsPagerAdapter = new WeekPagerAdapter(getSupportFragmentManager());
-        viewPager = (ViewPager) findViewById(R.id.pager);
-        viewPager.setAdapter(sectionsPagerAdapter);
+        toolbar.setNavigationIcon(R.drawable.ic_drawer);
 
-        //Init tabs
-        tabLayout = (SlidingTabLayout) findViewById(R.id.tabs);
-        tabLayout.setViewPager(viewPager);
-        tabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.light_blue));
+        //Init drawer list
+        drawerItems.add(new Lesson.DrawerItem(getResources().getString(R.string.schedule),
+            getResources().getDrawable(R.drawable.ic_action_paste)));
+        drawerItems.add(new Lesson.DrawerItem(getResources().getString(R.string.teachers),
+            getResources().getDrawable(R.drawable.ic_action_group)));
+        drawerItems.add(new Lesson.DrawerItem(getResources().getString(R.string.edit),
+            getResources().getDrawable(R.drawable.ic_action_search)));
+
+        //Init drawer
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+        drawerList = (ListView) findViewById(R.id.drawerList);
+
+        drawerList.setAdapter(new DrawerListAdapter(this, drawerItems));
+
+        //Init actionbar toggle(left button)
+        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close);
+        drawerLayout.setDrawerListener(toggle);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction()
+            .add(R.id.main_container, new ScheduleViewGroupFragment())
+            .commit();
     }
 
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState)
+    {
+        super.onPostCreate(savedInstanceState);
+        toggle.syncState();
+    }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-
-    public class WeekPagerAdapter extends FragmentPagerAdapter
-    {
-        public WeekPagerAdapter(FragmentManager fm)
-        {
-            super(fm);
-            for(int i = 0; i < days.length; i++)
-            {
-                fragments.add(ScheduleFragment.newInstance(days[i]));
-            }
-        }
-
-        @Override
-        public Fragment getItem(int position)
-        {
-            return fragments.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            // Show 3 total pages.
-            return 3;
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position)
-        {
-            return days[position];
-        }
     }
 
 }
