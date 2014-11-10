@@ -1,13 +1,18 @@
 package ru.shika.mamkschedule.mamkschedule;
 
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -32,8 +37,6 @@ public class MainActivity extends ActionBarActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        toolbar.setNavigationIcon(R.drawable.ic_drawer);
-
         //Init drawer list
         drawerItems.add(new Lesson.DrawerItem(getResources().getString(R.string.schedule),
             getResources().getDrawable(R.drawable.ic_action_paste)));
@@ -47,6 +50,7 @@ public class MainActivity extends ActionBarActivity
         drawerList = (ListView) findViewById(R.id.drawerList);
 
         drawerList.setAdapter(new DrawerListAdapter(this, drawerItems));
+        drawerList.setOnItemClickListener(new onDrawerItemClickListener());
 
         //Init actionbar toggle(left button)
         toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close);
@@ -57,7 +61,8 @@ public class MainActivity extends ActionBarActivity
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
-            .add(R.id.main_container, new ScheduleViewGroupFragment())
+            .add(R.id.main_container, new ScheduleViewGroupFragment(), "My schedule")
+            .addToBackStack("My schedule")
             .commit();
     }
 
@@ -83,6 +88,56 @@ public class MainActivity extends ActionBarActivity
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        super.onBackPressed();
+        finish();
+    }
+
+    private class onDrawerItemClickListener implements ListView.OnItemClickListener
+    {
+        String titles[] = {"My schedule", "Teachers", "Edit"};
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+        {
+            replaceFragment(titles[position]);
+
+            getSupportActionBar().setTitle(titles[position]);
+            drawerLayout.closeDrawer(drawerList);
+        }
+
+        private void replaceFragment(String tag)
+        {
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction fTrans = fm.beginTransaction();
+            Fragment fragment;
+
+            for(int i = 0; i < titles.length; i++)
+            {
+                Fragment temp = fm.findFragmentByTag(titles[i]);
+                if(temp != null && temp.isVisible())
+                {
+                    fTrans.detach(temp);
+                    fTrans.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+                    break;
+                }
+            }
+
+            fragment = fm.findFragmentByTag(tag);
+            if (fragment == null)
+            {
+                fragment = new ScheduleViewGroupFragment();
+                fTrans.add(R.id.main_container, fragment, tag);
+            }
+
+            fTrans.attach(fragment);
+            fTrans.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+            fTrans.commit();
+        }
     }
 
 }

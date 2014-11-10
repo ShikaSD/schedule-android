@@ -5,6 +5,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,8 +23,16 @@ public class ScheduleViewGroupFragment extends Fragment
 	ArrayList<Fragment> fragments = new ArrayList <Fragment>();
 
 	@Override
+	public void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+		Log.w("Shika", "onCreate");
+	}
+
+	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
 	{
+		Log.w("Shika", "onCreateView");
 		return inflater.inflate(R.layout.fragment_schedule_viewgroup, container, false);
 	}
 
@@ -34,13 +43,22 @@ public class ScheduleViewGroupFragment extends Fragment
 
 		days = getResources().getStringArray(R.array.days);
 
+		viewPager = (ViewPager) view.findViewById(R.id.pager);
+		tabLayout = (SlidingTabLayout) view.findViewById(R.id.tabs);
+	}
+
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState)
+	{
+		super.onActivityCreated(savedInstanceState);
+
+		Log.w("Shika", "onActivityCreated");
+
 		//Init viewpager with adapter
 		pagerAdapter = new WeekPagerAdapter(getChildFragmentManager());
-		viewPager = (ViewPager) view.findViewById(R.id.pager);
 		viewPager.setAdapter(pagerAdapter);
 
 		//Init tabs
-		tabLayout = (SlidingTabLayout) view.findViewById(R.id.tabs);
 		tabLayout.setViewPager(viewPager);
 		tabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.light_blue));
 
@@ -53,7 +71,7 @@ public class ScheduleViewGroupFragment extends Fragment
 			super(fm);
 			for(int i = 0; i < days.length; i++)
 			{
-				fragments.add(ScheduleFragment.newInstance(days[i]));
+				fragments.add(ScheduleFragment.newInstance("#ffffff"));
 			}
 		}
 

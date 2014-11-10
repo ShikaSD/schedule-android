@@ -4,7 +4,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/MAMKSchedule.iml" filepath="$PROJECT_DIR$/MAMKSchedule.iml" />
       <module fileurl="file://$PROJECT_DIR$/MAMKSchedule/MAMKSchedule-MAMKSchedule.iml" filepath="$PROJECT_DIR$/MAMKSchedule/MAMKSchedule-MAMKSchedule.iml" />
-      <module fileurl="file://$PROJECT_DIR$/SlidingColors/SlidingColors.iml" filepath="$PROJECT_DIR$/SlidingColors/SlidingColors.iml" />
     </modules>
   </component>
 </project>
