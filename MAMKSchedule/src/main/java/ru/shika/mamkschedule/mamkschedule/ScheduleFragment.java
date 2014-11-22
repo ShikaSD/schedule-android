@@ -1,5 +1,7 @@
 package ru.shika.mamkschedule.mamkschedule;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -14,20 +16,21 @@ import java.util.ArrayList;
 
 public class ScheduleFragment extends Fragment
 {
+	MainActivity.DBHelper dbh;
+	SQLiteDatabase db;
+
 	RecyclerView list;
 	RecyclerView.Adapter listAdapter;
 	RecyclerView.LayoutManager listLayoutManager;
 
-	String color;
-
 	boolean isFirst = true;
 
-	public static ScheduleFragment newInstance(String color)
+	public static ScheduleFragment newInstance(int day)
 	{
 		ScheduleFragment myFragment = new ScheduleFragment();
 
 		Bundle args = new Bundle();
-		args.putString("color", color);
+		args.putInt("day", day);
 		myFragment.setArguments(args);
 
 		return myFragment;
@@ -38,12 +41,40 @@ public class ScheduleFragment extends Fragment
 	{
 		super.onCreate(savedInstanceState);
 
+		//InitDB
+		dbh = new MainActivity.DBHelper(getParentFragment().getActivity());
+		db = dbh.getWritableDatabase();
+
 		ArrayList<Lesson> lessons = new ArrayList<Lesson>();
-		lessons.add(new Lesson("09:00", "12:00", "Kas/E012", "T5614SN, PC Technology", "Matti Juutilainen"));
-		lessons.add(new Lesson("10:00", "13:00", "Kas/MB310", "T42052A Electronics and Measurements", "Reijo Vuohelainen"));
 
-		color = getArguments().getString("color");
-
+		Cursor cursor = db.query("schedule", null, "day = " + getArguments().getInt("day"), null, null, null, null);
+		if(cursor != null)
+		{
+			if(cursor.moveToFirst())
+			{
+				do
+				{
+					String start, end, room, name, teacher;
+					start = end = room = name = teacher = null;
+					for(String cn : cursor.getColumnNames())
+					{
+						if(cn.equals("start"))
+							start = cursor.getString(cursor.getColumnIndex(cn));
+						if(cn.equals("end"))
+							end = cursor.getString(cursor.getColumnIndex(cn));
+						if(cn.equals("room"))
+							room = cursor.getString(cursor.getColumnIndex(cn));
+						if(cn.equals("name"))
+							name = cursor.getString(cursor.getColumnIndex(cn));
+						if(cn.equals("teacher"))
+							teacher = cursor.getString(cursor.getColumnIndex(cn));
+					}
+					lessons.add(new Lesson(start, end, room, name, teacher));
+				}
+				while (cursor.moveToNext());
+			}
+		}
+		db.close();
 		listAdapter = new ScheduleListAdapter(lessons);
 	}
 
@@ -54,7 +85,6 @@ public class ScheduleFragment extends Fragment
 
 		list = (RecyclerView) rootView.findViewById(R.id.recycler);
 		list.setHasFixedSize(true);
-		list.setBackgroundColor(getResources().getColor(R.color.background));
 
 		listLayoutManager = new LinearLayoutManager(getParentFragment().getActivity());
 		list.setLayoutManager(listLayoutManager);
@@ -69,8 +99,5 @@ public class ScheduleFragment extends Fragment
 	public void onActivityCreated(Bundle savedInstanceState)
 	{
 		super.onActivityCreated(savedInstanceState);
-
-		if(color != null)
-			list.setBackgroundColor(Color.parseColor(color));
 	}
 }

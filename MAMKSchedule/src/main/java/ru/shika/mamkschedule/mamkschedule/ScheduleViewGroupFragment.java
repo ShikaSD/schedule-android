@@ -71,7 +71,7 @@ public class ScheduleViewGroupFragment extends Fragment
 			super(fm);
 			for(int i = 0; i < days.length; i++)
 			{
-				fragments.add(ScheduleFragment.newInstance("#ffffff"));
+				fragments.add(ScheduleFragment.newInstance(i + 1));
 			}
 		}
 
