@@ -1,10 +1,9 @@
 package ru.shika.mamkschedule.mamkschedule;
 
 import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -20,12 +19,18 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import com.parse.Parse;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 
 
-public class MainActivity extends ActionBarActivity
+public class MainActivity extends ActionBarActivity implements Interfaces.needDownload
 {
+    HashMap<String, Interfaces.Download> interfaces = new HashMap<String, Interfaces.Download>();
 
     private ArrayList<Lesson.DrawerItem> drawerItems = new ArrayList<Lesson.DrawerItem>();
     private DrawerLayout drawerLayout;
@@ -33,7 +38,13 @@ public class MainActivity extends ActionBarActivity
 
     private ActionBarDrawerToggle toggle;
 
-    private DBHelper dbh;
+    protected static DBHelper dbh;
+    protected static SharedPreferences pref;
+    protected static SharedPreferences.Editor editor;
+
+    protected Date lastUpdate;
+    protected GroupDownloader groupDownloader;
+    protected ScheduleDownloader scheduleDownloader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -41,15 +52,25 @@ public class MainActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+        //deleteDatabase("scheduleDB");
+
+        //Let's find last update date
+        pref = getPreferences(MODE_PRIVATE);
+        editor = pref.edit();
+        lastUpdate = new Date(pref.getLong("lastUpdate", 0));
+
         //Parse init
         Parse.initialize(this, "eR4X3CWg0H0dQiykPaWPymOLuceIj7XlCWu3SLLi", "tZ8L3pIHV1nXUmXj5GASyM2JdbwKFHUDYDuqhKR7");
+        //looking for last updates
+        groupDownloader = new GroupDownloader();
+        groupDownloader.execute(lastUpdate);
+        Log.w("Shika", "lastUpdate at" + lastUpdate.toString());
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         //Database init
         dbh = new DBHelper(this);
-        writeToDb();
 
         //Init drawer list
         drawerItems.add(new Lesson.DrawerItem(getResources().getString(R.string.schedule),
@@ -58,6 +79,7 @@ public class MainActivity extends ActionBarActivity
             getResources().getDrawable(R.drawable.ic_action_group)));
         drawerItems.add(new Lesson.DrawerItem(getResources().getString(R.string.edit),
             getResources().getDrawable(R.drawable.ic_action_search)));
+        drawerItems.add(new Lesson.DrawerItem(getResources().getString(R.string.groups), null));
 
         //Init drawer
         drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
@@ -74,11 +96,15 @@ public class MainActivity extends ActionBarActivity
         getSupportActionBar().setHomeButtonEnabled(true);
 
         //Fragment init
+        Fragment fragment = new ScheduleViewGroupFragment();
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
-            .add(R.id.main_container, new ScheduleViewGroupFragment(), "My schedule")
+            .add(R.id.main_container, fragment, "My schedule")
             .addToBackStack("My schedule")
             .commit();
+
+        interfaces.put("My schedule", (Interfaces.Download) fragment);
+
     }
 
     @Override
@@ -112,9 +138,20 @@ public class MainActivity extends ActionBarActivity
         finish();
     }
 
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+
+        if(scheduleDownloader != null)
+            scheduleDownloader.cancel(true);
+        if(groupDownloader != null)
+            groupDownloader.cancel(true);
+    }
+
     private class onDrawerItemClickListener implements ListView.OnItemClickListener
     {
-        String titles[] = {"My schedule", "Teachers", "Edit"};
+        String titles[] = {"My schedule", "Teachers", "Edit", "Groups"};
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id)
@@ -145,8 +182,18 @@ public class MainActivity extends ActionBarActivity
             fragment = fm.findFragmentByTag(tag);
             if (fragment == null)
             {
-                fragment = new ScheduleViewGroupFragment();
+                if(tag.equals(getResources().getString(R.string.groups)))
+                {
+                    fragment = new GroupFragment();
+                    interfaces.put(tag, (Interfaces.Download) fragment);
+                }
+                else
+                {
+                    fragment = new ScheduleViewGroupFragment();
+                    interfaces.put(tag, (Interfaces.Download) fragment);
+                }
                 fTrans.add(R.id.main_container, fragment, tag);
+                Log.w("Shika", "New Fragment made");
             }
 
             fTrans.attach(fragment);
@@ -155,55 +202,154 @@ public class MainActivity extends ActionBarActivity
         }
     }
 
-    public void writeToDb()
+    //Interface method called from fragments
+    @Override
+    public void needDownload(String group, Calendar date)
     {
-        SQLiteDatabase db = dbh.getWritableDatabase();
+        date.setFirstDayOfWeek(Calendar.MONDAY);
+        date.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
 
-        Cursor cursor = db.query("schedule", null, null, null,null,null, null);
+        Lesson[] lessons = new Lesson[7];
+        String dateFormat;
 
-        Log.w("Shika", cursor.getCount() + "");
+        scheduleDownloader = new ScheduleDownloader();
 
-        if(cursor.getCount() > 0)
+        for(int i = 0; i < 7; i++)
         {
-            //db.delete("schedule", null, null);
-            return;
+            dateFormat = date.get(Calendar.YEAR) - 2000 + "" + (date.get(Calendar.MONTH) + 1) + "" +
+                (date.get(Calendar.DAY_OF_MONTH) > 9 ? date.get(Calendar.DAY_OF_MONTH) : "0" + date.get(Calendar.DAY_OF_MONTH));
+            lessons[i] = new Lesson(null, null, null, null, null, dateFormat, group, 0);
+            date.add(Calendar.DATE, 1);
         }
 
-        for(int i = 0; i < 30; i++)
-        {
-            ContentValues cv = new ContentValues();
-            cv.put("day", (i % 5)+1);
-            cv.put("name", "PC Technology");
-            cv.put("start", (int) Math.ceil(Math.random() * 20)+":00");
-            cv.put("end", (int) Math.ceil(Math.random() * 20)+":00");
-            cv.put("room", "Kas/MB304");
-            cv.put("teacher", "Juutilainen Matti");
-            db.insert("schedule", null, cv);
-        }
-
-        dbh.close();
+        scheduleDownloader.execute(lessons);
     }
 
 
-    public  static class DBHelper extends SQLiteOpenHelper
+    /*AsyncTasks classes to download group's and lesson's rows*/
+    public class GroupDownloader extends AsyncTask<Date, Void, ArrayList<String>>
     {
-        public DBHelper(Context ctx)
+        @Override
+        protected void onPreExecute()
         {
-            super(ctx, "myDB", null, 1);
+            super.onPreExecute();
+            Log.w("Shika", "GroupDownloader exec");
         }
 
         @Override
-        public void onCreate(SQLiteDatabase sqLiteDatabase)
+        protected ArrayList<String> doInBackground(Date... params)
         {
-            sqLiteDatabase.execSQL("create table schedule (id integer primary key autoincrement, day integer, name text, start text, end text, room text, teacher text);");
-            sqLiteDatabase.execSQL("create table enrol (id integer primary key autoincrement, name text)");
+            ArrayList<ParseObject> parseObjects;
+            ArrayList<String> groupNames = new ArrayList<String>();
+            ParseQuery<ParseObject> query = ParseQuery.getQuery("Groups");
+
+            try
+            {
+                int amount = query.count();
+
+                query.setLimit(amount);
+                query.whereGreaterThan("createdAt", params[0]);
+                query.whereDoesNotExist("last");
+                query.addAscendingOrder("name");
+
+                parseObjects = (ArrayList<ParseObject>) query.find();
+                SQLiteDatabase db = dbh.getWritableDatabase();
+                ContentValues cv = new ContentValues();
+
+                for (ParseObject i : parseObjects)
+                {
+                    groupNames.add(i.getString("name"));
+                    cv.put("name", i.getString("name"));
+                    db.insert("groups", null, cv);
+                }
+
+                db.close();
+            } catch (Exception e)
+            {
+                Log.e("Shika", e.getMessage());
+            }
+
+            return groupNames;
         }
 
         @Override
-        public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1)
+        protected void onPostExecute(ArrayList<String> groupNames)
         {
-
+            super.onPostExecute(groupNames);
+            editor.putLong("lastUpdate", Calendar.getInstance().getTimeInMillis());
+            editor.commit();
+            Log.w("Shika", "GroupDownloader finish " + Calendar.getInstance().getTimeInMillis());
         }
     }
 
+    public class ScheduleDownloader extends AsyncTask <Lesson, Void, String>
+    {
+        @Override
+        protected void onPreExecute()
+        {
+            super.onPreExecute();
+            Log.w("Shika", "ScheduleDownloader exec");
+        }
+
+        @Override
+        protected String doInBackground(Lesson... lessons)
+        {
+            int counter = 0;
+            for(Lesson lesson : lessons)
+            {
+                ArrayList<ParseObject> schedule;
+                ParseQuery<ParseObject> query = ParseQuery.getQuery("Schedule");
+                query.whereStartsWith("group", lesson.group);
+                query.whereStartsWith("date", lesson.date);
+
+                Log.w("Shika", lesson.group);
+                Log.w("Shika", lesson.date);
+                try
+                {
+                    schedule = (ArrayList<ParseObject>) query.find();
+                    SQLiteDatabase db = dbh.getWritableDatabase();
+                    ContentValues cv = new ContentValues();
+                    for (ParseObject i : schedule)
+                    {
+                        cv.put("groups", i.getString("group"));
+                        cv.put("date", i.getString("date"));
+                        cv.put("lesson", i.getString("lesson"));
+                        cv.put("teacher", i.getString("teacher"));
+                        cv.put("room", i.getString("room"));
+                        cv.put("start", i.getString("start"));
+                        cv.put("end", i.getString("end"));
+                        db.insert("schedule", null, cv);
+                        counter++;
+                    }
+                    dbh.close();
+                } catch (Exception e)
+                {
+                    Log.e("Shika", e.getMessage());
+                    return "error";
+                }
+            }
+
+            Log.w("Shika", counter+"");
+
+            if(counter == 0)
+            {
+                return "nothing";
+            }
+
+            return "success";
+        }
+
+        @Override
+        protected void onPostExecute(String string)
+        {
+            super.onPostExecute(string);
+            Log.w("Shika", "ScheduleDownloader finished");
+
+            //Let's tell fragment that we have done something
+            for(Interfaces.Download iFace : interfaces.values())
+            {
+                iFace.onDownloadEnd(string);
+            }
+        }
+    }
 }

@@ -6,7 +6,9 @@
 		android:layout_height = "wrap_content"
 		android:id="@+id/card"
 		card_view:cardCornerRadius="4dp"
-		android:layout_marginBottom="10dp">
+		android:layout_marginBottom="10dp"
+		android:clickable="true"
+		android:focusable="true">
 
 		<RelativeLayout
 			android:layout_width = "match_parent"

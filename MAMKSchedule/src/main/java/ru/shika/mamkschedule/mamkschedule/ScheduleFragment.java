@@ -1,8 +1,6 @@
 package ru.shika.mamkschedule.mamkschedule;
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
+import android.app.LoaderManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,10 +12,8 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
-public class ScheduleFragment extends Fragment
+public class ScheduleFragment extends Fragment implements Interfaces.updateFragment
 {
-	MainActivity.DBHelper dbh;
-	SQLiteDatabase db;
 
 	RecyclerView list;
 	RecyclerView.Adapter listAdapter;
@@ -25,6 +21,11 @@ public class ScheduleFragment extends Fragment
 
 	boolean isFirst = true;
 
+	int globalDay = 0;
+
+	public static ArrayList<Lesson> lessons = new ArrayList<Lesson>();
+
+	//Init Fragment
 	public static ScheduleFragment newInstance(int day)
 	{
 		ScheduleFragment myFragment = new ScheduleFragment();
@@ -41,41 +42,9 @@ public class ScheduleFragment extends Fragment
 	{
 		super.onCreate(savedInstanceState);
 
-		//InitDB
-		dbh = new MainActivity.DBHelper(getParentFragment().getActivity());
-		db = dbh.getWritableDatabase();
-
-		ArrayList<Lesson> lessons = new ArrayList<Lesson>();
-
-		Cursor cursor = db.query("schedule", null, "day = " + getArguments().getInt("day"), null, null, null, null);
-		if(cursor != null)
-		{
-			if(cursor.moveToFirst())
-			{
-				do
-				{
-					String start, end, room, name, teacher;
-					start = end = room = name = teacher = null;
-					for(String cn : cursor.getColumnNames())
-					{
-						if(cn.equals("start"))
-							start = cursor.getString(cursor.getColumnIndex(cn));
-						if(cn.equals("end"))
-							end = cursor.getString(cursor.getColumnIndex(cn));
-						if(cn.equals("room"))
-							room = cursor.getString(cursor.getColumnIndex(cn));
-						if(cn.equals("name"))
-							name = cursor.getString(cursor.getColumnIndex(cn));
-						if(cn.equals("teacher"))
-							teacher = cursor.getString(cursor.getColumnIndex(cn));
-					}
-					lessons.add(new Lesson(start, end, room, name, teacher));
-				}
-				while (cursor.moveToNext());
-			}
-		}
-		db.close();
 		listAdapter = new ScheduleListAdapter(lessons);
+		globalDay = getArguments().getInt("day");
+		Log.w("Shika", "globalDay in onCreate " + globalDay);
 	}
 
 	@Override
@@ -99,5 +68,20 @@ public class ScheduleFragment extends Fragment
 	public void onActivityCreated(Bundle savedInstanceState)
 	{
 		super.onActivityCreated(savedInstanceState);
+	}
+
+	@Override
+	public void update(ArrayList< ArrayList<Lesson>> list)
+	{
+		if(globalDay == 0)
+			globalDay = getArguments().getInt("day");
+
+		try
+		{
+			lessons.clear();
+			lessons.addAll(list.get(globalDay));
+			listAdapter.notifyDataSetChanged();
+		}
+		catch (Exception e){}
 	}
 }
