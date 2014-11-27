@@ -15,4 +15,12 @@
         android:background="@color/white"
         android:fadeScrollbars="true"/>
 
+    <TextView
+        android:layout_width = "wrap_content"
+        android:layout_height = "wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:text="There are no lessons that day"
+        android:id="@+id/emptySchedule"/>
+
 </RelativeLayout>

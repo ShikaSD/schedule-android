@@ -1,6 +1,7 @@
 package ru.shika.mamkschedule.mamkschedule;
 
 import android.app.Activity;
+import android.app.LoaderManager;
 import android.content.Context;
 import android.support.v4.content.Loader;
 import android.database.Cursor;
@@ -21,6 +22,7 @@ import ru.shika.android.SlidingTabLayout;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Download, android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor>
 {
@@ -34,9 +36,23 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	String[] days;
 	SlidingTabLayout tabLayout;
 
-	String group = "T5614SN";
-	final Calendar date = Calendar.getInstance();
+	String group = "";
+	boolean isOwnSchedule = false;
+	Calendar date = Calendar.getInstance();
+
 	DBHelper db;
+
+	public static Fragment newInstance(boolean isOwnSchedule, String group)
+	{
+		Log.w("Shika", "isOwnSchedule: "+ isOwnSchedule);
+		Fragment fragment = new ScheduleViewGroupFragment();
+		Bundle args = new Bundle();
+		args.putBoolean("schedule", isOwnSchedule);
+		args.putString("group", group);
+
+		fragment.setArguments(args);
+		return fragment;
+	}
 
 	//Interface init
 	@Override
@@ -56,7 +72,16 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		super.onCreate(savedInstanceState);
 
 		db = new DBHelper(getActivity());
-		getActivity().getSupportLoaderManager().initLoader(0, null, this);
+
+		group = getArguments().getString("group");
+		isOwnSchedule = getArguments().getBoolean("schedule");
+
+		Log.w("Shika", "isOwnSchedule: onCreate "+ isOwnSchedule);
+
+		if(getActivity().getSupportLoaderManager().getLoader(0) == null)
+			getActivity().getSupportLoaderManager().initLoader(0, null, this);
+		else
+			getActivity().getSupportLoaderManager().restartLoader(0, null, this);
 	}
 
 	@Override
@@ -103,7 +128,6 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		public WeekPagerAdapter(FragmentManager fm)
 		{
 			super(fm);
-			//Let's update arraylist
 			getActivity().getSupportLoaderManager().getLoader(0).forceLoad();
 		}
 
@@ -153,12 +177,20 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	public void onDownloadEnd(String result)
 	{
 		if(result.equals("success"))
+		{
+			Log.w("Shika", "Found something");
 			getActivity().getSupportLoaderManager().getLoader(0).forceLoad();
+		}
 		else
 		if(result.equals("nothing"))
-		{}
+		{
+			Log.w("Shika", "Found nothing");
+		}
 		else
+		{
+			Log.w("Shika", "Error");
 			showError();
+		}
 	}
 
 	@Override
@@ -175,7 +207,8 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	@Override
 	public Loader<Cursor> onCreateLoader(int i, Bundle bundle)
 	{
-		return new ScheduleLoader(getActivity(), db, group, date);
+		Log.w("Shika", "isOwnSchedule: onCreateLoader "+ getArguments().getBoolean("schedule"));
+		return new ScheduleLoader(getActivity(), db, getArguments().getString("group"), date, getArguments().getBoolean("schedule"));
 	}
 
 	//Loader methods, here we update arrays
@@ -183,7 +216,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
 	{
 		lessonsArr.clear();
-		ArrayList <Lesson> lessons = new ArrayList<Lesson>();
+		HashMap <String, Lesson> lessons = new HashMap<String, Lesson>();
 		if(cursor.moveToFirst())
 		{
 			int start = cursor.getColumnIndex("start");
@@ -192,10 +225,18 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 			int lesson = cursor.getColumnIndex("lesson");
 			int teacher = cursor.getColumnIndex("teacher");
 			int date = cursor.getColumnIndex("date");
+			int lessonId = cursor.getColumnIndex("lessonId");
 
 			do
 			{
+				if(lessons.containsKey(cursor.getString(lessonId)))
+				{
+					lessons.get(cursor.getString(lessonId)).teacher += ", " + cursor.getString(teacher);
+					continue;
+				}
+
 				String dateFormat = cursor.getString(date);
+
 				Calendar calendar = Calendar.getInstance();
 				calendar.set(Calendar.YEAR, Integer.parseInt("20"+dateFormat.substring(0,2)));
 				calendar = setMonth(calendar, dateFormat);
@@ -205,8 +246,8 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 				int day = calendar.get(Calendar.DAY_OF_WEEK) - 1;
 				//Log.w("Shika", "Day : " + day + " " + cursor.getString(lesson));
 
-				lessons.add(new Lesson(cursor.getString(start), cursor.getString(end), cursor.getString(room),
-					cursor.getString(lesson), cursor.getString(teacher), null, null, day));
+				lessons.put(cursor.getString(lessonId), new Lesson(cursor.getString(start), cursor.getString(end),
+					cursor.getString(room), cursor.getString(lesson), cursor.getString(teacher), null, null, day));
 			}
 			while (cursor.moveToNext());
 
@@ -215,7 +256,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 			{
 				result = new ArrayList<Lesson>();
 				//Log.w("Shika", "Result size: " + result.size());
-				for (Lesson temp : lessons)
+				for (Lesson temp : lessons.values())
 				{
 					if (temp.day == i)
 						result.add(temp);
@@ -229,9 +270,14 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 				iFace.update(lessonsArr);
 			}
 		}
-		else
+		else if(!isOwnSchedule)
 		{
-			downloader.needDownload(group, date);
+			Log.w("Shika", "Found nothing in database, need download");
+
+			//To avoid date changes
+			Calendar dateArg = Calendar.getInstance();
+			dateArg.setTime(date.getTime());
+			downloader.needDownload(group, dateArg);
 		}
 
 		db.close();
@@ -248,13 +294,16 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		DBHelper db;
 		String group;
 		Calendar date;
+		boolean isOwnSchedule = false;
 
-		public ScheduleLoader(Context context, DBHelper db, String group, Calendar date)
+		public ScheduleLoader(Context context, DBHelper db, String group, Calendar date, boolean
+			isOwnSchedule)
 		{
 			super(context);
 			this.db = db;
 			this.group = group;
 			this.date = date;
+			this.isOwnSchedule = isOwnSchedule;
 		}
 
 		//Load from database
@@ -262,23 +311,32 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		public Cursor loadInBackground()
 		{
 			Cursor cursor;
-
+			SQLiteDatabase sqdb = db.getReadableDatabase();
+			
 			date.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
 			String dates[] = new String[5];
-
-			for(int i = 0; i < 5; i++)
+			for(int i = 0; i < dates.length; i++)
 			{
-				dates[i] = date.get(Calendar.YEAR) - 2000 + "" + (date.get(Calendar.MONTH) + 1) + "" +
-					(date.get(Calendar.DAY_OF_MONTH) > 9 ? date.get(Calendar.DAY_OF_MONTH) : "0" + date.get(Calendar
-						.DAY_OF_MONTH));
+				dates[i] = date.get(Calendar.YEAR) - 2000 + "" +
+					(date.get(Calendar.MONTH) + 1 > 9 ? date.get(Calendar.MONTH) + 1 : "0" + (1 + date.get(Calendar.MONTH)))+
+					(date.get(Calendar.DAY_OF_MONTH) > 9 ? date.get(Calendar.DAY_OF_MONTH) : "0" + date.get(Calendar.DAY_OF_MONTH));
+				Log.w("Shika", "Dates are: " + dates[i]);
 				date.add(Calendar.DATE, 1);
 			}
 
-			SQLiteDatabase sqdb = db.getReadableDatabase();
-			cursor = sqdb.query("schedule", null, "date like ? or date like ? or date like ? or date like ? or date like ?",
-				dates, null, null ,"start");
+			if(isOwnSchedule)
+				cursor = sqdb.query("schedule", null, "isEnrolled = 1 and (date like ? or date like ? or date like " +
+						"? or date like ? or date like ?)",
+							dates, null, null ,"start");
+			else
+			{
+				group += "%";
+				cursor = sqdb.query("schedule", null, "groups like '" + group + "'and (date like ? or date like ? or date like ?" +
+						"or date like ? or date like ?)",
+					dates, null, null, "start");
+			}
 
-			Log.w("Shika", cursor.getCount() + "");
+			Log.w("Shika", cursor.getCount() + " found in database");
 
 			return cursor;
 		}
@@ -332,5 +390,22 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		}
 
 		return calendar;
+	}
+
+	protected static void CursorLog(Cursor cursor)
+	{
+		if(cursor.moveToFirst())
+		{
+			do
+			{
+				for(int i = 0; i < cursor.getColumnCount(); i++)
+				{
+					Log.w("Shika", cursor.getColumnName(i) + ": " + cursor.getString(i));
+				}
+			}
+			while (cursor.moveToNext());
+		}
+		else
+			Log.w("Shika", "Cursor is empty");
 	}
 }

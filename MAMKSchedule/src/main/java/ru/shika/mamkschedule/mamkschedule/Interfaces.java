@@ -21,4 +21,9 @@ public class Interfaces
 		public void update(ArrayList< ArrayList<Lesson>> lessons);
 	}
 
+	public abstract interface groupFragmentCallback
+	{
+		public void groupSelected(String s);
+	}
+
 }

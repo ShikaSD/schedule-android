@@ -1,5 +1,6 @@
 package ru.shika.mamkschedule.mamkschedule;
 
+import android.app.Activity;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -7,13 +8,24 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
 public class GroupFragment extends Fragment implements Interfaces.Download
 {
-	String[] groupNames = new String[200];
+	Interfaces.groupFragmentCallback callback;
+
+	String[] groupNames = new String[160];
+
+	@Override
+	public void onAttach(Activity activity)
+	{
+		super.onAttach(activity);
+
+		callback = (Interfaces.groupFragmentCallback) activity;
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -55,6 +67,15 @@ public class GroupFragment extends Fragment implements Interfaces.Download
 		ListView list = (ListView) rootView.findViewById(R.id.groupsList);
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, groupNames);
 		list.setAdapter(adapter);
+
+		list.setOnItemClickListener(new AdapterView.OnItemClickListener()
+		{
+			@Override
+			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
+			{
+				callback.groupSelected(groupNames[i]);
+			}
+		});
 
 		return rootView;
 	}

@@ -8,6 +8,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapter.ViewHolder>
 {

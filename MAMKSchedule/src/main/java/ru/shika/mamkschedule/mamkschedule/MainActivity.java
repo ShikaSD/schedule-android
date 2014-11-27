@@ -1,7 +1,9 @@
 package ru.shika.mamkschedule.mamkschedule;
 
+import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -21,6 +23,8 @@ import android.widget.ListView;
 import com.parse.Parse;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import org.json.JSONArray;
+import ru.shika.mamkschedule.mamkschedule.Interfaces.groupFragmentCallback;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -28,7 +32,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 
-public class MainActivity extends ActionBarActivity implements Interfaces.needDownload
+public class MainActivity extends ActionBarActivity implements Interfaces.needDownload, groupFragmentCallback
 {
     HashMap<String, Interfaces.Download> interfaces = new HashMap<String, Interfaces.Download>();
 
@@ -43,12 +47,13 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     protected static SharedPreferences.Editor editor;
 
     protected Date lastUpdate;
-    protected GroupDownloader groupDownloader;
+    protected ListDownloader groupDownloader;
     protected ScheduleDownloader scheduleDownloader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
@@ -57,13 +62,13 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         //Let's find last update date
         pref = getPreferences(MODE_PRIVATE);
         editor = pref.edit();
-        lastUpdate = new Date(pref.getLong("lastUpdate", 0));
+        lastUpdate = new Date(0);//pref.getLong("lastUpdate", 0));
 
         //Parse init
         Parse.initialize(this, "eR4X3CWg0H0dQiykPaWPymOLuceIj7XlCWu3SLLi", "tZ8L3pIHV1nXUmXj5GASyM2JdbwKFHUDYDuqhKR7");
         //looking for last updates
-        groupDownloader = new GroupDownloader();
-        groupDownloader.execute(lastUpdate);
+        groupDownloader = new ListDownloader();
+        groupDownloader.execute();
         Log.w("Shika", "lastUpdate at" + lastUpdate.toString());
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -96,7 +101,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         getSupportActionBar().setHomeButtonEnabled(true);
 
         //Fragment init
-        Fragment fragment = new ScheduleViewGroupFragment();
+        Fragment fragment = ScheduleViewGroupFragment.newInstance(true, "");
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
             .add(R.id.main_container, fragment, "My schedule")
@@ -131,12 +136,12 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
+   /* @Override
     public void onBackPressed()
     {
         super.onBackPressed();
         finish();
-    }
+    }*/
 
     @Override
     protected void onDestroy()
@@ -147,6 +152,28 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             scheduleDownloader.cancel(true);
         if(groupDownloader != null)
             groupDownloader.cancel(true);
+    }
+
+    @Override
+    public void groupSelected(String s)
+    {
+        String titles[] = {"My schedule", "Teachers", "Edit", "Groups"};
+
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        for(int i = 0; i < titles.length; i++)
+        {
+            Fragment temp = getSupportFragmentManager().findFragmentByTag(titles[i]);
+            if(temp != null && temp.isVisible())
+            {
+                ft.detach(temp);
+                ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+                break;
+            }
+        }
+        ft.add(R.id.main_container, ScheduleViewGroupFragment.newInstance(false, s), "Groups");
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        ft.addToBackStack("Groups");
+        ft.commit();
     }
 
     private class onDrawerItemClickListener implements ListView.OnItemClickListener
@@ -189,7 +216,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 }
                 else
                 {
-                    fragment = new ScheduleViewGroupFragment();
+                    //TODO: change fragments
+                    fragment = ScheduleViewGroupFragment.newInstance(false, "T5614SN");
                     interfaces.put(tag, (Interfaces.Download) fragment);
                 }
                 fTrans.add(R.id.main_container, fragment, tag);
@@ -216,7 +244,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         for(int i = 0; i < 7; i++)
         {
-            dateFormat = date.get(Calendar.YEAR) - 2000 + "" + (date.get(Calendar.MONTH) + 1) + "" +
+            dateFormat = date.get(Calendar.YEAR) - 2000 + "" +
+                (date.get(Calendar.MONTH) + 1 > 9 ? date.get(Calendar.MONTH) + 1 : "0" + (1 + date.get(Calendar.MONTH)))+
                 (date.get(Calendar.DAY_OF_MONTH) > 9 ? date.get(Calendar.DAY_OF_MONTH) : "0" + date.get(Calendar.DAY_OF_MONTH));
             lessons[i] = new Lesson(null, null, null, null, null, dateFormat, group, 0);
             date.add(Calendar.DATE, 1);
@@ -226,9 +255,12 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     }
 
 
+
     /*AsyncTasks classes to download group's and lesson's rows*/
-    public class GroupDownloader extends AsyncTask<Date, Void, ArrayList<String>>
+    public class ListDownloader extends AsyncTask<String, Void, Void>
     {
+        boolean isDatabaseEmpty = false;
+
         @Override
         protected void onPreExecute()
         {
@@ -237,7 +269,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         }
 
         @Override
-        protected ArrayList<String> doInBackground(Date... params)
+        protected Void doInBackground(String... params)
         {
             ArrayList<ParseObject> parseObjects;
             ArrayList<String> groupNames = new ArrayList<String>();
@@ -266,19 +298,28 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 db.close();
             } catch (Exception e)
             {
-                Log.e("Shika", e.getMessage());
             }
 
-            return groupNames;
+            SQLiteDatabase db = dbh.getReadableDatabase();
+            Cursor c = db.query("groups", null, null, null, null, null, null);
+            isDatabaseEmpty = !c.moveToNext();
+
+            return null;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<String> groupNames)
+        protected void onPostExecute(Void voids)
         {
-            super.onPostExecute(groupNames);
-            editor.putLong("lastUpdate", Calendar.getInstance().getTimeInMillis());
+            super.onPostExecute(voids);
+
+            long time;
+            if (isDatabaseEmpty) time = 0;
+            else time = Calendar.getInstance().getTimeInMillis();
+
+            editor.putLong("lastUpdate", time);
             editor.commit();
-            Log.w("Shika", "GroupDownloader finish " + Calendar.getInstance().getTimeInMillis());
+            Log.w("Shika", "ListDownloader finish " + Calendar.getInstance().getTimeInMillis());
+            dbh.close();
         }
     }
 
@@ -302,8 +343,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 query.whereStartsWith("group", lesson.group);
                 query.whereStartsWith("date", lesson.date);
 
-                Log.w("Shika", lesson.group);
-                Log.w("Shika", lesson.date);
+                Log.w("Shika", "Downloading: " + lesson.group + " " + lesson.date);
                 try
                 {
                     schedule = (ArrayList<ParseObject>) query.find();
@@ -318,18 +358,17 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                         cv.put("room", i.getString("room"));
                         cv.put("start", i.getString("start"));
                         cv.put("end", i.getString("end"));
+                        cv.put("lessonId", i.getString("lessonId"));
                         db.insert("schedule", null, cv);
                         counter++;
                     }
-                    dbh.close();
                 } catch (Exception e)
                 {
-                    Log.e("Shika", e.getMessage());
                     return "error";
                 }
             }
 
-            Log.w("Shika", counter+"");
+            Log.w("Shika", "Schedule counter: " + counter+"");
 
             if(counter == 0)
             {
@@ -350,6 +389,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             {
                 iFace.onDownloadEnd(string);
             }
+
+            dbh.close();
         }
     }
 }
