@@ -2,18 +2,20 @@ package ru.shika.mamkschedule.mamkschedule;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 
 public class Interfaces
 {
 	public abstract interface Download
 	{
 		public void onDownloadEnd(String result);
-		public void updateEnded();
+		public void updateInProgress(int amount);
+		public void onDateChanged(Date date);
 	}
 
 	public abstract interface needDownload
 	{
-		public void needDownload(String group, Calendar date);
+		public void needDownload(String group, String teacher, String course, Calendar date);
 	}
 
 	public abstract interface updateFragment
@@ -23,7 +25,7 @@ public class Interfaces
 
 	public abstract interface groupFragmentCallback
 	{
-		public void groupSelected(String s);
+		public void listSelected(String type, String item);
 	}
 
 }

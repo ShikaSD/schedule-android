@@ -1,15 +1,15 @@
 package ru.shika.android;
 
-import android.animation.Animator;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.graphics.*;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
-import android.util.Property;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.ObjectAnimator;
+import com.nineoldandroids.animation.ValueAnimator;
+import com.nineoldandroids.util.Property;
 
 public class CircularProgressDrawable extends Drawable
 	implements Animatable
@@ -17,8 +17,8 @@ public class CircularProgressDrawable extends Drawable
 
 	private static final Interpolator ANGLE_INTERPOLATOR      = new LinearInterpolator();
 	private static final Interpolator SWEEP_INTERPOLATOR      = new DecelerateInterpolator();
-	private static final int          ANGLE_ANIMATOR_DURATION = 2000;
-	private static final int          SWEEP_ANIMATOR_DURATION = 600;
+	private static final int          ANGLE_ANIMATOR_DURATION = 2500;
+	private static final int          SWEEP_ANIMATOR_DURATION = 750;
 	private static final int          MIN_SWEEP_ANGLE         = 30;
 	private final RectF fBounds                 = new RectF();
 

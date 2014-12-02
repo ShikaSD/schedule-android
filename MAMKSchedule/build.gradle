@@ -14,7 +14,7 @@ repositories {
 
 android {
     compileSdkVersion 21
-    buildToolsVersion "21.1.0"
+    buildToolsVersion "21.1.1"
 
     defaultConfig {
         applicationId "ru.shika.mamkschedule.mamkschedule"
@@ -38,4 +38,5 @@ dependencies {
     compile 'com.android.support:cardview-v7:21.0.+'
     compile 'com.android.support:recyclerview-v7:21.0.+'
     compile 'com.parse.bolts:bolts-android:1.1.2'
+    compile 'com.nineoldandroids:library:2.4.0+'
 }

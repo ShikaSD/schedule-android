@@ -11,14 +11,12 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
 public class ScheduleFragment extends Fragment implements Interfaces.updateFragment
 {
 
 	RecyclerView list;
-	RecyclerView.Adapter listAdapter;
+	ScheduleListAdapter listAdapter;
 	RecyclerView.LayoutManager listLayoutManager;
 
 	TextView empty;
@@ -27,7 +25,7 @@ public class ScheduleFragment extends Fragment implements Interfaces.updateFragm
 
 	int globalDay = 0;
 
-	public static ArrayList<Lesson> lessons = new ArrayList<Lesson>();
+	public ArrayList<Lesson> lessons = new ArrayList<Lesson>();
 
 	//Init Fragment
 	public static ScheduleFragment newInstance(int day)
@@ -88,26 +86,14 @@ public class ScheduleFragment extends Fragment implements Interfaces.updateFragm
 
 		try
 		{
-			lessons.clear();
-			lessons.addAll(list.get(globalDay));
-			Collections.sort(lessons, new LessonComparator());
-			listAdapter.notifyDataSetChanged();
+			listAdapter.swapData(list.get(globalDay));
 		}
-		catch (Exception e){}
+		catch (Exception e){Log.e("Shika", "Error in update fragment");}
 
 		if(lessons.isEmpty() && empty != null)
 			empty.setVisibility(View.VISIBLE);
 		else if(empty != null)
 			empty.setVisibility(View.GONE);
-	}
-
-	//For sort lessons
-	public class LessonComparator implements Comparator<Lesson>
-	{
-		@Override
-		public int compare(Lesson o1, Lesson o2) {
-			return (o1.start.compareTo(o2.start) == 0 ? o1.end.compareTo(o2.end) : o1.start.compareTo(o2.end));
-		}
 	}
 
 }

@@ -2,10 +2,10 @@ package ru.shika.android;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
+import ru.shika.mamkschedule.mamkschedule.R;
 
 /**
  * Simplest custom view possible, using CircularProgressDrawable
@@ -26,7 +26,7 @@ public class ProgressView extends View
 	public ProgressView(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
 
-		mDrawable = new CircularProgressDrawable(Color.RED, 10);
+		mDrawable = new CircularProgressDrawable(getResources().getColor(R.color.light_blue), 4);
 		mDrawable.setCallback(this);
 	}
 
@@ -43,7 +43,7 @@ public class ProgressView extends View
 	@Override
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 		super.onSizeChanged(w, h, oldw, oldh);
-		mDrawable.setBounds(0, 0, w, h);
+		mDrawable.setBounds(getPaddingLeft(), getPaddingTop(), w - getPaddingRight(), h - getPaddingBottom());
 	}
 
 	@Override
@@ -55,5 +55,10 @@ public class ProgressView extends View
 	@Override
 	protected boolean verifyDrawable(Drawable who) {
 		return who == mDrawable || super.verifyDrawable(who);
+	}
+
+	public void start()
+	{
+		mDrawable.start();
 	}
 }
