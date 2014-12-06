@@ -9,8 +9,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
 public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapter.ViewHolder>
 {
@@ -64,21 +62,12 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 
 	public void swapData(ArrayList<Lesson> data)
 	{
-		lessons.clear();
-		lessons.addAll(data);
+		notifyItemRangeRemoved(0, lessons.size());
+		lessons = data;
 
-		Log.w("Shika", lessons.size()+"");
+		Log.w("Shika", lessons.size()+" lessons in adapter");
 
-		Collections.sort(lessons, new LessonComparator());
-		notifyDataSetChanged();
+		notifyItemRangeInserted(0, lessons.size());
 	}
 
-	//For sort lessons
-	public class LessonComparator implements Comparator<Lesson>
-	{
-		@Override
-		public int compare(Lesson o1, Lesson o2) {
-			return (o1.start.compareTo(o2.start) == 0 ? o1.end.compareTo(o2.end) : o1.start.compareTo(o2.start));
-		}
-	}
 }

@@ -4,11 +4,11 @@
     <string name="app_name">MAMKSchedule</string>
     <string name="action_settings">Settings</string>
     <array name = "days">
-        <item>Mon</item>
-        <item>Tue</item>
-        <item>Wed</item>
-        <item>Thu</item>
-        <item>Fri</item>
+        <item>MON</item>
+        <item>TUE</item>
+        <item>WED</item>
+        <item>THU</item>
+        <item>FRI</item>
     </array>
 
     <string-array name = "drawer_strings">

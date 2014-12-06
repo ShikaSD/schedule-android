@@ -16,14 +16,15 @@ import android.widget.ListView;
 import android.widget.Toast;
 import ru.shika.android.ProgressView;
 
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ListFragment extends Fragment implements Interfaces.Download
 {
 	Interfaces.groupFragmentCallback callback;
 
-	ArrayList <String> names = new ArrayList<String>();
+	Map<String, String> names = new HashMap<String, String>();
 	ListFragmentAdapter adapter;
 
 	ProgressView progressView;
@@ -66,9 +67,21 @@ public class ListFragment extends Fragment implements Interfaces.Download
 		if(c.moveToFirst())
 		{
 			int name = c.getColumnIndex("name");
+			int id = c.getColumnIndex("courseId");
 			do
 			{
-				names.add(c.getString(name));
+				if(id == -1)
+					names.put(c.getString(name), c.getString(name));
+				else
+				{
+					if(names.containsKey(c.getString(id)))
+					{
+						String value = names.get(c.getString(id)) + ", "+ c.getString(name);
+						names.put(c.getString(id), value);
+					}
+					else
+						names.put(c.getString(id), c.getString(name));
+				}
 			}
 			while (c.moveToNext());
 		}
@@ -136,9 +149,21 @@ public class ListFragment extends Fragment implements Interfaces.Download
 		if(c.moveToFirst())
 		{
 			int name = c.getColumnIndex("name");
+			int id = c.getColumnIndex("courseId ");
 			do
 			{
-				names.add(c.getString(name));
+				if(id == -1 || c.getString(id).equals(""))
+					names.put(c.getString(name), c.getString(name));
+				else
+				{
+					if(names.containsKey(c.getString(id)))
+					{
+						String value = names.get(c.getString(id)) + ", "+ c.getString(name);
+						names.put(c.getString(id), value);
+					}
+					else
+						names.put(c.getString(id), c.getString(name));
+				}
 			}
 			while (c.moveToNext());
 			adapter.notifyDataSetChanged();

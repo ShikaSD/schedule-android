@@ -71,7 +71,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         setContentView(R.layout.main);
 
         //For debug
-        deleteDatabase("scheduleDB");
+       // deleteDatabase("scheduleDB");
 
         //Let's find last update date
         pref = getPreferences(MODE_PRIVATE);
@@ -198,10 +198,17 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     public void listSelected(String type, String item)
     {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        for(int i = 0; i < titles.length; i++)
+        Fragment fragment = null;
+
+        String[] tagSet = new String[interfaces.keySet().size()];
+        tagSet = interfaces.keySet().toArray(tagSet);
+        for(int i = 0; i < tagSet.length; i++)
         {
-            Fragment temp = getSupportFragmentManager().findFragmentByTag(titles[i]);
-            if(temp != null && temp.isVisible())
+            if (tagSet[i].equals(type + "ViewGroup"))
+                return;
+
+            Fragment temp = getSupportFragmentManager().findFragmentByTag(tagSet[i]);
+            if (temp != null && temp.isVisible())
             {
                 ft.detach(temp);
                 ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
@@ -210,14 +217,16 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         }
 
         if(type.equals(titles[1]))
-            ft.add(R.id.main_container, ScheduleViewGroupFragment.newInstance(false, item, null, null, globalDate), type);
+            fragment = ScheduleViewGroupFragment.newInstance(false, item, null, null, globalDate);
         else
         if(type.equals(titles[2]))
-            ft.add(R.id.main_container, ScheduleViewGroupFragment.newInstance(false, null, item, null, globalDate), type);
+            fragment = ScheduleViewGroupFragment.newInstance(false, null, item, null, globalDate);
         else
         if(type.equals(titles[3]))
-            ft.add(R.id.main_container, ScheduleViewGroupFragment.newInstance(false, null, null, item, globalDate), type);
+            fragment = ScheduleViewGroupFragment.newInstance(false, null, null, item, globalDate);
 
+        interfaces.put(type+"ViewGroup", (Interfaces.Download) fragment);
+        ft.add(R.id.main_container, fragment, type+"ViewGroup");
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.addToBackStack(type);
         ft.commit();
@@ -240,9 +249,14 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             FragmentTransaction fTrans = fm.beginTransaction();
             Fragment fragment;
 
-            for(int i = 0; i < titles.length; i++)
+            String[] tagSet = new String[interfaces.keySet().size()];
+            tagSet = interfaces.keySet().toArray(tagSet);
+            for(int i = 0; i < tagSet.length; i++)
             {
-                Fragment temp = fm.findFragmentByTag(titles[i]);
+                if(tagSet[i].equals(tag))
+                    return;
+
+                Fragment temp = getSupportFragmentManager().findFragmentByTag(tagSet[i]);
                 if(temp != null && temp.isVisible())
                 {
                     fTrans.detach(temp);
@@ -422,7 +436,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             if (isDatabaseEmpty) time = 0;
             else time = Calendar.getInstance().getTimeInMillis();
 
-            editor.putLong("lastUpdate", time);
+            editor.putLong(param+"lastUpdate", time);
             editor.commit();
         }
     }
@@ -443,7 +457,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             for(Lesson lesson : lessons)
             {
                 ArrayList<ParseObject> schedule;
-                ParseQuery<ParseObject> query = ParseQuery.getQuery("Schedule");
+                ParseQuery<ParseObject> query = ParseQuery.getQuery("Lessons");
 
                 if(lesson == null){ Log.w("Shika", "lesson = null"); continue;}
 
@@ -454,7 +468,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                     query.whereStartsWith("teacher", lesson.teacher);
                 else
                 if(lesson.name != null)
-                    query.whereStartsWith("lesson", lesson.name);
+                    query.whereStartsWith("name", lesson.name);
 
                 query.whereStartsWith("date", lesson.date);
 
@@ -474,6 +488,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                         cv.put("start", i.getString("start"));
                         cv.put("end", i.getString("end"));
                         cv.put("lessonId", i.getString("lessonId"));
+                        cv.put("courseId", i.getString("courseId"));
                         db.insert("schedule", null, cv);
                         counter++;
                     }
@@ -537,9 +552,13 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             public void onDateSelected(Date date)
             {
                 for(Interfaces.Download iFace : interfaces.values())
-                    iFace.onDateChanged(date);
+                {
+                    Fragment temp = (Fragment)iFace;
+                    if(temp.isVisible())
+                        iFace.onDateChanged(date);
+                }
 
-                globalDate = date;
+                //globalDate = date;
             }
 
             @Override

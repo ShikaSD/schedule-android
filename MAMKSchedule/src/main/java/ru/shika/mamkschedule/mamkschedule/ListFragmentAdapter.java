@@ -7,15 +7,15 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import java.util.Map;
 
 public class ListFragmentAdapter extends BaseAdapter
 {
-	ArrayList <String> list;
+	Map<String, String> list;
 	Context context;
 	LayoutInflater layoutInflater;
 
-	public ListFragmentAdapter(Context ctx, ArrayList<String> list)
+	public ListFragmentAdapter(Context ctx, Map<String, String> list)
 	{
 		this.list = list;
 		context = ctx;
@@ -48,7 +48,12 @@ public class ListFragmentAdapter extends BaseAdapter
 			v = layoutInflater.inflate(R.layout.fragment_list_item, viewGroup, false);
 		}
 
-		((TextView) v.findViewById(R.id.fragment_list_item)).setText(list.get(i));
+		String[] array = new String[list.keySet().size()];
+		array = list.keySet().toArray(array);
+
+		((TextView) v.findViewById(R.id.fragment_list_name)).setText(list.get(array[i]));
+		if(!array[i].equals(list.get(array[i])))
+			((TextView) v.findViewById(R.id.fragment_list_id)).setText(array[i]);
 
 		return v;
 	}

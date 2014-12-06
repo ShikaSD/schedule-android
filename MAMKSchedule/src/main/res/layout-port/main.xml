@@ -16,8 +16,6 @@
         android:foreground="?android:windowContentOverlay">
     </android.support.v7.widget.Toolbar>
 
-
-
     <android.support.v4.widget.DrawerLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -29,7 +27,6 @@
             android:layout_height = "match_parent"
             android:id="@+id/main_container"/>
 
-
         <ListView
             android:id="@+id/drawerList"
             android:layout_width = "240dp"
@@ -39,23 +36,19 @@
             android:divider="@color/black"
             android:dividerHeight="0dp"
             android:background="@color/white"/>
-
     </android.support.v4.widget.DrawerLayout>
 
     <FrameLayout
-        android:layout_width = "240dp"
+        android:layout_width = "match_parent"
         android:layout_height = "match_parent"
         android:layout_below="@+id/toolbar"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
         android:id="@+id/container_calendar"
         android:background="@color/white"
         android:visibility="gone"
-        android:layout_centerHorizontal="true"
         android:paddingRight="10dp"
         android:paddingLeft="10dp">
 
-        <ru.shika.android.CalendarPickerView
+         <ru.shika.android.CalendarPickerView
             android:layout_width = "match_parent"
             android:layout_height = "match_parent"
             android:id="@+id/calendar_view"
@@ -76,5 +69,4 @@
         android:adjustViewBounds="true"
         android:padding="5dp"
         android:onClick="onCalendarClick"/>
-
 </RelativeLayout>

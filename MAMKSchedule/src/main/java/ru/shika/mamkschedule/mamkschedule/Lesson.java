@@ -31,4 +31,16 @@ public class Lesson
 			this.drawable = drawable;
 		}
 	}
+
+	public static class ListItem
+	{
+		String name;
+		String id;
+
+		public ListItem(String name, String id)
+		{
+			this.name = name;
+			this.id = id;
+		}
+	}
 }

@@ -7,8 +7,6 @@
 		android:id="@+id/card"
 		card_view:cardCornerRadius="4dp"
 		android:layout_marginBottom="10dp"
-		android:clickable="true"
-		android:focusable="true"
 		card_view:cardElevation="2dp">
 
 		<RelativeLayout
