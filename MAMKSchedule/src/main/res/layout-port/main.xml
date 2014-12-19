@@ -1,13 +1,8 @@
 <RelativeLayout
     android:layout_height = "match_parent"
     android:layout_width="match_parent"
+    android:id="@+id/activity_container"
     xmlns:android = "http://schemas.android.com/apk/res/android">
-
-   <ru.shika.android.ProgressView
-        android:id="@+id/progressBar"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_centerInParent="true"/>
 
 
     <android.support.v7.widget.Toolbar
@@ -16,19 +11,22 @@
         android:foreground="?android:windowContentOverlay">
     </android.support.v7.widget.Toolbar>
 
+
+
     <android.support.v4.widget.DrawerLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/drawerLayout"
+        android:id="@+id/drawer_layout"
         android:layout_below="@+id/toolbar">
 
-        <FrameLayout
+        <RelativeLayout
             android:layout_width = "match_parent"
             android:layout_height = "match_parent"
             android:id="@+id/main_container"/>
 
+
         <ListView
-            android:id="@+id/drawerList"
+            android:id="@+id/drawer_list"
             android:layout_width = "240dp"
             android:layout_height = "match_parent"
             android:layout_gravity="start"
@@ -36,6 +34,7 @@
             android:divider="@color/black"
             android:dividerHeight="0dp"
             android:background="@color/white"/>
+
     </android.support.v4.widget.DrawerLayout>
 
     <FrameLayout
@@ -45,10 +44,11 @@
         android:id="@+id/container_calendar"
         android:background="@color/white"
         android:visibility="gone"
+        android:layout_centerHorizontal="true"
         android:paddingRight="10dp"
         android:paddingLeft="10dp">
 
-         <ru.shika.android.CalendarPickerView
+        <ru.shika.android.CalendarPickerView
             android:layout_width = "match_parent"
             android:layout_height = "match_parent"
             android:id="@+id/calendar_view"
@@ -56,17 +56,4 @@
 
     </FrameLayout>
 
-    <ImageButton
-        android:layout_width = "64dp"
-        android:layout_height = "64dp"
-        android:background="@drawable/round_button"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_margin="40dp"
-        android:elevation="8dp"
-        android:src="@drawable/ic_calendar"
-        android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
-        android:padding="5dp"
-        android:onClick="onCalendarClick"/>
 </RelativeLayout>

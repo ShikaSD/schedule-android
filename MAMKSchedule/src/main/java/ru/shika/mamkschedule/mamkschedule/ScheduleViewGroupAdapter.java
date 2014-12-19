@@ -109,10 +109,10 @@ public class ScheduleViewGroupAdapter extends PagerAdapter
 			try
 			{
 				adapters.get(i).swapData(list.get(i));
-				Log.w("Shika", "Adapter in update: "+i);
+				//Log.w("Shika", "Adapter in update: "+i);
 				updateVisibility(i);
 			}
-			catch (Exception e){Log.e("Shika", "Ex");}
+			catch (Exception e){/*Log.e("Shika", "Ex");*/}
 		}
 		//Log.w("Shika", "Adapter array contains: "+adapters.size());
 		//logArray(adapters);

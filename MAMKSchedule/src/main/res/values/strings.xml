@@ -3,7 +3,8 @@
 
     <string name="app_name">MAMKSchedule</string>
     <string name="action_settings">Settings</string>
-    <array name = "days">
+
+    <array name="days">
         <item>MON</item>
         <item>TUE</item>
         <item>WED</item>
@@ -11,15 +12,14 @@
         <item>FRI</item>
     </array>
 
-    <string-array name = "drawer_strings">
+    <string-array name="drawer_strings">
         <item name="schedule">My schedule</item>
         <item name="groups">Groups</item>
         <item name="teachers">Teachers</item>
         <item name="courses">Courses</item>
         <item name="edit">Edit schedule</item>
     </string-array>
-
-    <string-array name = "drawer_drawables">
+    <string-array name="drawer_drawables">
         <item>@drawable/ic_action_paste</item>
         <item>@drawable/ic_action_group</item>
         <item>@drawable/ic_action_search</item>
@@ -27,11 +27,18 @@
         <item>@drawable/ic_action_search</item>
     </string-array>
 
+    <string-array name = "edit_headers">
+        <item>Add</item>
+        <item>Delete </item>
+    </string-array>
+
     <string name="open">Open</string>
     <string name="close">Close</string>
 
+    <!--CalendarView strings -->
     <string name="day_name_format">EEE</string>
     <string name="invalid_date">Date must be between %1$s and %2$s.</string>
     <string name="month_name_format">MMMM yyyy</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

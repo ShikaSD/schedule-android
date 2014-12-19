@@ -245,7 +245,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 					if (temp.day == i)
 						result.add(temp);
 				}
-				Log.w("Shika", "result: " + result.size());
+				//Log.w("Shika", "result: " + result.size());
 				lessonsArr.add(result);
 			}
 
@@ -322,8 +322,10 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 			}
 
 			if(isOwnSchedule)
-				cursor = sqdb.query("schedule", null, "isEnrolled = 1 and (date like ? or date like ? or date like " +
-						"? or date like ? or date like ?)", dates, null, null ,"start");
+			{
+				cursor = sqdb.query("schedule", null, "groups like '" + group + "%'and (date like ? or date like ? or" +
+					" date like ? or date like ? or date like ?)", dates, null, null, "start");
+			}
 			else
 			if(group != null)
 			{
@@ -333,16 +335,14 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 			else
 			if(teacher != null)
 			{
-				teacher += "%";
 				cursor = sqdb.query("schedule", null, "teacher like '" + teacher + "%'and (date like ? or date like ?" +
 					" or date like ? or date like ? or date like ?)", dates, null, null, "start");
 			}
 			else
 			if(course != null)
 			{
-				course += "%";
-				cursor = sqdb.query("schedule", null, "lesson like '" + course + "%'and (date like ? or date like ? " +
-					"or date like ? or date like ? or date like ?)", dates, null, null, "start");
+				cursor = sqdb.query("schedule", null, "(courseId like '" + course + "%' or lesson like '" + course +
+					"%')and (date like ? or date like ? or date like ? or date like ? or date like ?)", dates, null, null, "start");
 			}
 
 			Log.w("Shika", cursor.getCount() + " found in database");

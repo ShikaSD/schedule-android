@@ -11,23 +11,26 @@ import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import com.parse.Parse;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import ru.shika.android.CalendarPickerView;
-import ru.shika.android.ProgressView;
+import ru.shika.android.CircleImageView;
+import ru.shika.android.MaterialProgressDrawable;
 import ru.shika.mamkschedule.mamkschedule.Interfaces.groupFragmentCallback;
 
 import java.util.ArrayList;
@@ -39,6 +42,14 @@ import java.util.HashMap;
 public class MainActivity extends ActionBarActivity implements Interfaces.needDownload, groupFragmentCallback
 {
     protected HashMap<String, Interfaces.Download> interfaces = new HashMap<String, Interfaces.Download>();
+
+    protected CircleImageView progress;
+    private int mCircleWidth;
+    private int mCircleHeight;
+    private MaterialProgressDrawable progressDrawable;
+
+    protected CircleImageView calendarButton;
+    CalendarPickerView calendar;
 
     private ArrayList<Lesson.DrawerItem> drawerItems = new ArrayList<Lesson.DrawerItem>();
     private DrawerLayout drawerLayout;
@@ -58,10 +69,12 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     protected ScheduleDownloader scheduleDownloader;
     protected Handler handler;
 
-    protected ProgressView progress;
-    protected FrameLayout container;
+    protected RelativeLayout container;
 
     protected Date globalDate = new Date();
+
+    protected String visibleFragmentTag;
+    protected String prevFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -100,8 +113,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         drawables.recycle();
 
         //Init drawer
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
-        drawerList = (ListView) findViewById(R.id.drawerList);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerList = (ListView) findViewById(R.id.drawer_list);
 
         drawerList.setAdapter(new DrawerListAdapter(this, drawerItems));
         drawerList.setOnItemClickListener(new onDrawerItemClickListener());
@@ -120,14 +133,20 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             .add(R.id.main_container, fragment, titles[0])
             .commit();
 
-        interfaces.put("My schedule", (Interfaces.Download) fragment);
+        interfaces.put(titles[0], (Interfaces.Download) fragment);
+
+        visibleFragmentTag = titles[0];
 
         //Don't forget finding views
-        progress = (ProgressView) findViewById(R.id.progressBar);
-        progress.setVisibility(View.GONE);
-        ViewCompat.setElevation(progress, 8);
-        ViewCompat.setTranslationZ(progress, 8);
-        container = (FrameLayout) findViewById(R.id.main_container);
+        createProgressView();
+
+        //Calendar button
+        createCalendarButton();
+
+        //CalendarView init
+        calendarInit();
+
+        container = (RelativeLayout) findViewById(R.id.main_container);
 
         //Init threads handler
         handler = new Handler()
@@ -137,12 +156,14 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 for (Interfaces.Download iFace : interfaces.values())
                     iFace.updateInProgress(msg.what);
 
+                progressDrawable.stop();
                 progress.setVisibility(View.GONE);
                 container.setVisibility(View.VISIBLE);
 
                 if(msg.what == -1)
                 {
                     //Show fragment
+                    progressDrawable.stop();
                     progress.setVisibility(View.GONE);
                     container.setVisibility(View.VISIBLE);
 
@@ -150,6 +171,76 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 }
             }
         };
+    }
+
+    private void createProgressView() {
+        final DisplayMetrics metrics = getResources().getDisplayMetrics();
+        mCircleWidth = (int) (56 * metrics.density);
+        mCircleHeight = (int) (56 * metrics.density);
+
+        progress = new CircleImageView(this, getResources().getColor(R.color.background), 56/2);
+        progressDrawable = new MaterialProgressDrawable(this, progress);
+
+        RelativeLayout.LayoutParams lParams =
+            new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
+        lParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+        progress.setLayoutParams(lParams);
+
+        progressDrawable.updateSizes(MaterialProgressDrawable.LARGE);
+        progressDrawable.setColorSchemeColors(getResources().getColor(R.color.light_blue));
+        progress.setImageDrawable(progressDrawable);
+
+        ((ViewGroup)(findViewById(R.id.activity_container))).addView(progress, 0);
+        progress.setVisibility(View.GONE);
+    }
+
+    private void createCalendarButton()
+    {
+        final DisplayMetrics metrics = getResources().getDisplayMetrics();
+        final int padding = 10;
+        mCircleWidth = (int) (56 * metrics.density);
+        mCircleHeight = (int) (56 * metrics.density);
+
+        calendarButton = new CircleImageView(this, getResources().getColor(R.color.light_blue), 56/2);
+
+        RelativeLayout.LayoutParams lParams =
+            new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
+        lParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        lParams.setMargins(0, 0, 30, 30);
+
+        calendarButton.setLayoutParams(lParams);
+        calendarButton.setPadding(padding, padding, padding, padding);
+
+        calendarButton.setFocusable(true);
+        calendarButton.setClickable(true);
+
+        calendarButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_calendar));
+        ((ViewGroup)(findViewById(R.id.activity_container))).addView(calendarButton);
+
+        calendarButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                onCalendarClick(view);
+            }
+        });
+    }
+
+    private void calendarInit()
+    {
+        Calendar until = Calendar.getInstance();
+        until.add(Calendar.MONTH, 5);
+        until.setFirstDayOfWeek(Calendar.MONDAY);
+
+        Calendar from = Calendar.getInstance();
+        from.set(2014, Calendar.SEPTEMBER, 1);
+
+        calendar = (CalendarPickerView) findViewById(R.id.calendar_view);
+        Date today = new Date();
+        calendar.init(from.getTime(), until.getTime())
+            .withSelectedDate(today);
     }
 
     @Override
@@ -176,12 +267,32 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         return super.onOptionsItemSelected(item);
     }
 
-   /* @Override
+    @Override
     public void onBackPressed()
     {
-        super.onBackPressed();
-        finish();
-    }*/
+        if(calendarButton.getVisibility() == View.GONE)
+        {
+            FrameLayout container = (FrameLayout) findViewById(R.id.container_calendar);
+            container.setVisibility(View.GONE);
+            calendarButton.setVisibility(View.VISIBLE);
+        }
+        else
+        if(visibleFragmentTag.endsWith("ViewGroup"))
+        {
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+
+            ft.attach(getSupportFragmentManager().findFragmentByTag(prevFragment));
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+            ft.commit();
+            visibleFragmentTag = prevFragment;
+
+            prevFragment = null;
+        }
+        else
+            super.onBackPressed();
+    }
 
     @Override
     protected void onDestroy()
@@ -200,21 +311,18 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment fragment = null;
 
-        String[] tagSet = new String[interfaces.keySet().size()];
-        tagSet = interfaces.keySet().toArray(tagSet);
-        for(int i = 0; i < tagSet.length; i++)
+        if(visibleFragmentTag.endsWith("ViewGroup"))
         {
-            if (tagSet[i].equals(type + "ViewGroup"))
-                return;
-
-            Fragment temp = getSupportFragmentManager().findFragmentByTag(tagSet[i]);
-            if (temp != null && temp.isVisible())
-            {
-                ft.detach(temp);
-                ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-                break;
-            }
+            ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
         }
+        else
+        {
+            ft.detach(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+        }
+
+        prevFragment = visibleFragmentTag;
 
         if(type.equals(titles[1]))
             fragment = ScheduleViewGroupFragment.newInstance(false, item, null, null, globalDate);
@@ -230,6 +338,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.addToBackStack(type);
         ft.commit();
+        visibleFragmentTag = type+"ViewGroup";
     }
 
     private class onDrawerItemClickListener implements ListView.OnItemClickListener
@@ -245,24 +354,22 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         private void replaceFragment(String tag)
         {
+            if(visibleFragmentTag.equals(tag))
+                return;
+
             FragmentManager fm = getSupportFragmentManager();
-            FragmentTransaction fTrans = fm.beginTransaction();
+            FragmentTransaction ft = fm.beginTransaction();
             Fragment fragment;
 
-            String[] tagSet = new String[interfaces.keySet().size()];
-            tagSet = interfaces.keySet().toArray(tagSet);
-            for(int i = 0; i < tagSet.length; i++)
+            if(visibleFragmentTag.endsWith("ViewGroup"))
             {
-                if(tagSet[i].equals(tag))
-                    return;
-
-                Fragment temp = getSupportFragmentManager().findFragmentByTag(tagSet[i]);
-                if(temp != null && temp.isVisible())
-                {
-                    fTrans.detach(temp);
-                    fTrans.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-                    break;
-                }
+                ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
+                ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+            }
+            else
+            {
+                ft.detach(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
+                ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
             }
 
             fragment = fm.findFragmentByTag(tag);
@@ -281,13 +388,14 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                     fragment = ListFragment.newInstance(tag);
                     interfaces.put(tag, (Interfaces.Download) fragment);
                 }
-                fTrans.add(R.id.main_container, fragment, tag);
+                ft.add(R.id.main_container, fragment, tag);
                 Log.w("Shika", "New Fragment made");
             }
 
-            fTrans.attach(fragment);
-            fTrans.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-            fTrans.commit();
+            ft.attach(fragment);
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+            ft.commit();
+            visibleFragmentTag = tag;
         }
     }
 
@@ -300,7 +408,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         Lesson[] lessons = new Lesson[5];
         String dateFormat;
 
-        Log.w("Shika", "in needDownload");
         Log.w("Shika", "in needDownload");
         scheduleDownloader = new ScheduleDownloader();
 
@@ -355,6 +462,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
        public ListDownloader(String param)
         {
             //Show progress bar
+            progressDrawable.start();
             progress.setVisibility(View.VISIBLE);
             container.setVisibility(View.GONE);
 
@@ -407,7 +515,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                             cv.put("teacher", i.getString("teacher"));
                         }
 
-                        cv.put("name", i.getString("name"));
+                        String name = i.getString("name");
+                        cv.put("name", name);
                         db.insert(param, null, cv);
 
                         downloaded++;
@@ -428,6 +537,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             SQLiteDatabase db = dbh.getReadableDatabase();
             Cursor c = db.query(param, null, null, null, null, null, null);
             isDatabaseEmpty = !c.moveToNext();
+
+            db.close();
 
             //Remove progress button
             handler.sendEmptyMessage(-1);
@@ -482,7 +593,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                     {
                         cv.put("groups", i.getString("group"));
                         cv.put("date", i.getString("date"));
-                        cv.put("lesson", i.getString("lesson"));
+                        cv.put("lesson", i.getString("name"));
                         cv.put("teacher", i.getString("teacher"));
                         cv.put("room", i.getString("room"));
                         cv.put("start", i.getString("start"));
@@ -529,22 +640,10 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         FrameLayout container = (FrameLayout) findViewById(R.id.container_calendar);
 
         if(container.getVisibility() == View.GONE)
+        {
             container.setVisibility(View.VISIBLE);
-        else
-            container.setVisibility(View.GONE);
-
-
-        Calendar until = Calendar.getInstance();
-        until.add(Calendar.MONTH, 5);
-        until.setFirstDayOfWeek(Calendar.MONDAY);
-
-        Calendar from = Calendar.getInstance();
-        from.set(2014, Calendar.SEPTEMBER, 1);
-
-        CalendarPickerView calendar = (CalendarPickerView) findViewById(R.id.calendar_view);
-        Date today = new Date();
-        calendar.init(from.getTime(), until.getTime())
-            .withSelectedDate(today);
+            calendarButton.setVisibility(View.GONE);
+        }
 
         calendar.setOnDateSelectedListener(new CalendarPickerView.OnDateSelectedListener()
         {
@@ -556,6 +655,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                     Fragment temp = (Fragment)iFace;
                     if(temp.isVisible())
                         iFace.onDateChanged(date);
+
+                    calendar.selectDate(date, true);
                 }
 
                 //globalDate = date;

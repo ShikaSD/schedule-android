@@ -2,7 +2,6 @@ package ru.shika.mamkschedule.mamkschedule;
 
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,7 +64,7 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 		notifyItemRangeRemoved(0, lessons.size());
 		lessons = data;
 
-		Log.w("Shika", lessons.size()+" lessons in adapter");
+		//Log.w("Shika", lessons.size()+" lessons in adapter");
 
 		notifyItemRangeInserted(0, lessons.size());
 	}

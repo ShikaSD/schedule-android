@@ -1,8 +1,9 @@
 .gradle
-/local.properties
+local.properties
 .DS_Store
-/build
-/.idea
-/.navigation
-
-*.html
+build
+.idea
+.navigation
+gradle
+gen
+*.iml

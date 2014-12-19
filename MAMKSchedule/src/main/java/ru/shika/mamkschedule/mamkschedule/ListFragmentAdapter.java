@@ -7,17 +7,20 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 public class ListFragmentAdapter extends BaseAdapter
 {
-	Map<String, String> list;
+	Map<String, Integer> keys;
+	ArrayList <ArrayList <String>> names;
 	Context context;
 	LayoutInflater layoutInflater;
 
-	public ListFragmentAdapter(Context ctx, Map<String, String> list)
+	public ListFragmentAdapter(Context ctx, Map<String, Integer> keys, ArrayList<ArrayList<String>> names)
 	{
-		this.list = list;
+		this.keys = keys;
+		this.names = names;
 		context = ctx;
 		layoutInflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
@@ -25,13 +28,13 @@ public class ListFragmentAdapter extends BaseAdapter
 	@Override
 	public int getCount()
 	{
-		return list.size();
+		return names.size();
 	}
 
 	@Override
 	public Object getItem(int i)
 	{
-		return list.get(i);
+		return names.get(i);
 	}
 
 	@Override
@@ -48,12 +51,23 @@ public class ListFragmentAdapter extends BaseAdapter
 			v = layoutInflater.inflate(R.layout.fragment_list_item, viewGroup, false);
 		}
 
-		String[] array = new String[list.keySet().size()];
-		array = list.keySet().toArray(array);
+		int size = names.get(i).size();
+		String name = names.get(i).get(0);
+		for(int j = 1; j < size; j++)
+			name += "|"+names.get(i).get(j);
 
-		((TextView) v.findViewById(R.id.fragment_list_name)).setText(list.get(array[i]));
-		if(!array[i].equals(list.get(array[i])))
-			((TextView) v.findViewById(R.id.fragment_list_id)).setText(array[i]);
+		((TextView) v.findViewById(R.id.fragment_list_name)).setText(name);
+		if(keys.containsValue(i))
+			for(String key : keys.keySet())
+			{
+				if (keys.get(key).equals(i))
+				{
+					if(!key.equals(name))
+						((TextView) v.findViewById(R.id.fragment_list_id)).setText(key);
+
+					break;
+				}
+			}
 
 		return v;
 	}

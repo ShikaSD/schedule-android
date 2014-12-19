@@ -3,19 +3,20 @@ package ru.shika.mamkschedule.mamkschedule;
 import android.app.Activity;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.view.ViewCompat;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
-import ru.shika.android.ProgressView;
+import android.widget.RelativeLayout;
+import ru.shika.android.CircleImageView;
+import ru.shika.android.MaterialProgressDrawable;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,10 +25,14 @@ public class ListFragment extends Fragment implements Interfaces.Download
 {
 	Interfaces.groupFragmentCallback callback;
 
-	Map<String, String> names = new HashMap<String, String>();
+	//To sort them by course id
+	Map<String, Integer> keys = new HashMap<String, Integer>(); //Ids
+	ArrayList <ArrayList <String>> names = new ArrayList<ArrayList <String>>(); //Full name
+
 	ListFragmentAdapter adapter;
 
-	ProgressView progressView;
+	CircleImageView progressView;
+	MaterialProgressDrawable progressDrawable;
 
 	String fragmentType = "";
 
@@ -62,36 +67,8 @@ public class ListFragment extends Fragment implements Interfaces.Download
 		dbHelper = new DBHelper(getActivity());
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-		Cursor c = db.query(fragmentType, null, null, null, null, null, null);
-
-		if(c.moveToFirst())
-		{
-			int name = c.getColumnIndex("name");
-			int id = c.getColumnIndex("courseId");
-			do
-			{
-				if(id == -1)
-					names.put(c.getString(name), c.getString(name));
-				else
-				{
-					if(names.containsKey(c.getString(id)))
-					{
-						String value = names.get(c.getString(id)) + ", "+ c.getString(name);
-						names.put(c.getString(id), value);
-					}
-					else
-						names.put(c.getString(id), c.getString(name));
-				}
-			}
-			while (c.moveToNext());
-		}
-		else
-		{
-			Toast.makeText(getActivity(), "No "+fragmentType.toLowerCase()+" found", Toast.LENGTH_SHORT).show();
-		}
-
-		c.close();
-		dbHelper.close();
+		Cursor c = db.rawQuery("select * from " + fragmentType + " order by name", null);
+		cursorParse(c);
 	}
 
 	@Override
@@ -102,28 +79,47 @@ public class ListFragment extends Fragment implements Interfaces.Download
 
 		ListView list = (ListView) rootView.findViewById(R.id.groupsList);
 
-		adapter = new ListFragmentAdapter(getActivity(), names);
+		adapter = new ListFragmentAdapter(getActivity(), keys, names);
 		list.setAdapter(adapter);
 		list.setOnItemClickListener(new AdapterView.OnItemClickListener()
 		{
 			@Override
 			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
 			{
-				callback.listSelected(fragmentType, names.get(i));
+				if(fragmentType.equals("Courses"))
+				{
+					if(keys.containsValue(i))
+						for(String key : keys.keySet())
+							if (keys.get(key).equals(i))
+							{
+								callback.listSelected(fragmentType, key);
+								return;
+							}
+
+				}
+				callback.listSelected(fragmentType, names.get(i).get(0));
 			}
 		});
 
-		progressView = (ProgressView) rootView.findViewById(R.id.fragment_list_progress);
+		final DisplayMetrics metrics = getResources().getDisplayMetrics();
+		int mCircleWidth = (int) (40 * metrics.density);
+		int mCircleHeight = (int) (40 * metrics.density);
 
-		int sdk = Build.VERSION.SDK_INT;
-		if(sdk < android.os.Build.VERSION_CODES.JELLY_BEAN)
-			progressView.setBackgroundDrawable(getResources().getDrawable(R.drawable.round_button));
-		else
-			progressView.setBackground(getResources().getDrawable(R.drawable.round_button));
+		progressView = new CircleImageView(getActivity(), getResources().getColor(R.color.background), 40/2);
+		progressDrawable = new MaterialProgressDrawable(getActivity(), progressView);
 
-		ViewCompat.setElevation(progressView, 8);
-		ViewCompat.setTranslationZ(progressView, 8);
-		progressView.invalidate();
+		RelativeLayout.LayoutParams lParams =
+			new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
+		lParams.bottomMargin = 20;
+		lParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+		lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		progressView.setLayoutParams(lParams);
+
+		progressDrawable.setColorSchemeColors(getResources().getColor(R.color.light_blue));
+		progressView.setImageDrawable(progressDrawable);
+
+		((ViewGroup) rootView).addView(progressView);
+		progressView.setVisibility(View.GONE);
 
 		return rootView;
 	}
@@ -137,47 +133,63 @@ public class ListFragment extends Fragment implements Interfaces.Download
 	{
 		Log.w("Shika", "update ListFragment " + amount);
 
+		if(progressView.getVisibility() != View.VISIBLE)
+		{
+			progressView.setVisibility(View.VISIBLE);
+			progressDrawable.start();
+		}
+
 		if(amount == -1)
 		{
+			progressDrawable.stop();
 			progressView.setVisibility(View.GONE);
 			return;
 		}
 
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
-		Cursor c = db.rawQuery("select * from "+ fragmentType+" limit "+names.size()+", 5000", null);
-
-		if(c.moveToFirst())
-		{
-			int name = c.getColumnIndex("name");
-			int id = c.getColumnIndex("courseId ");
-			do
-			{
-				if(id == -1 || c.getString(id).equals(""))
-					names.put(c.getString(name), c.getString(name));
-				else
-				{
-					if(names.containsKey(c.getString(id)))
-					{
-						String value = names.get(c.getString(id)) + ", "+ c.getString(name);
-						names.put(c.getString(id), value);
-					}
-					else
-						names.put(c.getString(id), c.getString(name));
-				}
-			}
-			while (c.moveToNext());
-			adapter.notifyDataSetChanged();
-		}
-		else
-		{
-			//Toast.makeText(getActivity(), "No "+fragmentType.toLowerCase()+" found", Toast.LENGTH_SHORT).show();
-		}
-
-		c.close();
-		dbHelper.close();
+		Cursor c = db.rawQuery("select * from "+ fragmentType+" order by name limit "+names.size()+", 5000", null);
+		cursorParse(c);
+		adapter.notifyDataSetChanged();
 	}
 
 	@Override
 	public void onDateChanged(Date date)
 	{}
+
+	private void cursorParse(Cursor c)
+	{
+		if(c.moveToFirst())
+		{
+			int name = c.getColumnIndex("name");
+			int id = c.getColumnIndex("courseId");
+			do
+			{
+				String courseId;
+
+				if(id == -1 || c.getString(id).equals(""))
+					courseId = c.getString(name);
+				else
+					courseId = c.getString(id);
+
+				if (!keys.containsKey(courseId))
+				{
+					names.add(new ArrayList<String>());
+					keys.put(courseId, names.size() - 1);
+				}
+
+				int index = keys.get(courseId);
+
+				if (!names.get(index).contains(c.getString(name)))
+					names.get(index).add(c.getString(name));
+
+			}
+			while (c.moveToNext());
+		}
+		else
+		{
+			//Toast.makeText(getActivity(), "No "+fragmentType.toLowerCase()+" found", Toast.LENGTH_SHORT).show();
+		}
+		c.close();
+		dbHelper.close();
+	}
 }

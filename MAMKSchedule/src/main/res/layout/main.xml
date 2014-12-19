@@ -1,19 +1,16 @@
 <RelativeLayout
     android:layout_height = "match_parent"
     android:layout_width="match_parent"
-    xmlns:android = "http://schemas.android.com/apk/res/android">
-
-   <ru.shika.android.ProgressView
-        android:id="@+id/progressBar"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_centerInParent="true"/>
+    android:id="@+id/activity_container"
+    xmlns:android = "http://schemas.android.com/apk/res/android"
+    xmlns:app = "http://schemas.android.com/apk/res-auto">
 
 
     <android.support.v7.widget.Toolbar
         style="@style/AppTheme.Toolbar"
         android:id="@+id/toolbar"
-        android:foreground="?android:windowContentOverlay">
+        android:foreground="?android:windowContentOverlay"
+        app:theme="@style/ThemeOverlay.AppCompat.ActionBar">
     </android.support.v7.widget.Toolbar>
 
 
@@ -21,17 +18,17 @@
     <android.support.v4.widget.DrawerLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/drawerLayout"
+        android:id="@+id/drawer_layout"
         android:layout_below="@+id/toolbar">
 
-        <FrameLayout
+        <RelativeLayout
             android:layout_width = "match_parent"
             android:layout_height = "match_parent"
             android:id="@+id/main_container"/>
 
 
         <ListView
-            android:id="@+id/drawerList"
+            android:id="@+id/drawer_list"
             android:layout_width = "240dp"
             android:layout_height = "match_parent"
             android:layout_gravity="start"
@@ -62,19 +59,5 @@
             android:scrollbars="none"/>
 
     </FrameLayout>
-
-    <ImageButton
-        android:layout_width = "64dp"
-        android:layout_height = "64dp"
-        android:background="@drawable/round_button"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_margin="40dp"
-        android:elevation="8dp"
-        android:src="@drawable/ic_calendar"
-        android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
-        android:padding="5dp"
-        android:onClick="onCalendarClick"/>
 
 </RelativeLayout>
