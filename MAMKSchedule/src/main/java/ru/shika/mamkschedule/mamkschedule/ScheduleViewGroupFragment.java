@@ -14,7 +14,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 import ru.shika.android.SlidingTabLayout;
 
 import java.util.ArrayList;
@@ -87,10 +86,10 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		globalDate.setFirstDayOfWeek(Calendar.MONDAY);
 		dayOfWeek = getWeek(globalDate);
 
-		if(getActivity().getSupportLoaderManager().getLoader(0) == null)
-			getActivity().getSupportLoaderManager().initLoader(0, getArguments(), this);
+		if(getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_SCHEDULE) == null)
+			getActivity().getSupportLoaderManager().initLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
 		else
-			getActivity().getSupportLoaderManager().restartLoader(0, getArguments(), this);
+			getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
 	}
 
 	@Override
@@ -141,7 +140,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		if(result.equals("success"))
 		{
 			Log.w("Shika", "Found something");
-			getActivity().getSupportLoaderManager().getLoader(0).forceLoad();
+			getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_SCHEDULE).forceLoad();
 		}
 		else
 		if(result.equals("nothing"))
@@ -169,13 +168,13 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		globalDate.setTime(date);
 		dayOfWeek = getWeek(globalDate);
 		globalDate.setFirstDayOfWeek(Calendar.MONDAY);
-		getActivity().getSupportLoaderManager().restartLoader(0, getArguments(), this);
+		getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
 
 	}
 
 	public void showError()
 	{
-		Toast.makeText(getActivity(), "Error occured. Please check your internet connection", Toast.LENGTH_SHORT).show();
+		MainActivity.showToast("Error occured. Please check your internet connection");
 	}
 
 	@Override
@@ -323,25 +322,27 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 			if(isOwnSchedule)
 			{
-				cursor = sqdb.query("schedule", null, "groups like '" + group + "%'and (date like ? or date like ? or" +
-					" date like ? or date like ? or date like ?)", dates, null, null, "start");
+				String query = "select * from Courses inner join Schedule on(Courses.courseId = Schedule.courseId and" +
+					" Courses.name = Schedule.lesson) where isEnrolled = 1 and (date like ? or date like ? or date " +
+					"like ? or date like ? or date like ?)";
+				cursor = sqdb.rawQuery(query, dates);
 			}
 			else
 			if(group != null)
 			{
-				cursor = sqdb.query("schedule", null, "groups like '" + group + "%'and (date like ? or date like ? or" +
+				cursor = sqdb.query("Schedule", null, "groups like '" + group + "%'and (date like ? or date like ? or" +
 					" date like ? or date like ? or date like ?)", dates, null, null, "start");
 			}
 			else
 			if(teacher != null)
 			{
-				cursor = sqdb.query("schedule", null, "teacher like '" + teacher + "%'and (date like ? or date like ?" +
+				cursor = sqdb.query("Schedule", null, "teacher like '" + teacher + "%'and (date like ? or date like ?" +
 					" or date like ? or date like ? or date like ?)", dates, null, null, "start");
 			}
 			else
 			if(course != null)
 			{
-				cursor = sqdb.query("schedule", null, "(courseId like '" + course + "%' or lesson like '" + course +
+				cursor = sqdb.query("Schedule", null, "(courseId like '" + course + "%' or lesson like '" + course +
 					"%')and (date like ? or date like ? or date like ? or date like ? or date like ?)", dates, null, null, "start");
 			}
 

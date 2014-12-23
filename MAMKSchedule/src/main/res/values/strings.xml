@@ -27,13 +27,24 @@
         <item>@drawable/ic_action_search</item>
     </string-array>
 
-    <string-array name = "edit_headers">
-        <item>Add</item>
-        <item>Delete </item>
+    <string name = "edit_empty">Your personal schedule is empty\nTry to add courses with button below</string>
+
+    <string name = "edit_header">Look for courses with:</string>
+    <string-array name = "edit_strings">
+        <item>Group</item>
+        <item>Teacher</item>
+        <item>Name</item>
     </string-array>
+
+    <string name = "add">ADD</string>
 
     <string name="open">Open</string>
     <string name="close">Close</string>
+
+    <string name = "yes">YES</string>
+    <string name = "no">NO</string>
+    <string name = "dialog_text">Do you want to add this course?</string>
+    <string name = "dialog_header">Course adding</string>
 
     <!--CalendarView strings -->
     <string name="day_name_format">EEE</string>

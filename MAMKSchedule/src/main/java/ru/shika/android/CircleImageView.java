@@ -27,12 +27,12 @@ import android.widget.ImageView;
 
 public class CircleImageView extends ImageView {
 
-    private static final int KEY_SHADOW_COLOR = 0x3E000000;
+    private static final int KEY_SHADOW_COLOR = 0x4E000000;
     private static final int FILL_SHADOW_COLOR = 0x3D000000;
     // PX
     private static final float X_OFFSET = 0f;
     private static final float Y_OFFSET = 1.75f;
-    private float SHADOW_RADIUS = 6.5f;
+    private float SHADOW_RADIUS = 8f;
     private int SHADOW_ELEVATION = 8;
 
     private Animation.AnimationListener mListener;

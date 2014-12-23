@@ -17,14 +17,8 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.FrameLayout;
-import android.widget.ListView;
-import android.widget.RelativeLayout;
+import android.view.*;
+import android.widget.*;
 import com.parse.Parse;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
@@ -33,15 +27,18 @@ import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
 import ru.shika.mamkschedule.mamkschedule.Interfaces.groupFragmentCallback;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.*;
 
 
 public class MainActivity extends ActionBarActivity implements Interfaces.needDownload, groupFragmentCallback
 {
-    protected HashMap<String, Interfaces.Download> interfaces = new HashMap<String, Interfaces.Download>();
+    public final static int LOADER_LIST = 1;
+    public final static int LOADER_SCHEDULE = 0;
+    public final static int LOADER_EDIT = 2;
+
+    public final static int END_OF_DOWNLOAD = -1;
+
+    protected HashMap<String, Interfaces.Download> interfaces;
 
     protected CircleImageView progress;
     private int mCircleWidth;
@@ -51,7 +48,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     protected CircleImageView calendarButton;
     CalendarPickerView calendar;
 
-    private ArrayList<Lesson.DrawerItem> drawerItems = new ArrayList<Lesson.DrawerItem>();
+    private ArrayList<Lesson.DrawerItem> drawerItems;
     private DrawerLayout drawerLayout;
     private ListView drawerList;
 
@@ -65,7 +62,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     protected static SharedPreferences.Editor editor;
 
     protected Date lastUpdate;
-    protected ListDownloader listDownloader;
     protected ScheduleDownloader scheduleDownloader;
     protected Handler handler;
 
@@ -74,14 +70,18 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     protected Date globalDate = new Date();
 
     protected String visibleFragmentTag;
-    protected String prevFragment;
+    protected Stack<String> backStack;
+
+    private static TextView toastText;
+    private static Toast toast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+        interfaces = new HashMap<String, Interfaces.Download>();
 
         //For debug
        // deleteDatabase("scheduleDB");
@@ -102,6 +102,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         //Get drawer's items from resources
         titles = getResources().getStringArray(R.array.drawer_strings);
         drawables = getResources().obtainTypedArray(R.array.drawer_drawables);
+
+        drawerItems = new ArrayList<Lesson.DrawerItem>();
 
         //TODO: Find icons for the drawer
         //Init drawer list
@@ -135,7 +137,19 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         interfaces.put(titles[0], (Interfaces.Download) fragment);
 
+        backStack = new Stack<String>();
         visibleFragmentTag = titles[0];
+
+        //Toast init
+        LayoutInflater inflater = getLayoutInflater();
+        View layout = inflater.inflate(R.layout.toast,
+            (ViewGroup) findViewById(R.id.toast_layout_root));
+
+        toastText = (TextView) layout.findViewById(R.id.text);
+
+        toast = new Toast(getApplicationContext());
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setView(layout);
 
         //Don't forget finding views
         createProgressView();
@@ -160,7 +174,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 progress.setVisibility(View.GONE);
                 container.setVisibility(View.VISIBLE);
 
-                if(msg.what == -1)
+                if(msg.what == END_OF_DOWNLOAD)
                 {
                     //Show fragment
                     progressDrawable.stop();
@@ -197,7 +211,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     private void createCalendarButton()
     {
         final DisplayMetrics metrics = getResources().getDisplayMetrics();
-        final int padding = 10;
+        final int padding = 16;
         mCircleWidth = (int) (56 * metrics.density);
         mCircleHeight = (int) (56 * metrics.density);
 
@@ -226,6 +240,12 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 onCalendarClick(view);
             }
         });
+    }
+
+    public static void showToast(String text)
+    {
+        toastText.setText(text);
+        toast.show();
     }
 
     private void calendarInit()
@@ -272,13 +292,14 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     {
         if(calendarButton.getVisibility() == View.GONE)
         {
-            FrameLayout container = (FrameLayout) findViewById(R.id.container_calendar);
-            container.setVisibility(View.GONE);
+            calendar.setVisibility(View.GONE);
             calendarButton.setVisibility(View.VISIBLE);
         }
         else
-        if(visibleFragmentTag.endsWith("ViewGroup"))
+        if(backStack.size() > 1)
         {
+            String prevFragment = backStack.pop();
+
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
             ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
@@ -287,8 +308,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
             ft.commit();
             visibleFragmentTag = prevFragment;
-
-            prevFragment = null;
         }
         else
             super.onBackPressed();
@@ -301,17 +320,16 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         if(scheduleDownloader != null)
             scheduleDownloader.cancel(true);
-        if(listDownloader != null)
-            handler.removeCallbacks(listDownloader);
     }
 
     @Override
-    public void listSelected(String type, String item)
+    public void listItemSelected(String type, String item)
     {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment fragment = null;
 
-        if(visibleFragmentTag.endsWith("ViewGroup"))
+        if(visibleFragmentTag.endsWith("ViewGroup") || visibleFragmentTag.endsWith("Edit") ||
+            visibleFragmentTag.endsWith("Chooser"))
         {
             ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
             ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
@@ -322,7 +340,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
         }
 
-        prevFragment = visibleFragmentTag;
+        backStack.push(visibleFragmentTag);
 
         if(type.equals(titles[1]))
             fragment = ScheduleViewGroupFragment.newInstance(false, item, null, null, globalDate);
@@ -339,6 +357,78 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         ft.addToBackStack(type);
         ft.commit();
         visibleFragmentTag = type+"ViewGroup";
+    }
+
+    @Override
+    public void listItemInEditSelected(String type, String item)
+    {
+        String tag = type + "Chooser";
+
+        if(type.equals(titles[3]))
+        {
+            DialogFragment newFragment = DialogFragment.newInstance(item);
+            Log.w("Shika", item);
+            newFragment.show(getSupportFragmentManager().beginTransaction(), "dialog");
+            return;
+        }
+
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        Fragment fragment;
+
+        ft.detach(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+
+        backStack.push(visibleFragmentTag);
+
+        fragment = fm.findFragmentByTag(tag);
+        if (fragment == null)
+        {
+            Thread thread = new Thread(new ListEditDownloader(type, item));
+            thread.start();
+
+            fragment = ListFragment.newEditInstance(type, item);
+            interfaces.put(tag, (Interfaces.Download) fragment);
+            ft.add(R.id.main_container, fragment, tag);
+            Log.w("Shika", "New Fragment made");
+        }
+
+        ft.attach(fragment);
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        ft.commit();
+        visibleFragmentTag = tag;
+    }
+
+    @Override
+    public void editTypeSelected(String tag)
+    {
+        tag += "Edit";
+
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        Fragment fragment;
+
+        ft.detach(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+
+        backStack.push(visibleFragmentTag);
+
+        fragment = fm.findFragmentByTag(tag);
+        if (fragment == null)
+        {
+            Thread thread = new Thread(new ListDownloader(tag.replace("Edit", "")));
+            thread.start();
+
+            fragment = ListFragment.newInstance(tag.replace("Edit", ""), true);
+            interfaces.put(tag, (Interfaces.Download) fragment);
+            ft.add(R.id.main_container, fragment, tag);
+            Log.w("Shika", "New Fragment made");
+        }
+
+        ft.attach(fragment);
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        ft.commit();
+        visibleFragmentTag = tag;
     }
 
     private class onDrawerItemClickListener implements ListView.OnItemClickListener
@@ -361,7 +451,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             FragmentTransaction ft = fm.beginTransaction();
             Fragment fragment;
 
-            if(visibleFragmentTag.endsWith("ViewGroup"))
+            if(visibleFragmentTag.endsWith("ViewGroup") || visibleFragmentTag.endsWith("Edit") ||
+                visibleFragmentTag.endsWith("Chooser"))
             {
                 ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
                 ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
@@ -380,12 +471,16 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                     fragment = ScheduleViewGroupFragment.newInstance(true, null, null, null, globalDate);
                     interfaces.put(tag, (Interfaces.Download) fragment);
                 }
+                else if(tag.equals(titles[titles.length - 1]))
+                {
+                    fragment = new EditFragment();
+                }
                 else
                 {
                     Thread thread = new Thread(new ListDownloader(tag));
                     thread.start();
 
-                    fragment = ListFragment.newInstance(tag);
+                    fragment = ListFragment.newInstance(tag, false);
                     interfaces.put(tag, (Interfaces.Download) fragment);
                 }
                 ft.add(R.id.main_container, fragment, tag);
@@ -396,6 +491,9 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
             ft.commit();
             visibleFragmentTag = tag;
+
+            //Clear back stack, as we started new category
+            backStack.clear();
         }
     }
 
@@ -459,7 +557,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         boolean isDatabaseEmpty = false;
         String param;
 
-       public ListDownloader(String param)
+        public ListDownloader(String param)
         {
             //Show progress bar
             progressDrawable.start();
@@ -479,6 +577,13 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             //looking for last updates
             lastUpdate = new Date(pref.getLong(param+"lastUpdate", 0));
             Log.w("Shika", "lastUpdate at " + lastUpdate.toString());
+
+            if(lastUpdate.getTime() == 0)
+            {
+                SQLiteDatabase db = dbh.getWritableDatabase();
+                db.delete(param, null, null);
+                db.close();
+            }
 
             ArrayList<ParseObject> parseObjects;
             ParseQuery<ParseObject> query = ParseQuery.getQuery(param);
@@ -527,7 +632,11 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                         break;
 
                     db.close();
-                    handler.sendEmptyMessage(downloaded);
+                    try
+                    {
+                        handler.sendEmptyMessage(downloaded);
+                    }
+                    catch (Exception e){e.printStackTrace();}
                 }
             } catch (Exception e)
             {
@@ -541,7 +650,11 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             db.close();
 
             //Remove progress button
-            handler.sendEmptyMessage(-1);
+            try
+            {
+                handler.sendEmptyMessage(END_OF_DOWNLOAD);
+            }
+            catch (Exception e){e.printStackTrace();}
 
             long time;
             if (isDatabaseEmpty) time = 0;
@@ -549,6 +662,97 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
             editor.putLong(param+"lastUpdate", time);
             editor.commit();
+        }
+    }
+
+    public class ListEditDownloader implements Runnable
+    {
+
+        String type;
+        String name;
+
+        boolean isNecessary = true;
+
+        public ListEditDownloader(String type, String name)
+        {
+            this.type = type;
+            this.name = name;
+
+            progressDrawable.start();
+            progress.setVisibility(View.VISIBLE);
+            container.setVisibility(View.GONE);
+
+            lastUpdate = new Date(pref.getLong(type+"lastUpdate", 0));
+
+            if(lastUpdate.getTime() != 0)
+            {
+                Thread thread = new Thread(new ListDownloader(type));
+                thread.run();
+
+                isNecessary = false;
+
+                try
+                {
+                    handler.sendEmptyMessage(END_OF_DOWNLOAD);
+                }
+                catch (Exception e){e.printStackTrace();}
+            }
+        }
+
+        @Override
+        public void run()
+        {
+            if (!isNecessary)
+                return;
+
+            ArrayList<ParseObject> parseObjects;
+            ParseQuery<ParseObject> query = ParseQuery.getQuery("Courses");
+
+            try
+            {
+                int amount = query.count();
+
+
+                query.setLimit(amount);
+                query.whereEqualTo("name", name);
+
+                parseObjects = (ArrayList<ParseObject>) query.find();
+
+                insertValues(parseObjects);
+
+                query = ParseQuery.getQuery("Courses");
+                query.setLimit(amount);
+                query.whereEqualTo("courseId", name);
+
+                parseObjects = (ArrayList<ParseObject>) query.find();
+
+                insertValues(parseObjects);
+            }
+            catch (Exception e){showToast("Network error occured. Please check your internet connection");}
+
+            try
+            {
+                handler.sendEmptyMessage(END_OF_DOWNLOAD);
+            }
+            catch (Exception e){e.printStackTrace();}
+        }
+
+        public void insertValues(ArrayList<ParseObject> parseObjects)
+        {
+            SQLiteDatabase db = dbh.getWritableDatabase();
+            ContentValues cv = new ContentValues();
+
+            for (ParseObject i : parseObjects)
+            {
+
+                cv.put("courseId", i.getString("courseId"));
+                cv.put("groups", i.getString("group"));
+                cv.put("teacher", i.getString("teacher"));
+                cv.put("name", i.getString("name"));
+                db.insert("Courses", null, cv);
+            }
+
+            dbh.close();
         }
     }
 
@@ -637,11 +841,10 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
     public void onCalendarClick(View view)
     {
-        FrameLayout container = (FrameLayout) findViewById(R.id.container_calendar);
 
-        if(container.getVisibility() == View.GONE)
+        if(calendar.getVisibility() == View.GONE)
         {
-            container.setVisibility(View.VISIBLE);
+            calendar.setVisibility(View.VISIBLE);
             calendarButton.setVisibility(View.GONE);
         }
 

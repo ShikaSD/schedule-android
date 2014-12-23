@@ -20,7 +20,9 @@ public class Interfaces
 
 	public abstract interface groupFragmentCallback
 	{
-		public void listSelected(String type, String item);
+		public void listItemSelected(String type, String item);
+		public void listItemInEditSelected(String type, String item);
+		public void editTypeSelected(String type);
 	}
 
 }

@@ -53,4 +53,26 @@
         <item name="android:clickable">true</item>
         <item name="android:textStyle">bold</item>
     </style>
+
+    <style name = "AppTheme.Button" parent="TextAppearance.AppCompat.Button">
+        <item name = "android:background">@drawable/button</item>
+        <item name="android:textColor">@drawable/button_text_color</item>
+        <item name = "android:textStyle">bold</item>
+        <item name = "android:textSize">16sp</item>
+        <item name = "android:minWidth">64dp</item>
+        <item name = "android:padding">8dp</item>
+        <item name = "android:layout_margin">4dp</item>
+        <item name = "android:height">36dp</item>
+    </style>
+
+    <style name = "AppTheme.ListHeader" parent="AppTheme">
+        <item name = "android:textStyle">bold</item>
+        <item name = "android:textSize">20sp</item>
+    </style>
+
+    <style name="AppTheme.Dialog" parent="android:style/Theme.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+    </style>
 </resources>

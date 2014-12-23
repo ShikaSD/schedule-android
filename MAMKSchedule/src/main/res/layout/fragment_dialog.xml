@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+	xmlns:android = "http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content">
+
+
+	<RelativeLayout
+		android:layout_width = "wrap_content"
+		android:layout_height = "wrap_content"
+		android:background="@drawable/button_normal"
+
+		android:paddingTop="@dimen/dialog_margin"
+		android:paddingLeft="@dimen/dialog_margin"
+		android:paddingRight="16dp"
+		android:paddingBottom="16dp"
+
+		android:layout_marginTop="@dimen/dialog_margin"
+		android:layout_marginBottom="@dimen/dialog_margin"
+		android:layout_marginLeft="40dp"
+		android:layout_marginRight="40dp">
+
+		<TextView
+			android:layout_width = "wrap_content"
+			android:layout_height = "wrap_content"
+			style="@style/AppTheme.ListHeader"
+			android:text="@string/dialog_header"
+			android:id="@+id/dialog_header"
+			android:layout_marginBottom="@dimen/dialog_margin"/>
+
+		<TextView
+			android:layout_width = "wrap_content"
+			android:layout_height = "wrap_content"
+			android:textColor="@color/gray"
+			android:layout_below="@+id/dialog_header"
+			android:id="@+id/dialog_text"
+			android:text="@string/dialog_text"
+			android:layout_marginBottom="@dimen/dialog_margin"
+			android:textSize="18sp"/>
+
+		<Button
+			style="@style/AppTheme.Button"
+			android:id="@+id/dialog_yes"
+			android:layout_alignParentRight="true"
+			android:layout_below="@+id/dialog_text"
+			android:text="@string/yes"
+			android:layout_width = "wrap_content"
+			android:layout_height = "wrap_content"
+			android:layout_marginBottom="0dp"/>
+		<Button
+			style="@style/AppTheme.Button"
+			android:id="@+id/dialog_no"
+			android:layout_below="@+id/dialog_text"
+			android:layout_toLeftOf="@+id/dialog_yes"
+			android:text="@string/no"
+			android:layout_width = "wrap_content"
+			android:layout_height = "wrap_content"
+			android:layout_marginBottom="0dp"/>
+
+	</RelativeLayout>
+</FrameLayout>

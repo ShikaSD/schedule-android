@@ -1,10 +1,14 @@
 package ru.shika.mamkschedule.mamkschedule;
 
 import android.app.Activity;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,8 +25,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ListFragment extends Fragment implements Interfaces.Download
+public class ListFragment extends Fragment implements Interfaces.Download, LoaderManager.LoaderCallbacks<Cursor>
 {
+	/**Fragment is used three times: in drawer menu and two types in edit
+	 * isEditFragment = false, fragmentType = true : drawer
+	 * isEditFragment = true : edit (typeName = null || != null)
+	 */
+
 	Interfaces.groupFragmentCallback callback;
 
 	//To sort them by course id
@@ -35,15 +44,32 @@ public class ListFragment extends Fragment implements Interfaces.Download
 	MaterialProgressDrawable progressDrawable;
 
 	String fragmentType = "";
+	String typeName = null;
+	boolean isEditFragment = false;
 
 	DBHelper dbHelper;
 
-	public static Fragment newInstance(String listType)
+	public int from = 0;
+
+	public static Fragment newInstance(String listType, boolean isEditFragment)
 	{
 		Fragment fragment = new ListFragment();
 
 		Bundle args = new Bundle();
 		args.putString("type", listType);
+		args.putBoolean("edit", isEditFragment);
+		fragment.setArguments(args);
+
+		return fragment;
+	}
+
+	public static Fragment newEditInstance(String listType, String name)
+	{
+		Fragment fragment = new ListFragment();
+
+		Bundle args = new Bundle();
+		args.putString("type", listType);
+		args.putString("name", name);
 		fragment.setArguments(args);
 
 		return fragment;
@@ -63,12 +89,30 @@ public class ListFragment extends Fragment implements Interfaces.Download
 		super.onCreate(savedInstanceState);
 
 		fragmentType = getArguments().getString("type");
+		isEditFragment = getArguments().getBoolean("edit", false);
+
+		if(getArguments().getString("name") != null)
+		{
+			isEditFragment = true;
+			typeName = getArguments().getString("name");
+		}
 
 		dbHelper = new DBHelper(getActivity());
-		SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-		Cursor c = db.rawQuery("select * from " + fragmentType + " order by name", null);
-		cursorParse(c);
+		if(typeName == null)
+		{
+			if (getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_LIST) == null)
+				getActivity().getSupportLoaderManager().initLoader(MainActivity.LOADER_LIST, null, this);
+			else
+				getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_LIST, null, this);
+		}
+		else
+		{
+			if (getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_EDIT) == null)
+				getActivity().getSupportLoaderManager().initLoader(MainActivity.LOADER_EDIT, null, this);
+			else
+				getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_EDIT, null, this);
+		}
 	}
 
 	@Override
@@ -86,18 +130,28 @@ public class ListFragment extends Fragment implements Interfaces.Download
 			@Override
 			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
 			{
+
+				String item = "";
 				if(fragmentType.equals("Courses"))
 				{
 					if(keys.containsValue(i))
 						for(String key : keys.keySet())
 							if (keys.get(key).equals(i))
 							{
-								callback.listSelected(fragmentType, key);
-								return;
+								item = key;
+								break;
 							}
 
 				}
-				callback.listSelected(fragmentType, names.get(i).get(0));
+				else
+					item = names.get(i).get(0);
+
+				if(isEditFragment && typeName == null)
+					callback.listItemInEditSelected(fragmentType, item);
+				else if(typeName != null)
+					callback.listItemInEditSelected("Courses", item);
+				else
+					callback.listItemSelected(fragmentType, item);
 			}
 		});
 
@@ -121,6 +175,11 @@ public class ListFragment extends Fragment implements Interfaces.Download
 		((ViewGroup) rootView).addView(progressView);
 		progressView.setVisibility(View.GONE);
 
+		if(typeName != null)
+			getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_EDIT, null, this);
+		else
+			getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_LIST, null, this);
+
 		return rootView;
 	}
 
@@ -133,23 +192,29 @@ public class ListFragment extends Fragment implements Interfaces.Download
 	{
 		Log.w("Shika", "update ListFragment " + amount);
 
-		if(progressView.getVisibility() != View.VISIBLE)
-		{
-			progressView.setVisibility(View.VISIBLE);
-			progressDrawable.start();
-		}
+		from = names.size() - 1;
+		if(from < 0) from = 0;
 
-		if(amount == -1)
+		if(getActivity() != null)
 		{
-			progressDrawable.stop();
-			progressView.setVisibility(View.GONE);
-			return;
-		}
+			if (progressView.getVisibility() != View.VISIBLE)
+			{
+				progressView.setVisibility(View.VISIBLE);
+				progressDrawable.start();
+			}
 
-		SQLiteDatabase db = dbHelper.getReadableDatabase();
-		Cursor c = db.rawQuery("select * from "+ fragmentType+" order by name limit "+names.size()+", 5000", null);
-		cursorParse(c);
-		adapter.notifyDataSetChanged();
+			if (amount == -1)
+			{
+				progressDrawable.stop();
+				progressView.setVisibility(View.GONE);
+				return;
+			}
+
+			if(typeName != null)
+				getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_EDIT, null, this);
+			else
+				getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_LIST, null, this);
+		}
 	}
 
 	@Override
@@ -191,5 +256,65 @@ public class ListFragment extends Fragment implements Interfaces.Download
 		}
 		c.close();
 		dbHelper.close();
+	}
+
+	@Override
+	public Loader<Cursor> onCreateLoader(int i, Bundle bundle)
+	{
+		if(i == MainActivity.LOADER_EDIT)
+			return new ListLoader(getActivity(), dbHelper, typeName, -1);
+
+		return new ListLoader(getActivity(), dbHelper, fragmentType, from);
+	}
+
+	@Override
+	public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
+	{
+		cursorParse(cursor);
+		adapter.notifyDataSetChanged();
+	}
+
+	@Override
+	public void onLoaderReset(Loader<Cursor> loader)
+	{
+
+	}
+
+	public static class ListLoader extends CursorLoader
+	{
+		DBHelper dbh;
+		String type;
+		int from;
+
+		public ListLoader(Context context, DBHelper dbh, String type, int from)
+		{
+			super(context);
+			this.dbh = dbh;
+			this.type = type;
+			this.from = from;
+		}
+
+		public void setFromValue(int from)
+		{
+			this.from = from;
+		}
+
+		@Override
+		public Cursor loadInBackground()
+		{
+			Cursor c;
+
+			SQLiteDatabase db = dbh.getReadableDatabase();
+
+			if(from >= 0)
+				c = db.rawQuery("select * from "+ type +" order by name limit "+from+", 5000", null);
+			else
+				c = db.rawQuery("select * from Courses where groups like '%"+type+"%' or teacher like '%"+type+"%' " +
+					"order by name", null);
+
+			Log.w("Shika", c.getCount() + " " + type);
+
+			return c;
+		}
 	}
 }
