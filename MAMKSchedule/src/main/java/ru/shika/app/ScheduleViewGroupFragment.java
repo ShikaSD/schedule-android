@@ -1,4 +1,4 @@
-package ru.shika.mamkschedule.mamkschedule;
+package ru.shika.app;
 
 import android.app.Activity;
 import android.content.Context;
@@ -10,11 +10,16 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
+import ru.shika.android.CircleImageView;
+import ru.shika.android.MaterialProgressDrawable;
 import ru.shika.android.SlidingTabLayout;
+import ru.shika.mamkschedule.mamkschedule.R;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -23,23 +28,29 @@ import java.util.HashMap;
 
 public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Download, LoaderManager.LoaderCallbacks<Cursor>
 {
-	Interfaces.needDownload downloader;
-	public ArrayList< ArrayList<Lesson>>lessonsArr;
+	protected Interfaces.needDownload downloader;
+	protected ArrayList< ArrayList<Lesson>>lessonsArr;
 
-	ScheduleViewGroupAdapter pagerAdapter;
-	ViewPager viewPager;
-	String[] days;
-	SlidingTabLayout tabLayout;
+	protected ScheduleViewGroupAdapter pagerAdapter;
+	protected ViewPager viewPager;
+	protected String[] days;
+	protected SlidingTabLayout tabLayout;
 
-	String group = null;
-	String teacher = null;
-	String course = null;
+	protected String group = null;
+	protected String teacher = null;
+	protected String course = null;
 
-	boolean isOwnSchedule = false;
-	Calendar globalDate = Calendar.getInstance();
-	int dayOfWeek = getWeek(globalDate);
+	protected boolean isOwnSchedule = false;
+	protected boolean didUpdate = false;
+	protected Calendar globalDate;
 
-	DBHelper db;
+	protected int dayOfWeek;
+
+	protected DBHelper dbh;
+
+	protected CircleImageView progress;
+	protected MaterialProgressDrawable progressDrawable;
+	private int mCircleWidth, mCircleHeight;
 
 	public static Fragment newInstance(boolean isOwnSchedule, String group, String teacher, String course, Date date)
 	{
@@ -76,12 +87,16 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		for (int i = 0; i < 5; i++)
 			lessonsArr.add(new ArrayList<Lesson>());
 
-		db = new DBHelper(getActivity());
+		dbh = new DBHelper(getActivity());
 
 		group = getArguments().getString("group");
 		teacher = getArguments().getString("teacher");
 		course = getArguments().getString("course");
 		isOwnSchedule = (group == null && teacher == null && course == null);
+
+		didUpdate = false;
+
+		globalDate = Calendar.getInstance();
 		globalDate.setTimeInMillis(getArguments().getLong("date"));
 		globalDate.setFirstDayOfWeek(Calendar.MONDAY);
 		dayOfWeek = getWeek(globalDate);
@@ -95,7 +110,9 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
 	{
-		return inflater.inflate(R.layout.fragment_schedule_viewgroup, container, false);
+		View rootView =  inflater.inflate(R.layout.fragment_schedule_viewgroup, container, false);
+		createProgressView((ViewGroup) rootView);
+		return rootView;
 	}
 
 	@Override
@@ -107,6 +124,30 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 		viewPager = (ViewPager) view.findViewById(R.id.pager);
 		tabLayout = (SlidingTabLayout) view.findViewById(R.id.tabs);
+
+		getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
+	}
+
+	private void createProgressView(ViewGroup rootView) {
+		final DisplayMetrics metrics = getResources().getDisplayMetrics();
+		int mCircleWidth = (int) (40 * metrics.density);
+		int mCircleHeight = (int) (40 * metrics.density);
+
+		progress = new CircleImageView(getActivity(), getResources().getColor(R.color.background), 40/2);
+		progressDrawable = new MaterialProgressDrawable(getActivity(), progress);
+
+		RelativeLayout.LayoutParams lParams =
+			new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
+		lParams.bottomMargin = 20;
+		lParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+		lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		progress.setLayoutParams(lParams);
+
+		progressDrawable.setColorSchemeColors(getResources().getColor(R.color.light_blue));
+		progress.setImageDrawable(progressDrawable);
+
+		rootView.addView(progress);
+		progress.setVisibility(View.GONE);
 	}
 
 	@Override
@@ -123,13 +164,22 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		tabLayout.setViewPager(viewPager);
 		tabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.light_blue));
 
+		tabLayout.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener()
+		{
+			@Override
+			public void onPageSelected(int position)
+			{
+				setDayOfWeek(position);
+			}
+		});
+
 	}
 
 	@Override
 	public void onDestroy()
 	{
 		super.onDestroy();
-		db.close();
+		dbh.close();
 	}
 
 
@@ -137,15 +187,23 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	@Override
 	public void onDownloadEnd(String result)
 	{
+		progressDrawable.stop();
+		progress.setVisibility(View.GONE);
+
 		if(result.equals("success"))
 		{
 			Log.w("Shika", "Found something");
 			getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_SCHEDULE).forceLoad();
 		}
 		else
-		if(result.equals("nothing"))
+		if(result.equals("nothing") || result.equals("no courses"))
 		{
 			Log.w("Shika", "Found nothing");
+			int size = lessonsArr.size();
+			for(int i = 0; i < lessonsArr.size(); i++)
+				lessonsArr.get(i).clear();
+
+			pagerAdapter.notifyDataSetChanged(lessonsArr);
 		}
 		else
 		{
@@ -164,24 +222,31 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		//This variable changes somehow O_O, so reinit it
 		isOwnSchedule = (group == null && teacher == null && course == null);
 
-		//Log.w("Shika", "Fragment: "+group+"+"+ teacher +"+"+ course+"+"+isOwnSchedule);
+		//Let's compare week number
+		Calendar d = Calendar.getInstance();
+		d.setTime(date);
+		d.setFirstDayOfWeek(Calendar.MONDAY);
+
+		if(d.get(Calendar.WEEK_OF_YEAR) != globalDate.get(Calendar.WEEK_OF_YEAR))
+			getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
+
 		globalDate.setTime(date);
 		dayOfWeek = getWeek(globalDate);
 		globalDate.setFirstDayOfWeek(Calendar.MONDAY);
-		getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
 
+		viewPager.setCurrentItem(dayOfWeek);
 	}
 
 	public void showError()
 	{
-		MainActivity.showToast("Error occured. Please check your internet connection");
+		MainActivity.showToast("Network error occured. Please check your internet connection");
 	}
 
 	@Override
 	public Loader<Cursor> onCreateLoader(int i, Bundle bundle)
 	{
 		Log.w("Shika", "onCreate Loader");
-		return new ScheduleLoader(getActivity(), db, group,
+		return new ScheduleLoader(getActivity(), dbh, group,
 			teacher, course, globalDate, isOwnSchedule);
 	}
 
@@ -210,6 +275,11 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 				String id = cursor.getString(lessonId);
 				if(lessons.containsKey(id))
 				{
+					if(lessons.get(id).teacher == null)
+						Log.w("Shika", "Teacher null on Course name = " + lessons.get(id).name);
+					if(lessons.get(id).group == null)
+						Log.w("Shika", "Group null on Course name = " + lessons.get(id).name);
+
 					if(!lessons.get(id).teacher.equals(cursor.getString(teacher)))
 						lessons.get(id).teacher += ", "+cursor.getString(teacher);
 					if(!lessons.get(id).group.equals(cursor.getString(group)))
@@ -250,28 +320,32 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 			pagerAdapter.notifyDataSetChanged(lessonsArr);
 			viewPager.setCurrentItem(dayOfWeek);
+
+			if(isOwnSchedule && !didUpdate)
+			{
+				//To avoid date changes
+				Calendar dateArg = Calendar.getInstance();
+				dateArg.setTime(globalDate.getTime());
+				downloader.needDownload(null, null, null, dateArg);
+				didUpdate = true;
+			}
 		} else
 		{
+			progress.setVisibility(View.VISIBLE);
+			progressDrawable.start();
+
 			Log.w("Shika", "Found nothing in database, need download");
 
 			//To avoid date changes
 			Calendar dateArg = Calendar.getInstance();
 			dateArg.setTime(globalDate.getTime());
 
-			if (group != null)
-			{
-				downloader.needDownload(group, null, null, dateArg);
-			} else if (teacher != null)
-			{
-				downloader.needDownload(null, teacher, null, dateArg);
-			}
-			else if(course != null)
-			{
-				downloader.needDownload(null, null, course, dateArg);
-			}
+			didUpdate = true;
+
+			downloader.needDownload(group, teacher, course, dateArg);
 		}
 
-		db.close();
+		dbh.close();
 	}
 
 	@Override
@@ -352,6 +426,14 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		}
 	}
 
+	public void setDayOfWeek(int day)
+	{
+		globalDate.set(Calendar.DAY_OF_WEEK, getWeekDayNumber(day));
+		dayOfWeek = day;
+
+		((MainActivity) getActivity()).setGlobalDate(globalDate.getTime());
+	}
+
 	//Fucking bullshit for calendar
 	private Calendar setMonth(Calendar calendar, String dateString)
 	{
@@ -426,6 +508,26 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		}
 	}
 
+	private int getWeekDayNumber(int i)
+	{
+		switch (i)
+		{
+			case 0:
+				return Calendar.MONDAY;
+			case 1:
+				return Calendar.TUESDAY;
+			case 2:
+				return Calendar.WEDNESDAY;
+			case 3:
+				return Calendar.THURSDAY;
+			case 4:
+				return Calendar.FRIDAY;
+
+			default:
+				return Calendar.MONDAY;
+		}
+	}
+
 	protected static void CursorLog(Cursor cursor)
 	{
 		if(cursor.moveToFirst())
@@ -442,6 +544,4 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		else
 			Log.w("Shika", "Cursor is empty");
 	}
-
-
 }

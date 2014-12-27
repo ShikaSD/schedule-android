@@ -1,4 +1,4 @@
-package ru.shika.mamkschedule.mamkschedule;
+package ru.shika.app;
 
 import android.app.Activity;
 import android.content.Context;
@@ -10,15 +10,16 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
+import ru.shika.mamkschedule.mamkschedule.R;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,6 +40,8 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	ArrayList <ArrayList <String>> names = new ArrayList<ArrayList <String>>(); //Full name
 
 	ListFragmentAdapter adapter;
+	ListView list;
+	TextView empty;
 
 	CircleImageView progressView;
 	MaterialProgressDrawable progressDrawable;
@@ -120,8 +123,8 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	{
 		View rootView = inflater.inflate(R.layout.fragment_list, container, false);
 
-
-		ListView list = (ListView) rootView.findViewById(R.id.groupsList);
+		list = (ListView) rootView.findViewById(R.id.groupsList);
+		empty = (TextView) rootView.findViewById(R.id.empty);
 
 		adapter = new ListFragmentAdapter(getActivity(), keys, names);
 		list.setAdapter(adapter);
@@ -132,7 +135,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			{
 
 				String item = "";
-				if(fragmentType.equals("Courses"))
+				if(fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser") )
 				{
 					if(keys.containsValue(i))
 						for(String key : keys.keySet())
@@ -190,9 +193,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	@Override
 	public void updateInProgress(int amount)
 	{
-		Log.w("Shika", "update ListFragment " + amount);
-
-		from = names.size() - 1;
+		from = keys.size() - 1;
 		if(from < 0) from = 0;
 
 		if(getActivity() != null)
@@ -201,6 +202,8 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			{
 				progressView.setVisibility(View.VISIBLE);
 				progressDrawable.start();
+				list.setVisibility(View.VISIBLE);
+				empty.setVisibility(View.GONE);
 			}
 
 			if (amount == -1)
@@ -272,6 +275,12 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	{
 		cursorParse(cursor);
 		adapter.notifyDataSetChanged();
+
+		if(keys.size() == 0)
+		{
+			list.setVisibility(View.GONE);
+			empty.setVisibility(View.VISIBLE);
+		}
 	}
 
 	@Override
@@ -294,11 +303,6 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			this.from = from;
 		}
 
-		public void setFromValue(int from)
-		{
-			this.from = from;
-		}
-
 		@Override
 		public Cursor loadInBackground()
 		{
@@ -311,8 +315,6 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			else
 				c = db.rawQuery("select * from Courses where groups like '%"+type+"%' or teacher like '%"+type+"%' " +
 					"order by name", null);
-
-			Log.w("Shika", c.getCount() + " " + type);
 
 			return c;
 		}

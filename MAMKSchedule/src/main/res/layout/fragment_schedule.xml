@@ -14,7 +14,7 @@
         android:layout_height = "wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:text="There are no lessons that day"
+        android:text="@string/no_lessons"
         android:id="@+id/emptySchedule"/>
 
 </RelativeLayout>

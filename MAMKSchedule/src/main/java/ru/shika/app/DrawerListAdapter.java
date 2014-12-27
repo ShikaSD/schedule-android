@@ -1,4 +1,4 @@
-package ru.shika.mamkschedule.mamkschedule;
+package ru.shika.app;
 
 
 import android.content.Context;
@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import ru.shika.mamkschedule.mamkschedule.R;
 
 import java.util.ArrayList;
 

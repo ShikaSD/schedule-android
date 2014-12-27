@@ -1,4 +1,4 @@
-package ru.shika.mamkschedule.mamkschedule;
+package ru.shika.app;
 
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import ru.shika.mamkschedule.mamkschedule.R;
 
 public class DialogFragment extends android.support.v4.app.DialogFragment implements View.OnClickListener
 {
@@ -61,7 +62,7 @@ public class DialogFragment extends android.support.v4.app.DialogFragment implem
 				ContentValues cv = new ContentValues();
 				cv.put("isEnrolled", 1);
 				String where = "courseId = '"+name+"' or (name = '"+name+"' and courseId = '')";
-				db.update("Courses", cv, where, null);
+				int res = db.update("Courses", cv, where, null);
 				dbh.close();
 				MainActivity.showToast("Course added to your schedule");
 				dismiss();

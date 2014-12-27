@@ -1,11 +1,13 @@
-package ru.shika.mamkschedule.mamkschedule;
+package ru.shika.app;
 
 import android.content.ContentValues;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -14,6 +16,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.view.ActionMode;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -25,12 +29,13 @@ import com.parse.ParseQuery;
 import ru.shika.android.CalendarPickerView;
 import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
-import ru.shika.mamkschedule.mamkschedule.Interfaces.groupFragmentCallback;
+import ru.shika.mamkschedule.mamkschedule.R;
 
 import java.util.*;
 
 
-public class MainActivity extends ActionBarActivity implements Interfaces.needDownload, groupFragmentCallback
+public class MainActivity extends ActionBarActivity implements Interfaces.needDownload, Interfaces.groupFragmentCallback,
+                                                                ActionMode.Callback
 {
     public final static int LOADER_LIST = 1;
     public final static int LOADER_SCHEDULE = 0;
@@ -46,7 +51,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     private MaterialProgressDrawable progressDrawable;
 
     protected CircleImageView calendarButton;
-    CalendarPickerView calendar;
+    private CalendarPickerView calendar;
+    private CardView calendarContainer;
 
     private ArrayList<Lesson.DrawerItem> drawerItems;
     private DrawerLayout drawerLayout;
@@ -75,6 +81,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     private static TextView toastText;
     private static Toast toast;
 
+    private View.OnClickListener calendarButtonClick, addButtonClick;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -98,6 +106,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         //Database init
         dbh = new DBHelper(this);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            dbh.getWritableDatabase().rawQuery("PRAGMA automatic_index=off;", null);
 
         //Get drawer's items from resources
         titles = getResources().getStringArray(R.array.drawer_strings);
@@ -122,7 +132,33 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         drawerList.setOnItemClickListener(new onDrawerItemClickListener());
 
         //Init actionbar toggle(left button)
-        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close);
+        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close)
+        {
+            @Override
+            public void onDrawerSlide(View view, float v)
+            {
+
+            }
+
+            @Override
+            public void onDrawerOpened(View view)
+            {
+                calendarButton.setVisibility(View.GONE);
+                calendarContainer.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onDrawerClosed(View view)
+            {
+                calendarButton.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onDrawerStateChanged(int i)
+            {
+
+            }
+        };
         drawerLayout.setDrawerListener(toggle);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -150,6 +186,24 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         toast = new Toast(getApplicationContext());
         toast.setDuration(Toast.LENGTH_LONG);
         toast.setView(layout);
+
+        //Init listeners
+        calendarButtonClick = new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                onCalendarClick(view);
+            }
+        };
+        addButtonClick = new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                onAddClick(view);
+            }
+        };
 
         //Don't forget finding views
         createProgressView();
@@ -210,18 +264,24 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
     private void createCalendarButton()
     {
-        final DisplayMetrics metrics = getResources().getDisplayMetrics();
-        final int padding = 16;
-        mCircleWidth = (int) (56 * metrics.density);
-        mCircleHeight = (int) (56 * metrics.density);
+        Resources resources = getResources();
 
-        calendarButton = new CircleImageView(this, getResources().getColor(R.color.light_blue), 56/2);
+        final int circleDiameter = (int) resources.getDimension(R.dimen.function_button_diameter);
+
+        final DisplayMetrics metrics = resources.getDisplayMetrics();
+        final int padding = (int) resources.getDimension(R.dimen.function_button_padding);
+        mCircleWidth = circleDiameter;
+        mCircleHeight = circleDiameter;
+        final float xPosition = resources.getDimension(R.dimen.function_button_vertical_margin);
+        final float yPosition = resources.getDimension(R.dimen.function_button_horizontal_margin);
+
+        calendarButton = new CircleImageView(this, getResources().getColor(R.color.light_blue), mCircleHeight / 2);
 
         RelativeLayout.LayoutParams lParams =
             new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
         lParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        lParams.setMargins(0, 0, 30, 30);
+        lParams.setMargins(0, 0, (int) (xPosition), (int) (yPosition));
 
         calendarButton.setLayoutParams(lParams);
         calendarButton.setPadding(padding, padding, padding, padding);
@@ -229,17 +289,10 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         calendarButton.setFocusable(true);
         calendarButton.setClickable(true);
 
-        calendarButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_calendar));
+        calendarButton.setImageDrawable(resources.getDrawable(R.drawable.ic_calendar));
         ((ViewGroup)(findViewById(R.id.activity_container))).addView(calendarButton);
 
-        calendarButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View view)
-            {
-                onCalendarClick(view);
-            }
-        });
+        calendarButton.setOnClickListener(calendarButtonClick);
     }
 
     public static void showToast(String text)
@@ -261,6 +314,34 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         Date today = new Date();
         calendar.init(from.getTime(), until.getTime())
             .withSelectedDate(today);
+
+        calendar.setOnDateSelectedListener(new CalendarPickerView.OnDateSelectedListener()
+        {
+            @Override
+            public void onDateSelected(Date date)
+            {
+                for(Interfaces.Download iFace : interfaces.values())
+                {
+                    Fragment temp = (Fragment)iFace;
+                    if(temp.isVisible())
+                        iFace.onDateChanged(date);
+
+                    calendar.selectDate(date, true);
+                    calendarContainer.setVisibility(View.GONE);
+                    calendarButton.setVisibility(View.VISIBLE);
+                }
+
+                globalDate = date;
+            }
+
+            @Override
+            public void onDateUnselected(Date date)
+            {
+
+            }
+        });
+
+        calendarContainer = (CardView) findViewById(R.id.calendar_container);
     }
 
     @Override
@@ -290,13 +371,19 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     @Override
     public void onBackPressed()
     {
-        if(calendarButton.getVisibility() == View.GONE)
+        if(calendarButton.getVisibility() == View.GONE && visibleFragmentTag.equals(titles[4]))
         {
-            calendar.setVisibility(View.GONE);
+            calendarButton.setVisibility(View.VISIBLE);
+            ((EditFragment)getSupportFragmentManager().findFragmentByTag(visibleFragmentTag)).backPressed();
+        }
+        else
+        if(calendarContainer.getVisibility() == View.VISIBLE)
+        {
+            calendarContainer.setVisibility(View.GONE);
             calendarButton.setVisibility(View.VISIBLE);
         }
         else
-        if(backStack.size() > 1)
+        if(backStack.size() > 0)
         {
             String prevFragment = backStack.pop();
 
@@ -308,6 +395,11 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
             ft.commit();
             visibleFragmentTag = prevFragment;
+
+            if(visibleFragmentTag.equals(titles[4]))
+            {
+                calendarButton.setVisibility(View.VISIBLE);
+            }
         }
         else
             super.onBackPressed();
@@ -367,7 +459,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         if(type.equals(titles[3]))
         {
             DialogFragment newFragment = DialogFragment.newInstance(item);
-            Log.w("Shika", item);
             newFragment.show(getSupportFragmentManager().beginTransaction(), "dialog");
             return;
         }
@@ -387,7 +478,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             Thread thread = new Thread(new ListEditDownloader(type, item));
             thread.start();
 
-            fragment = ListFragment.newEditInstance(type, item);
+            fragment = ListFragment.newEditInstance(tag, item);
             interfaces.put(tag, (Interfaces.Download) fragment);
             ft.add(R.id.main_container, fragment, tag);
             Log.w("Shika", "New Fragment made");
@@ -429,6 +520,46 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.commit();
         visibleFragmentTag = tag;
+    }
+
+    @Override
+    public boolean onCreateActionMode(ActionMode actionMode, Menu menu)
+    {
+        MenuInflater inflater = actionMode.getMenuInflater();
+        inflater.inflate(R.menu.edit_actionmode, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareActionMode(ActionMode actionMode, Menu menu)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem)
+    {
+        switch (menuItem.getItemId())
+        {
+            case R.id.delete:
+                deleteItems();
+                actionMode.finish();
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public void onDestroyActionMode(ActionMode actionMode)
+    {
+        actionMode = null;
+    }
+
+    public void deleteItems()
+    {
+
     }
 
     private class onDrawerItemClickListener implements ListView.OnItemClickListener
@@ -487,6 +618,21 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 Log.w("Shika", "New Fragment made");
             }
 
+            if(tag.endsWith("Chooser") || tag.contains("Edit"))
+            {
+                calendarButton.setOnClickListener(addButtonClick);
+                calendarButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_new));
+                int p = (int) getResources().getDimension(R.dimen.function_button_padding) + 8;
+                calendarButton.setPadding(p, p, p, p);
+            }
+            else
+            {
+                calendarButton.setOnClickListener(calendarButtonClick);
+                calendarButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_calendar));
+                int p = (int) getResources().getDimension(R.dimen.function_button_padding);
+                calendarButton.setPadding(p, p, p, p);
+            }
+
             ft.attach(fragment);
             ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
             ft.commit();
@@ -510,40 +656,13 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         scheduleDownloader = new ScheduleDownloader();
 
         //Adding different items (some dirty code)
-        if(group != null)
+        for(int i = 0; i < 5; i++)
         {
-            for(int i = 0; i < 5; i++)
-            {
-                dateFormat = date.get(Calendar.YEAR) - 2000 + "" +
-                    (date.get(Calendar.MONTH) + 1 > 9 ? date.get(Calendar.MONTH) + 1 : "0" + (1 + date.get(Calendar.MONTH)))+
-                    (date.get(Calendar.DAY_OF_MONTH) > 9 ? date.get(Calendar.DAY_OF_MONTH) : "0" + date.get(Calendar.DAY_OF_MONTH));
-                lessons[i] = new Lesson(null, null, null, null, null, dateFormat, group, 0);
-                date.add(Calendar.DATE, 1);
-            }
-        }
-        else
-        if(teacher != null)
-        {
-            for(int i = 0; i < 5; i++)
-            {
-                dateFormat = date.get(Calendar.YEAR) - 2000 + "" +
-                    (date.get(Calendar.MONTH) + 1 > 9 ? date.get(Calendar.MONTH) + 1 : "0" + (1 + date.get(Calendar.MONTH)))+
-                    (date.get(Calendar.DAY_OF_MONTH) > 9 ? date.get(Calendar.DAY_OF_MONTH) : "0" + date.get(Calendar.DAY_OF_MONTH));
-                lessons[i] = new Lesson(null, null, null, null, teacher, dateFormat, null, 0);
-                date.add(Calendar.DATE, 1);
-            }
-        }
-        else
-        if(course !=  null)
-        {
-            for(int i = 0; i < 5; i++)
-            {
-                dateFormat = date.get(Calendar.YEAR) - 2000 + "" +
-                    (date.get(Calendar.MONTH) + 1 > 9 ? date.get(Calendar.MONTH) + 1 : "0" + (1 + date.get(Calendar.MONTH)))+
-                    (date.get(Calendar.DAY_OF_MONTH) > 9 ? date.get(Calendar.DAY_OF_MONTH) : "0" + date.get(Calendar.DAY_OF_MONTH));
-                lessons[i] = new Lesson(null, null, null, course, null, dateFormat, null, 0);
-                date.add(Calendar.DATE, 1);
-            }
+            dateFormat = date.get(Calendar.YEAR) - 2000 + "" +
+                (date.get(Calendar.MONTH) + 1 > 9 ? date.get(Calendar.MONTH) + 1 : "0" + (1 + date.get(Calendar.MONTH)))+
+                (date.get(Calendar.DAY_OF_MONTH) > 9 ? date.get(Calendar.DAY_OF_MONTH) : "0" + date.get(Calendar.DAY_OF_MONTH));
+            lessons[i] = new Lesson(null, null, course, teacher, null, dateFormat, group, 0);
+            date.add(Calendar.DATE, 1);
         }
 
         scheduleDownloader.execute(lessons);
@@ -578,13 +697,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             lastUpdate = new Date(pref.getLong(param+"lastUpdate", 0));
             Log.w("Shika", "lastUpdate at " + lastUpdate.toString());
 
-            if(lastUpdate.getTime() == 0)
-            {
-                SQLiteDatabase db = dbh.getWritableDatabase();
-                db.delete(param, null, null);
-                db.close();
-            }
-
             ArrayList<ParseObject> parseObjects;
             ParseQuery<ParseObject> query = ParseQuery.getQuery(param);
 
@@ -613,15 +725,22 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
                     for (ParseObject i : parseObjects)
                     {
+                        String name = i.getString("name");
+                        cv.put("name", name);
+
                         if(param.equals("Courses"))
                         {
                             cv.put("courseId", i.getString("courseId"));
                             cv.put("groups", i.getString("group"));
                             cv.put("teacher", i.getString("teacher"));
+
+                            Cursor x = db.rawQuery("select count(*) from Courses where courseId = '" +
+                                i.getString("courseId") + "' and name = '" + i.getString("name") + "'", null);
+                            x.moveToFirst();
+                            if(x.getInt(0) > 0)
+                                continue;
                         }
 
-                        String name = i.getString("name");
-                        cv.put("name", name);
                         db.insert(param, null, cv);
 
                         downloaded++;
@@ -671,18 +790,20 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         String type;
         String name;
 
-        boolean isNecessary = true;
+        boolean isNecessary;
 
         public ListEditDownloader(String type, String name)
         {
+            Log.w("Shika", "ListEditDownloader exec");
             this.type = type;
             this.name = name;
+            isNecessary = true;
 
             progressDrawable.start();
             progress.setVisibility(View.VISIBLE);
             container.setVisibility(View.GONE);
 
-            lastUpdate = new Date(pref.getLong(type+"lastUpdate", 0));
+            lastUpdate = new Date(pref.getLong(titles[3] + "lastUpdate", 0));
 
             if(lastUpdate.getTime() != 0)
             {
@@ -711,20 +832,17 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             try
             {
                 int amount = query.count();
-
-
                 query.setLimit(amount);
-                query.whereEqualTo("name", name);
+                query.addAscendingOrder("name");
+
+                if(type.equals("Groups"))
+                    query.whereEqualTo("group", name);
+
+                if(type.equals("Teachers"))
+                    query.whereEqualTo("teacher", name);
 
                 parseObjects = (ArrayList<ParseObject>) query.find();
-
-                insertValues(parseObjects);
-
-                query = ParseQuery.getQuery("Courses");
-                query.setLimit(amount);
-                query.whereEqualTo("courseId", name);
-
-                parseObjects = (ArrayList<ParseObject>) query.find();
+                Log.w("Shika", parseObjects.size() + " type:" + type);
 
                 insertValues(parseObjects);
             }
@@ -752,32 +870,50 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 db.insert("Courses", null, cv);
             }
 
+            handler.sendEmptyMessage(parseObjects.size());
+
             dbh.close();
         }
     }
 
     public class ScheduleDownloader extends AsyncTask <Lesson, Void, String>
     {
+        boolean isMySchedule;
+        ArrayList<ParseObject> schedule;
+        int counter;
+
         @Override
         protected void onPreExecute()
         {
             super.onPreExecute();
             Log.w("Shika", "ScheduleDownloader exec");
+
+            isMySchedule = visibleFragmentTag.equals(titles[0]);
+
+            counter = 0;
         }
 
         @Override
         protected String doInBackground(Lesson... lessons)
         {
-            int counter = 0;
+            if(isMySchedule)
+            {
+                Log.w("Shika", "We have own schedule here " + visibleFragmentTag);
+                return downloadSchedule(lessons);
+            }
+
             for(Lesson lesson : lessons)
             {
-                ArrayList<ParseObject> schedule;
                 ParseQuery<ParseObject> query = ParseQuery.getQuery("Lessons");
+                query.addAscendingOrder("name");
 
                 if(lesson == null){ Log.w("Shika", "lesson = null"); continue;}
 
                 if(lesson.group != null)
+                {
+                    Log.w("Shika", "We have grouplist here");
                     query.whereStartsWith("group", lesson.group);
+                }
                 else
                 if(lesson.teacher != null)
                     query.whereStartsWith("teacher", lesson.teacher);
@@ -788,29 +924,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 query.whereStartsWith("date", lesson.date);
 
                 Log.w("Shika", "Downloading in ScheduleDownloader from " + lesson.date);
-                try
-                {
-                    schedule = (ArrayList<ParseObject>) query.find();
-                    SQLiteDatabase db = dbh.getWritableDatabase();
-                    ContentValues cv = new ContentValues();
-                    for (ParseObject i : schedule)
-                    {
-                        cv.put("groups", i.getString("group"));
-                        cv.put("date", i.getString("date"));
-                        cv.put("lesson", i.getString("name"));
-                        cv.put("teacher", i.getString("teacher"));
-                        cv.put("room", i.getString("room"));
-                        cv.put("start", i.getString("start"));
-                        cv.put("end", i.getString("end"));
-                        cv.put("lessonId", i.getString("lessonId"));
-                        cv.put("courseId", i.getString("courseId"));
-                        db.insert("schedule", null, cv);
-                        counter++;
-                    }
-                } catch (Exception e)
-                {
-                    return "error";
-                }
+
+                parseQuery(query);
             }
 
             Log.w("Shika", "Schedule counter: " + counter+"");
@@ -829,47 +944,120 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             super.onPostExecute(string);
             Log.w("Shika", "ScheduleDownloader finished");
 
+            dbh.close();
+
+            if(string.equals("no courses"))
+            {
+                showToast("There are no courses in your schedule list. Please add them in edit schedule section.");
+            }
+
+
             //Let's tell fragment that we have done something
             for(Interfaces.Download iFace : interfaces.values())
             {
-                iFace.onDownloadEnd(string);
+                Fragment temp = (Fragment) iFace;
+                if(temp.isVisible())
+                    iFace.onDownloadEnd(string);
+            }
+        }
+
+        protected String parseQuery(ParseQuery <ParseObject> query)
+        {
+            try
+            {
+                schedule = (ArrayList<ParseObject>) query.find();
+                SQLiteDatabase db = dbh.getWritableDatabase();
+                ContentValues cv = new ContentValues();
+                for (ParseObject i : schedule)
+                {
+                    cv.put("groups", i.getString("group"));
+                    cv.put("date", i.getString("date"));
+                    cv.put("lesson", i.getString("name"));
+                    cv.put("teacher", i.getString("teacher"));
+                    cv.put("room", i.getString("room"));
+                    cv.put("start", i.getString("start"));
+                    cv.put("end", i.getString("end"));
+                    cv.put("lessonId", i.getString("lessonId"));
+                    cv.put("courseId", i.getString("courseId"));
+                    db.insert("schedule", null, cv);
+                    counter++;
+                }
+            } catch (Exception e)
+            {
+                showToast("Network error occured. Please check your internet connection");
             }
 
-            dbh.close();
+            return null;
+        }
+
+        protected String downloadSchedule(Lesson... lessons)
+        {
+            SQLiteDatabase db = dbh.getReadableDatabase();
+            Cursor c = db.rawQuery("select * from Courses where isEnrolled = 1", null);
+
+            if(!c.moveToNext())
+                return "no courses";
+
+            int courseId = c.getColumnIndex("courseId");
+            int name = c.getColumnIndex("name");
+
+            ParseQuery <ParseObject> query = new ParseQuery<ParseObject>("Lessons");
+            for(Lesson lesson : lessons)
+            {
+                Log.w("Shika", "date: " + lesson.date);
+                c.moveToFirst();
+                do
+                {
+                    Cursor x = db.rawQuery("select count(*) from Schedule where lesson = '" + c.getString(name) +
+                        "' and courseId = '" + c.getString(courseId) + "' and date = '" + lesson.date + "'", null);
+                    x.moveToFirst();
+                    if(x.getInt(0) > 0)
+                    {
+                        counter++;
+                        continue;
+                    }
+
+                    query.whereEqualTo("name", c.getString(name));
+                    query.whereEqualTo("courseId", c.getString(courseId));
+                    query.whereEqualTo("date", lesson.date);
+                    query.addAscendingOrder("name");
+
+                    parseQuery(query);
+
+                }
+                while (c.moveToNext());
+            }
+
+            if(counter == 0)
+            {
+                return "nothing";
+            }
+
+            return "success";
         }
     }
 
     public void onCalendarClick(View view)
     {
-
-        if(calendar.getVisibility() == View.GONE)
+        if(calendarContainer.getVisibility() == View.GONE)
         {
-            calendar.setVisibility(View.VISIBLE);
+            calendarContainer.setVisibility(View.VISIBLE);
             calendarButton.setVisibility(View.GONE);
         }
+    }
 
-        calendar.setOnDateSelectedListener(new CalendarPickerView.OnDateSelectedListener()
-        {
-            @Override
-            public void onDateSelected(Date date)
-            {
-                for(Interfaces.Download iFace : interfaces.values())
-                {
-                    Fragment temp = (Fragment)iFace;
-                    if(temp.isVisible())
-                        iFace.onDateChanged(date);
+    public void onAddClick(View view)
+    {
+        EditFragment fragment = (EditFragment) getSupportFragmentManager().findFragmentByTag(titles[4]);
+        fragment.addClick(view);
 
-                    calendar.selectDate(date, true);
-                }
+        calendarButton.setVisibility(View.GONE);
+    }
 
-                //globalDate = date;
-            }
+    public void setGlobalDate(Date date)
+    {
+        globalDate = date;
 
-            @Override
-            public void onDateUnselected(Date date)
-            {
-
-            }
-        });
+        calendar.selectDate(date);
     }
 }

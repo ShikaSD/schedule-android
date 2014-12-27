@@ -17,8 +17,8 @@
 
 		android:layout_marginTop="@dimen/dialog_margin"
 		android:layout_marginBottom="@dimen/dialog_margin"
-		android:layout_marginLeft="40dp"
-		android:layout_marginRight="40dp">
+		android:layout_marginLeft="@dimen/dialog_margin"
+		android:layout_marginRight="@dimen/dialog_margin">
 
 		<TextView
 			android:layout_width = "wrap_content"

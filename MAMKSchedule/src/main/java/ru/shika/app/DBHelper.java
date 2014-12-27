@@ -1,4 +1,4 @@
-package ru.shika.mamkschedule.mamkschedule;
+package ru.shika.app;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
