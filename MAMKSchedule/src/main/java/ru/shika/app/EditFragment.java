@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.view.ActionMode;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,28 +21,31 @@ import java.util.Map;
 
 public class EditFragment extends Fragment
 {
-	Interfaces.groupFragmentCallback callback;
+	private Interfaces.groupFragmentCallback callback;
 
 	//To sort them by course id
-	Map<String, Integer> keys = new HashMap<String, Integer>(); //Ids
-	ArrayList <ArrayList <String>> names = new ArrayList<ArrayList <String>>(); //Full name
+	private Map<String, Integer> keys; //Ids
+	private ArrayList <ArrayList <String>> names; //Full name
 
-	Button add;
-	TextView empty;
+	private Button add;
+	private TextView empty;
 
-	ListView list;
-	DrawerListAdapter editAdapter;
-	ListFragmentAdapter listAdapter;
-	TextView header;
+	private ListView list;
+	private DrawerListAdapter editAdapter;
+	private ListFragmentAdapter listAdapter;
+	private TextView header;
 
-	String[] strings;
-	String[] titles;
-	TypedArray drawables;
-	ArrayList <Lesson.DrawerItem> drawerItems;
+	private String[] strings;
+	private String[] titles;
+	private TypedArray drawables;
+	private ArrayList <Lesson.DrawerItem> drawerItems;
 
-	ActionMode actionMode;
+	private ActionMode actionMode;
 
-	DBHelper dbh;
+	private DBHelper dbh;
+
+	public boolean wasInEditMode = false;
+
 
 	@Override
 	public void onAttach(Activity activity)
@@ -55,6 +59,9 @@ public class EditFragment extends Fragment
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+
+		keys = new HashMap<String, Integer>();
+		names = new ArrayList<ArrayList <String>>();
 
 		titles = getResources().getStringArray(R.array.drawer_strings);
 
@@ -70,7 +77,7 @@ public class EditFragment extends Fragment
 		dbh = new DBHelper(getActivity());
 
 		editAdapter = new DrawerListAdapter(getActivity(), drawerItems);
-		listAdapter = new ListFragmentAdapter(getActivity(), keys, names);
+		listAdapter = new ListFragmentAdapter(getActivity(), keys, names, true);
 	}
 
 	@Override
@@ -83,12 +90,6 @@ public class EditFragment extends Fragment
 	public void onViewCreated(View view, Bundle savedInstanceState)
 	{
 		super.onViewCreated(view, savedInstanceState);
-
-		SQLiteDatabase db = dbh.getReadableDatabase();
-		Cursor c = db.rawQuery("select * from Courses where isEnrolled = 1", null);
-		cursorParse(c);
-
-		listAdapter.notifyDataSetChanged();
 
 		empty = (TextView) view.findViewById(R.id.fragment_edit_empty);
 		empty.setText(getResources().getText(R.string.edit_empty));
@@ -106,36 +107,25 @@ public class EditFragment extends Fragment
 
 		list = (ListView) view.findViewById(R.id.fragment_edit_list);
 		header = (TextView) view.findViewById(R.id.fragment_edit_list_header);
-		if(list.getAdapter() == null)
-		{
-			list.setAdapter(listAdapter);
-			list.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
-		}
 
-		if(keys.size() > 0)
-		{
-			header.setText("Your courses are:");
-			header.setVisibility(View.VISIBLE);
-			add.setVisibility(View.GONE);
-			empty.setVisibility(View.GONE);
-		}
-		else
-		{
-			list.setVisibility(View.GONE);
-		}
+		update();
+
+		if(wasInEditMode)
+			list.setAdapter(editAdapter);
+		if(list.getAdapter() == null)
+			list.setAdapter(listAdapter);
 
 		list.setOnItemClickListener(new AdapterView.OnItemClickListener()
 		{
 			@Override
 			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
 			{
-				if(!(list.getAdapter() instanceof DrawerListAdapter))
+				if(list.getAdapter() instanceof ListFragmentAdapter)
 				{
-					if(actionMode != null)
-						return;
+					if(listAdapter.getCheckedAmount() == 0)
+						actionMode = ((MainActivity) getActivity()).startSupportActionMode((MainActivity) getActivity());
 
-					actionMode = ((MainActivity) getActivity()).startSupportActionMode((MainActivity) getActivity());
-					view.setSelected(true);
+					listAdapter.toggle(i);
 					return;
 				}
 
@@ -173,6 +163,8 @@ public class EditFragment extends Fragment
 			add.setVisibility(View.VISIBLE);
 			empty.setVisibility(View.VISIBLE);
 		}
+
+		wasInEditMode = false;
 	}
 
 
@@ -183,6 +175,8 @@ public class EditFragment extends Fragment
 
 	public void addClick(View v)
 	{
+		wasInEditMode = true;
+
 		empty.setVisibility(View.GONE);
 		add.setVisibility(View.GONE);
 
@@ -227,5 +221,45 @@ public class EditFragment extends Fragment
 		}
 		c.close();
 		dbh.close();
+	}
+
+	public void showCheckboxes(boolean show)
+	{
+		if(!show)
+			listAdapter.unCheck();
+		listAdapter.showCheckboxes(show);
+	}
+
+	public String[] getChecked()
+	{
+		return listAdapter.getChecked();
+	}
+
+	public void update()
+	{
+		names.clear();
+		keys.clear();
+
+		SQLiteDatabase db = dbh.getReadableDatabase();
+		Cursor c = db.rawQuery("select * from Courses where isEnrolled = 1", null);
+		Log.w("Shika", c.getCount() + " in Edit fragment");
+		cursorParse(c);
+
+		if(keys.size() > 0)
+		{
+			header.setText("Your courses are:");
+			header.setVisibility(View.VISIBLE);
+			add.setVisibility(View.GONE);
+			empty.setVisibility(View.GONE);
+		}
+		else
+		{
+			list.setVisibility(View.GONE);
+			header.setVisibility(View.GONE);
+			add.setVisibility(View.VISIBLE);
+			empty.setVisibility(View.VISIBLE);
+		}
+
+		listAdapter.notifyDataSetChanged();
 	}
 }

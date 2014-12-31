@@ -1,30 +1,40 @@
 package ru.shika.app;
 
-import android.content.ContentValues;
-import android.database.sqlite.SQLiteDatabase;
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import ru.shika.mamkschedule.mamkschedule.R;
 
-public class DialogFragment extends android.support.v4.app.DialogFragment implements View.OnClickListener
+public class DialogCallbackFragment extends android.support.v4.app.DialogFragment implements View.OnClickListener
 {
-	Button yes, no;
-	DBHelper dbh;
+	private Interfaces.dialogCallback callback;
 
-	String name;
+	private Button yes, no;
 
-	public static DialogFragment newInstance(String name)
+	private String title, text;
+
+	public static DialogCallbackFragment newInstance(String title, String text)
 	{
-		DialogFragment fragment = new DialogFragment();
+		DialogCallbackFragment fragment = new DialogCallbackFragment();
 
 		Bundle args = new Bundle();
-		args.putString("name", name);
+		args.putString("title", title);
+		args.putString("text", text);
 		fragment.setArguments(args);
 
 		return fragment;
+	}
+
+	@Override
+	public void onAttach(Activity activity)
+	{
+		super.onAttach(activity);
+
+		callback = (Interfaces.dialogCallback) activity;
 	}
 
 	@Override
@@ -32,10 +42,10 @@ public class DialogFragment extends android.support.v4.app.DialogFragment implem
 	{
 		super.onCreate(savedInstanceState);
 
-		setStyle(DialogFragment.STYLE_NO_FRAME, R.style.AppTheme_Dialog);
-		dbh = new DBHelper(getActivity());
+		setStyle(DialogAddFragment.STYLE_NO_FRAME, R.style.AppTheme_Dialog);
 
-		name = getArguments().getString("name");
+		title = getArguments().getString("title");
+		text = getArguments().getString("text");
 	}
 
 	@Override
@@ -49,6 +59,9 @@ public class DialogFragment extends android.support.v4.app.DialogFragment implem
 		yes.setOnClickListener(this);
 		no.setOnClickListener(this);
 
+		((TextView) rootView.findViewById(R.id.dialog_header)).setText(title);
+		((TextView) rootView.findViewById(R.id.dialog_text)).setText(text);
+
 		return rootView;
 	}
 
@@ -58,19 +71,13 @@ public class DialogFragment extends android.support.v4.app.DialogFragment implem
 		switch (view.getId())
 		{
 			case R.id.dialog_yes:
-				SQLiteDatabase db = dbh.getWritableDatabase();
-				ContentValues cv = new ContentValues();
-				cv.put("isEnrolled", 1);
-				String where = "courseId = '"+name+"' or (name = '"+name+"' and courseId = '')";
-				int res = db.update("Courses", cv, where, null);
-				dbh.close();
-				MainActivity.showToast("Course added to your schedule");
+				callback.dialogDone(MainActivity.dialogs.DIALOG_REMOVE);
 				dismiss();
 				break;
 			case R.id.dialog_no:
 				dismiss();
 				break;
-			
+
 			default:
 				break;
 		}

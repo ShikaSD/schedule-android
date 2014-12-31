@@ -15,6 +15,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.RelativeLayout;
 import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
@@ -51,6 +53,8 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	protected CircleImageView progress;
 	protected MaterialProgressDrawable progressDrawable;
 	private int mCircleWidth, mCircleHeight;
+
+	private Animation appear, disappear;
 
 	public static Fragment newInstance(boolean isOwnSchedule, String group, String teacher, String course, Date date)
 	{
@@ -101,6 +105,8 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		globalDate.setFirstDayOfWeek(Calendar.MONDAY);
 		dayOfWeek = getWeek(globalDate);
 
+		animationInit();
+
 		if(getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_SCHEDULE) == null)
 			getActivity().getSupportLoaderManager().initLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
 		else
@@ -138,7 +144,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 		RelativeLayout.LayoutParams lParams =
 			new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
-		lParams.bottomMargin = 20;
+		lParams.bottomMargin = 22;
 		lParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
 		lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
 		progress.setLayoutParams(lParams);
@@ -148,6 +154,55 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 		rootView.addView(progress);
 		progress.setVisibility(View.GONE);
+	}
+
+	private void animationInit()
+	{
+		appear = AnimationUtils.loadAnimation(getActivity(), R.anim.progress_drawable_appear);
+		appear.setAnimationListener(new Animation.AnimationListener()
+		{
+			@Override
+			public void onAnimationStart(Animation animation)
+			{
+				progress.setVisibility(View.VISIBLE);
+				progressDrawable.start();
+			}
+
+			@Override
+			public void onAnimationEnd(Animation animation)
+			{
+
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation)
+			{
+
+			}
+		});
+
+		disappear = AnimationUtils.loadAnimation(getActivity(), R.anim.progress_drawable_disappear);
+		disappear.setAnimationListener(new Animation.AnimationListener()
+		{
+			@Override
+			public void onAnimationStart(Animation animation)
+			{
+
+			}
+
+			@Override
+			public void onAnimationEnd(Animation animation)
+			{
+				progressDrawable.stop();
+				progress.setVisibility(View.GONE);
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation)
+			{
+
+			}
+		});
 	}
 
 	@Override
@@ -187,8 +242,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	@Override
 	public void onDownloadEnd(String result)
 	{
-		progressDrawable.stop();
-		progress.setVisibility(View.GONE);
+		progress.startAnimation(disappear);
 
 		if(result.equals("success"))
 		{
@@ -235,6 +289,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		globalDate.setFirstDayOfWeek(Calendar.MONDAY);
 
 		viewPager.setCurrentItem(dayOfWeek);
+		didUpdate = false;
 	}
 
 	public void showError()
@@ -255,10 +310,10 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
 	{
 		//Log.w("Shika", "Finish: "+group+"+"+ teacher +"+"+ course+"+"+isOwnSchedule);
+		lessonsArr.clear();
 
 		if(cursor.moveToFirst())
 		{
-			lessonsArr.clear();
 			HashMap <String, Lesson> lessons = new HashMap<String, Lesson>();
 
 			int start = cursor.getColumnIndex("start");
@@ -321,18 +376,25 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 			pagerAdapter.notifyDataSetChanged(lessonsArr);
 			viewPager.setCurrentItem(dayOfWeek);
 
-			if(isOwnSchedule && !didUpdate)
+			if(!didUpdate)
 			{
 				//To avoid date changes
 				Calendar dateArg = Calendar.getInstance();
 				dateArg.setTime(globalDate.getTime());
-				downloader.needDownload(null, null, null, dateArg);
+
+				progress.startAnimation(appear);
+
+				downloader.needDownload(this.group, this.teacher, course, dateArg);
 				didUpdate = true;
 			}
 		} else
 		{
-			progress.setVisibility(View.VISIBLE);
-			progressDrawable.start();
+			for(int i = 0; i < days.length; i++)
+				lessonsArr.add(new ArrayList<Lesson>());
+
+			pagerAdapter.notifyDataSetChanged(lessonsArr);
+
+			progress.startAnimation(appear);
 
 			Log.w("Shika", "Found nothing in database, need download");
 
@@ -397,8 +459,9 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 			if(isOwnSchedule)
 			{
 				String query = "select * from Courses inner join Schedule on(Courses.courseId = Schedule.courseId and" +
-					" Courses.name = Schedule.lesson) where isEnrolled = 1 and (date like ? or date like ? or date " +
-					"like ? or date like ? or date like ?)";
+					" Courses.name = Schedule.lesson and Courses.teacher = Schedule.teacher and Courses.groups = " +
+					"Schedule.groups) where isEnrolled = 1 and " +
+					"(date like ? or date like ? or date like ? or date like ? or date like ?)";
 				cursor = sqdb.rawQuery(query, dates);
 			}
 			else

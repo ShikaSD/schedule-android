@@ -10,9 +10,14 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -32,27 +37,29 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	 * isEditFragment = false, fragmentType = true : drawer
 	 * isEditFragment = true : edit (typeName = null || != null)
 	 */
-
-	Interfaces.groupFragmentCallback callback;
+	private Interfaces.groupFragmentCallback callback;
 
 	//To sort them by course id
-	Map<String, Integer> keys = new HashMap<String, Integer>(); //Ids
-	ArrayList <ArrayList <String>> names = new ArrayList<ArrayList <String>>(); //Full name
+	private Map<String, Integer> keys; //Ids
+	private ArrayList <ArrayList <String>> names; //Full name
+	private SparseArray <Boolean> checks;
 
-	ListFragmentAdapter adapter;
-	ListView list;
-	TextView empty;
+	private ListFragmentAdapter adapter;
+	private ListView list;
+	private TextView empty;
 
-	CircleImageView progressView;
-	MaterialProgressDrawable progressDrawable;
+	private CircleImageView progressView;
+	private MaterialProgressDrawable progressDrawable;
 
-	String fragmentType = "";
-	String typeName = null;
-	boolean isEditFragment = false;
+	private String fragmentType;
+	private String typeName;
+	private boolean isEditFragment;
 
-	DBHelper dbHelper;
+	private DBHelper dbHelper;
 
-	public int from = 0;
+	private int from = 0;
+
+	private TranslateAnimation appear, disappear;
 
 	public static Fragment newInstance(String listType, boolean isEditFragment)
 	{
@@ -91,6 +98,12 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	{
 		super.onCreate(savedInstanceState);
 
+		animationInit();
+
+		keys = new HashMap<String, Integer>();
+		names = new ArrayList<ArrayList<String>>();
+		checks = new SparseArray<Boolean>();
+
 		fragmentType = getArguments().getString("type");
 		isEditFragment = getArguments().getBoolean("edit", false);
 
@@ -126,13 +139,23 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 		list = (ListView) rootView.findViewById(R.id.groupsList);
 		empty = (TextView) rootView.findViewById(R.id.empty);
 
-		adapter = new ListFragmentAdapter(getActivity(), keys, names);
+		if(fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser") )
+		{
+			adapter = new ListFragmentAdapter(getActivity(), keys, names, true);
+			adapter.showCheckboxes(true);
+		}
+		else
+			adapter = new ListFragmentAdapter(getActivity(), keys, names, false);
+
 		list.setAdapter(adapter);
 		list.setOnItemClickListener(new AdapterView.OnItemClickListener()
 		{
 			@Override
 			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
 			{
+				if(isEditFragment && (fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser")) &&
+					adapter.isChecked(i))
+					return;
 
 				String item = "";
 				if(fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser") )
@@ -150,30 +173,19 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 					item = names.get(i).get(0);
 
 				if(isEditFragment && typeName == null)
+				{
 					callback.listItemInEditSelected(fragmentType, item);
+				}
 				else if(typeName != null)
+				{
 					callback.listItemInEditSelected("Courses", item);
+				}
 				else
 					callback.listItemSelected(fragmentType, item);
 			}
 		});
 
-		final DisplayMetrics metrics = getResources().getDisplayMetrics();
-		int mCircleWidth = (int) (40 * metrics.density);
-		int mCircleHeight = (int) (40 * metrics.density);
-
-		progressView = new CircleImageView(getActivity(), getResources().getColor(R.color.background), 40/2);
-		progressDrawable = new MaterialProgressDrawable(getActivity(), progressView);
-
-		RelativeLayout.LayoutParams lParams =
-			new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
-		lParams.bottomMargin = 20;
-		lParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-		lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-		progressView.setLayoutParams(lParams);
-
-		progressDrawable.setColorSchemeColors(getResources().getColor(R.color.light_blue));
-		progressView.setImageDrawable(progressDrawable);
+		progressInit();
 
 		((ViewGroup) rootView).addView(progressView);
 		progressView.setVisibility(View.GONE);
@@ -186,6 +198,77 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 		return rootView;
 	}
 
+	private void animationInit()
+	{
+		appear = (TranslateAnimation) AnimationUtils.loadAnimation(getActivity(), R.anim.progress_drawable_appear);
+		appear.setAnimationListener(new Animation.AnimationListener()
+		{
+			@Override
+			public void onAnimationStart(Animation animation)
+			{
+				progressView.setVisibility(View.VISIBLE);
+				progressDrawable.start();
+			}
+
+			@Override
+			public void onAnimationEnd(Animation animation)
+			{
+
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation)
+			{
+
+			}
+		});
+
+		disappear = (TranslateAnimation) AnimationUtils.loadAnimation(getActivity(), R.anim.progress_drawable_disappear);
+		disappear.setAnimationListener(new Animation.AnimationListener()
+		{
+			@Override
+			public void onAnimationStart(Animation animation)
+			{
+
+			}
+
+			@Override
+			public void onAnimationEnd(Animation animation)
+			{
+				progressDrawable.stop();
+				progressView.setVisibility(View.GONE);
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation)
+			{
+
+			}
+		});
+	}
+
+	private void progressInit()
+	{
+		final DisplayMetrics metrics = getResources().getDisplayMetrics();
+		int mCircleWidth = (int) (40 * metrics.density);
+		int mCircleHeight = (int) (40 * metrics.density);
+
+		progressView = new CircleImageView(getActivity(), getResources().getColor(R.color.background), 40/2);
+		progressDrawable = new MaterialProgressDrawable(getActivity(), progressView);
+
+		RelativeLayout.LayoutParams lParams =
+			new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
+		lParams.bottomMargin = 22;
+		lParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+		lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		progressView.setLayoutParams(lParams);
+
+		progressDrawable.setColorSchemeColors(getResources().getColor(R.color.light_blue));
+		progressView.setImageDrawable(progressDrawable);
+
+
+	}
+
 	@Override
 	public void onDownloadEnd(String result)
 	{}
@@ -193,23 +276,22 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	@Override
 	public void updateInProgress(int amount)
 	{
-		from = keys.size() - 1;
-		if(from < 0) from = 0;
+		if(keys != null)
+			from = keys.size() - 1;
+		if(from < 0 || keys == null) from = 0;
 
 		if(getActivity() != null)
 		{
 			if (progressView.getVisibility() != View.VISIBLE)
 			{
-				progressView.setVisibility(View.VISIBLE);
-				progressDrawable.start();
+				progressView.startAnimation(appear);
 				list.setVisibility(View.VISIBLE);
 				empty.setVisibility(View.GONE);
 			}
 
 			if (amount == -1)
 			{
-				progressDrawable.stop();
-				progressView.setVisibility(View.GONE);
+				progressView.startAnimation(disappear);
 				return;
 			}
 
@@ -226,10 +308,12 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 
 	private void cursorParse(Cursor c)
 	{
+		checks.clear();
 		if(c.moveToFirst())
 		{
 			int name = c.getColumnIndex("name");
 			int id = c.getColumnIndex("courseId");
+			int isEnrolled = c.getColumnIndex("isEnrolled");
 			do
 			{
 				String courseId;
@@ -249,6 +333,10 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 
 				if (!names.get(index).contains(c.getString(name)))
 					names.get(index).add(c.getString(name));
+
+				if(isEnrolled != -1)
+					if(c.getInt(isEnrolled) == 1)
+						checks.put(index, true);
 
 			}
 			while (c.moveToNext());
@@ -274,7 +362,12 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
 	{
 		cursorParse(cursor);
+
 		adapter.notifyDataSetChanged();
+
+		if(adapter.isCheckingList)
+			adapter.check(checks);
+		Log.w("Shika", fragmentType);
 
 		if(keys.size() == 0)
 		{

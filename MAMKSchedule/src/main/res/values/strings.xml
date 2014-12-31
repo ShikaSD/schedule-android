@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">MAMKSchedule</string>
+    <string name="app_name">MAMK Schedule</string>
     <string name="action_settings">Settings</string>
 
     <array name="days">
@@ -14,6 +14,9 @@
 
     <string name = "no_lessons">There are no lessons that day</string>
     <string name = "no_items">There are no items in that list</string>
+
+    <string name = "dialog_delete_title">Delete courses</string>
+    <string name = "dialog_delete_text">Do you want to delete these courses from your schedule?</string>
 
     <string-array name="drawer_strings">
         <item name="schedule">My schedule</item>

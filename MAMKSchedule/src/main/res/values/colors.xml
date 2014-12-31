@@ -8,7 +8,9 @@
 	<color name = "gray">#575757</color>
 	<color name = "black">#000</color>
 	<color name = "dark_gray">#323232</color>
+
 	<color name = "transparent_dark_gray">#dd323232</color>
+	<color name = "transparent_light_blue">#88008deb</color>
 
 	<color name="calendar_active_month_bg">#fff5f7f9</color>
 	<color name="calendar_bg">#ffffffff</color>

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapter.ViewHolder>
 {
 	private ArrayList<Lesson> lessons;
+	private long ids;
 
 	public static class ViewHolder extends RecyclerView.ViewHolder
 	{
@@ -20,7 +21,9 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 
 		public TextView start, end, room, name, teacher;
 
-		public ViewHolder (View layout)
+		public long id;
+
+		public ViewHolder (View layout, long id)
 		{
 			super(layout);
 			this.layout = (CardView) layout;
@@ -29,11 +32,14 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 			room = (TextView) layout.findViewById(R.id.room);
 			name = (TextView) layout.findViewById(R.id.lessonName);
 			teacher = (TextView) layout.findViewById(R.id.teacher);
+
+			this.id = id;
 		}
 	}
 
 	public ScheduleListAdapter(ArrayList<Lesson> lessons) {
 		this.lessons = lessons;
+		ids = 0;
 	}
 
 	@Override
@@ -42,7 +48,7 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 		View v = LayoutInflater.from(parent.getContext())
 			                   .inflate(R.layout.fragment_schedule_card, parent, false);
 
-		return new ViewHolder(v);
+		return new ViewHolder(v, ids++);
 	}
 
 	@Override
@@ -70,4 +76,9 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 		notifyItemRangeInserted(0, lessons.size());
 	}
 
+	@Override
+	public long getItemId(int position)
+	{
+		return lessons.get(position).hashCode();
+	}
 }

@@ -25,4 +25,9 @@ public class Interfaces
 		public void editTypeSelected(String type);
 	}
 
+	public abstract interface dialogCallback
+	{
+		public void dialogDone(MainActivity.dialogs dialogs);
+	}
+
 }
