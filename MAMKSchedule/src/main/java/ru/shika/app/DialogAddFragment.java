@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,19 +13,20 @@ import ru.shika.mamkschedule.mamkschedule.R;
 
 public class DialogAddFragment extends android.support.v4.app.DialogFragment implements View.OnClickListener
 {
-	Interfaces.dialogCallback callback;
+	private Interfaces.dialogCallback callback;
 
-	Button yes, no;
-	DBHelper dbh;
+	private Button yes, no;
+	private DBHelper dbh;
 
-	String name;
+	private String name, item;
 
-	public static DialogAddFragment newInstance(String name)
+	public static DialogAddFragment newInstance(String name, String item)
 	{
 		DialogAddFragment fragment = new DialogAddFragment();
 
 		Bundle args = new Bundle();
 		args.putString("name", name);
+		args.putString("item", item);
 		fragment.setArguments(args);
 
 		return fragment;
@@ -44,9 +46,10 @@ public class DialogAddFragment extends android.support.v4.app.DialogFragment imp
 		super.onCreate(savedInstanceState);
 
 		setStyle(DialogAddFragment.STYLE_NO_FRAME, R.style.AppTheme_Dialog);
-		dbh = new DBHelper(getActivity());
+		dbh = getDBH();
 
 		name = getArguments().getString("name");
+		item = getArguments().getString("item");
 	}
 
 	@Override
@@ -63,6 +66,22 @@ public class DialogAddFragment extends android.support.v4.app.DialogFragment imp
 		return rootView;
 	}
 
+	//For working with activity dbh
+	private DBHelper getDBH()
+	{
+		return ((MainActivity) getActivity()).getDBHelper();
+	}
+
+	private void addDBConnection()
+	{
+		((MainActivity) getActivity()).addDBConnection();
+	}
+
+	private void closeDatabase()
+	{
+		((MainActivity) getActivity()).closeDatabase();
+	}
+
 	@Override
 	public void onClick(View view)
 	{
@@ -70,16 +89,22 @@ public class DialogAddFragment extends android.support.v4.app.DialogFragment imp
 		{
 			case R.id.dialog_yes:
 				SQLiteDatabase db = dbh.getWritableDatabase();
+				addDBConnection();
 
 				ContentValues cv = new ContentValues();
 				cv.put("isEnrolled", 1);
-				String where = "courseId = '"+name+"' or (name = '"+name+"' and courseId = '')";
-				int res = db.update("Courses", cv, where, null);
 
-				dbh.close();
+				String where = "(courseId = ? or (name = ? and courseId = ''))";
+				String[] args = new String[] {name, name, item, item};
+				if(!item.equals("Courses"))
+					where += " and (groups = ? or teacher = ?)";
+				int res = db.update("Courses", cv, where, args);
 
-				callback.dialogDone(MainActivity.dialogs.DIALOG_ADD);
-				MainActivity.showToast("Course added to your schedule");
+				Log.d("Shika", where + " " + res);
+
+				closeDatabase();
+
+				callback.dialogDone(MainActivity.Dialogs.DIALOG_ADD);
 
 				dismiss();
 				break;

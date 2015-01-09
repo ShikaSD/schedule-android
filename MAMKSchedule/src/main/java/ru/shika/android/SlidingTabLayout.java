@@ -20,6 +20,7 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -28,6 +29,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
+import ru.shika.mamkschedule.mamkschedule.R;
 
 /**
  * To be used with ViewPager to provide a tab indicator component which give constant feedback as to
@@ -172,7 +174,11 @@ public class SlidingTabLayout extends HorizontalScrollView {
         TextView textView = new TextView(context);
         textView.setGravity(Gravity.CENTER);
         textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, TAB_VIEW_TEXT_SIZE_SP);
-        textView.setTypeface(Typeface.DEFAULT_BOLD);
+        textView.setTypeface(Typeface.DEFAULT);
+
+        //Custom settings for me
+        textView.setTextColor(context.getResources().getColor(R.color.white));
+        ViewCompat.setAlpha(textView, .7f);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             // If we're running on Honeycomb or newer, then we can use the Theme's
@@ -254,6 +260,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
     public class InternalViewPagerListener implements ViewPager.OnPageChangeListener {
         private int mScrollState;
+        private int mSelectedPage = mViewPager.getCurrentItem();
 
         @Override
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -274,6 +281,30 @@ public class SlidingTabLayout extends HorizontalScrollView {
                 mViewPagerPageChangeListener.onPageScrolled(position, positionOffset,
                         positionOffsetPixels);
             }
+
+            int selectedPage = mSelectedPage;
+            if (position < mSelectedPage && positionOffset < .8f)
+                selectedPage = mSelectedPage - 1;
+            else if (position == mSelectedPage && positionOffset > .2f)
+                selectedPage = mSelectedPage + 1;
+
+            if(mScrollState == ViewPager.SCROLL_STATE_SETTLING)
+                selectedPage = mSelectedPage;
+
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+            {
+                for (int i = 0; i < tabStripChildCount; i++)
+                    ViewCompat.setAlpha(mTabStrip.getChildAt(i), .7f);
+
+                ViewCompat.setAlpha(mTabStrip.getChildAt(selectedPage), 1f);
+            }
+            else
+            {
+                for (int i = 0; i < tabStripChildCount; i++)
+                    ((TextView) mTabStrip.getChildAt(i)).setTextColor(getResources().getColor(R.color.transparent_white));
+
+                ((TextView) mTabStrip.getChildAt(selectedPage)).setTextColor(getResources().getColor(R.color.white));
+            }
         }
 
         @Override
@@ -287,6 +318,8 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
         @Override
         public void onPageSelected(int position) {
+            mSelectedPage = position;
+
             if (mScrollState == ViewPager.SCROLL_STATE_IDLE) {
                 mTabStrip.onViewPagerPageChanged(position, 0f);
                 scrollToTab(position, 0);

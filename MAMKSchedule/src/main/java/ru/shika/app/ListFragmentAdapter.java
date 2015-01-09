@@ -1,7 +1,6 @@
 package ru.shika.app;
 
 import android.content.Context;
-import android.os.Build;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -14,11 +13,11 @@ import ru.shika.mamkschedule.mamkschedule.R;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
+import java.util.Comparator;
 
 public class ListFragmentAdapter extends BaseAdapter
 {
-	private Map<String, Integer> keys;
+	private SparseArray <String> keys;
 	private ArrayList <ArrayList <String>> names;
 	private Context context;
 	private LayoutInflater layoutInflater;
@@ -29,7 +28,8 @@ public class ListFragmentAdapter extends BaseAdapter
 	private boolean showCheckboxes;
 
 
-	public ListFragmentAdapter(Context ctx, Map<String, Integer> keys, ArrayList<ArrayList<String>> names, boolean isCheckingList)
+	public ListFragmentAdapter(Context ctx, SparseArray <String> keys, ArrayList<ArrayList<String>> names, boolean
+		isCheckingList)
 	{
 		this.keys = keys;
 		this.names = names;
@@ -80,17 +80,9 @@ public class ListFragmentAdapter extends BaseAdapter
 			name += "|"+names.get(i).get(j);
 
 		((TextView) v.findViewById(R.id.fragment_list_name)).setText(name);
-		if(keys.containsValue(i))
-			for(String key : keys.keySet())
-			{
-				if (keys.get(key).equals(i))
-				{
-					if(!key.equals(name))
-						((TextView) v.findViewById(R.id.fragment_list_id)).setText(key);
 
-					break;
-				}
-			}
+		if(!keys.get(i).equals(names.get(i).get(0)))
+			((TextView) v.findViewById(R.id.fragment_list_id)).setText(keys.get(i));
 
 		if(isCheckingList)
 		{
@@ -104,8 +96,7 @@ public class ListFragmentAdapter extends BaseAdapter
 			if(showCheckboxes)
 			{
 				checkBox.setVisibility(View.VISIBLE);
-				if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-					checkBox.setButtonDrawable(R.drawable.checkbox);
+				checkBox.setButtonDrawable(R.drawable.checkbox);
 			}
 			else
 				checkBox.setVisibility(View.GONE);
@@ -116,9 +107,32 @@ public class ListFragmentAdapter extends BaseAdapter
 		return v;
 	}
 
-	public void toggle(int position)
+	@Override
+	public void notifyDataSetChanged()
 	{
-		checkedItems.set(position, !checkedItems.get(position));
+		int size = names.size();
+
+		StringComparator comparator = new StringComparator();
+		for(int i = 0; i < size; i++)
+		{
+			Collections.sort(names.get(i), comparator);
+		}
+
+		//Collections.sort(names, new ArrayComparator());
+
+		super.notifyDataSetChanged();
+	}
+
+	public void toggle(int key)
+	{
+		if (key < checkedItems.size())
+			checkedItems.set(key, !checkedItems.get(key));
+		else
+		{
+			while (key > checkedItems.size()) checkedItems.add(Boolean.FALSE);
+			checkedItems.add(Boolean.TRUE);
+		}
+
 		notifyDataSetChanged();
 	}
 
@@ -180,14 +194,7 @@ public class ListFragmentAdapter extends BaseAdapter
 		for(int i = 0; i < size; i++)
 			if(checkedItems.get(i))
 			{
-				if(keys.containsValue(i))
-					for(String key : keys.keySet())
-					{
-						if (keys.get(key).equals(i))
-						{
-							ans[j++] = key;
-						}
-					}
+				ans[j++] = keys.get(i);
 			}
 
 		return ans;
@@ -202,5 +209,37 @@ public class ListFragmentAdapter extends BaseAdapter
 	{
 		showCheckboxes = show;
 		notifyDataSetChanged();
+	}
+
+	public static class StringComparator implements Comparator <String>
+	{
+		@Override
+		public int compare(String o1, String o2)
+		{
+			return o1.toLowerCase().compareTo(o2.toLowerCase());
+		}
+	}
+
+	public class ArrayComparator implements Comparator <ArrayList <String>>
+	{
+		@Override
+		public int compare(ArrayList<String> o1, ArrayList<String> o2)
+		{
+			int i1 = names.indexOf(o1);
+			int i2 = names.indexOf(o2);
+
+			int compareResult = o1.get(0).compareTo(o2.get(0));
+
+			Log.w("Shika", i1 + " " + i2 + " : " + compareResult);
+
+			if(compareResult < 0)
+			{
+				String temp = keys.get(i1);
+				keys.put(i1, keys.get(i2));
+				keys.put(i2, temp);
+			}
+
+			return compareResult;
+		}
 	}
 }

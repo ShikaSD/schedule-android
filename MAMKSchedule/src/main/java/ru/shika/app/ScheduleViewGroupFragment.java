@@ -91,7 +91,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		for (int i = 0; i < 5; i++)
 			lessonsArr.add(new ArrayList<Lesson>());
 
-		dbh = new DBHelper(getActivity());
+		dbh = getDBH();
 
 		group = getArguments().getString("group");
 		teacher = getArguments().getString("teacher");
@@ -144,7 +144,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 		RelativeLayout.LayoutParams lParams =
 			new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
-		lParams.bottomMargin = 22;
+		lParams.bottomMargin = (int) getResources().getDimension(R.dimen.function_button_vertical_margin);
 		lParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
 		lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
 		progress.setLayoutParams(lParams);
@@ -154,6 +154,22 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 		rootView.addView(progress);
 		progress.setVisibility(View.GONE);
+	}
+
+	//For working with activity dbh
+	private DBHelper getDBH()
+	{
+		return ((MainActivity) getActivity()).getDBHelper();
+	}
+
+	private void addDBConnection()
+	{
+		((MainActivity) getActivity()).addDBConnection();
+	}
+
+	private void closeDatabase()
+	{
+		((MainActivity) getActivity()).closeDatabase();
 	}
 
 	private void animationInit()
@@ -217,7 +233,9 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 		//Init tabs
 		tabLayout.setViewPager(viewPager);
-		tabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.light_blue));
+		tabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.orange_accent));
+		tabLayout.setBackgroundColor(getResources().getColor(R.color.light_blue));
+		tabLayout.setDividerColors(getResources().getColor(R.color.light_blue));
 
 		tabLayout.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener()
 		{
@@ -242,22 +260,23 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	@Override
 	public void onDownloadEnd(String result)
 	{
+		pagerAdapter.setTextToEmpty(getString(R.string.no_lessons));
 		progress.startAnimation(disappear);
 
 		if(result.equals("success"))
 		{
-			Log.w("Shika", "Found something");
+			Log.d("Shika", "Found something");
 			getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_SCHEDULE).forceLoad();
 		}
 		else
 		if(result.equals("nothing") || result.equals("no courses"))
 		{
-			Log.w("Shika", "Found nothing");
-			int size = lessonsArr.size();
-			for(int i = 0; i < lessonsArr.size(); i++)
+			Log.d("Shika", "Found nothing");
+			/*int size = lessonsArr.size();
+			for(int i = 0; i < size; i++)
 				lessonsArr.get(i).clear();
 
-			pagerAdapter.notifyDataSetChanged(lessonsArr);
+			pagerAdapter.notifyDataSetChanged(lessonsArr);*/
 		}
 		else
 		{
@@ -272,7 +291,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	@Override
 	public void onDateChanged(Date date)
 	{
-		Log.w("Shika", "dateChanged in Fragment"+ this);
+		//Log.w("Shika", "dateChanged in Fragment"+ this);
 		//This variable changes somehow O_O, so reinit it
 		isOwnSchedule = (group == null && teacher == null && course == null);
 
@@ -282,7 +301,10 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		d.setFirstDayOfWeek(Calendar.MONDAY);
 
 		if(d.get(Calendar.WEEK_OF_YEAR) != globalDate.get(Calendar.WEEK_OF_YEAR))
+		{
 			getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
+			lessonsArr.clear();
+		}
 
 		globalDate.setTime(date);
 		dayOfWeek = getWeek(globalDate);
@@ -294,13 +316,13 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 	public void showError()
 	{
-		MainActivity.showToast("Network error occured. Please check your internet connection");
+		((MainActivity) getActivity()).showToast("Network error occured. Please check your internet connection");
 	}
 
 	@Override
 	public Loader<Cursor> onCreateLoader(int i, Bundle bundle)
 	{
-		Log.w("Shika", "onCreate Loader");
+		//Log.w("Shika", "onCreate Loader");
 		return new ScheduleLoader(getActivity(), dbh, group,
 			teacher, course, globalDate, isOwnSchedule);
 	}
@@ -331,9 +353,15 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 				if(lessons.containsKey(id))
 				{
 					if(lessons.get(id).teacher == null)
+					{
 						Log.w("Shika", "Teacher null on Course name = " + lessons.get(id).name);
+						continue;
+					}
 					if(lessons.get(id).group == null)
+					{
 						Log.w("Shika", "Group null on Course name = " + lessons.get(id).name);
+						continue;
+					}
 
 					if(!lessons.get(id).teacher.equals(cursor.getString(teacher)))
 						lessons.get(id).teacher += ", "+cursor.getString(teacher);
@@ -384,6 +412,8 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 				progress.startAnimation(appear);
 
+				pagerAdapter.setTextToEmpty(getString(R.string.updating));
+
 				downloader.needDownload(this.group, this.teacher, course, dateArg);
 				didUpdate = true;
 			}
@@ -396,7 +426,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 			progress.startAnimation(appear);
 
-			Log.w("Shika", "Found nothing in database, need download");
+			Log.d("Shika", "Found nothing in database, need download");
 
 			//To avoid date changes
 			Calendar dateArg = Calendar.getInstance();
@@ -404,10 +434,12 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 			didUpdate = true;
 
+			pagerAdapter.setTextToEmpty(getString(R.string.updating));
+
 			downloader.needDownload(group, teacher, course, dateArg);
 		}
 
-		dbh.close();
+		closeDatabase();
 	}
 
 	@Override
@@ -424,6 +456,8 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		String course;
 		Calendar date;
 		boolean isOwnSchedule = false;
+
+		int argumentsArrayLength = 5;
 
 		public ScheduleLoader(Context context, DBHelper db, String group, String teacher, String course,
 							  Calendar date, boolean isOwnSchedule)
@@ -444,10 +478,21 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		{
 			Cursor cursor = null;
 			SQLiteDatabase sqdb = db.getReadableDatabase();
+			//As it is "static context"
+			MainActivity.dbConnections++;
+
+			String[] dates;
 			
 			date.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
-			String dates[] = new String[5];
-			for(int i = 0; i < dates.length; i++)
+
+			if(course != null)
+			{
+				dates = new String[argumentsArrayLength + 1];
+				dates[0] = course;
+			}
+			else
+				dates = new String[argumentsArrayLength];
+			for(int i = dates.length - argumentsArrayLength; i < dates.length; i++)
 			{
 				dates[i] = date.get(Calendar.YEAR) - 2000 + "" +
 					(date.get(Calendar.MONTH) + 1 > 9 ? date.get(Calendar.MONTH) + 1 : "0" + (1 + date.get(Calendar.MONTH)))+
@@ -467,8 +512,8 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 			else
 			if(group != null)
 			{
-				cursor = sqdb.query("Schedule", null, "groups like '" + group + "%'and (date like ? or date like ? or" +
-					" date like ? or date like ? or date like ?)", dates, null, null, "start");
+				cursor = sqdb.query("Schedule", null, "groups like '" + group + "%' and (date like ? or date like ? " +
+					"or date like ? or date like ? or date like ?)", dates, null, null, "start");
 			}
 			else
 			if(teacher != null)
@@ -479,11 +524,11 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 			else
 			if(course != null)
 			{
-				cursor = sqdb.query("Schedule", null, "(courseId like '" + course + "%' or lesson like '" + course +
-					"%')and (date like ? or date like ? or date like ? or date like ? or date like ?)", dates, null, null, "start");
+				cursor = sqdb.query("Schedule", null, "(courseId like '" + course + "%' or lesson like ?) and (date " +
+					"like ? or date like ? or date like ? or date like ? or date like ?)", dates, null, null, "start");
 			}
 
-			Log.w("Shika", cursor.getCount() + " found in database");
+			Log.d("Shika", cursor.getCount() + " found in database");
 
 			return cursor;
 		}

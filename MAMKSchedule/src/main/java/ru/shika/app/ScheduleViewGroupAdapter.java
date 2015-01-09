@@ -18,7 +18,7 @@ import java.util.Comparator;
 
 public class ScheduleViewGroupAdapter extends PagerAdapter
 {
-	SparseArray layouts;
+	SparseArray<RelativeLayout> layouts;
 	ArrayList <ArrayList<Lesson>> lessons;
 	SparseArray <ScheduleListAdapter> adapters;
 	String[] titles;
@@ -52,7 +52,7 @@ public class ScheduleViewGroupAdapter extends PagerAdapter
 	{
 		RelativeLayout layout;
 		if (layouts.get(position) != null)
-			layout = (RelativeLayout) layouts.get(position);
+			layout = layouts.get(position);
 		else
 			layout = (RelativeLayout) getItem(container, position);
 
@@ -129,9 +129,9 @@ public class ScheduleViewGroupAdapter extends PagerAdapter
 
 	private void updateVisibility(int position)
 	{
-		RecyclerView recyclerView = (RecyclerView) ((RelativeLayout)layouts.get(position))
+		RecyclerView recyclerView = (RecyclerView) (layouts.get(position))
 			.findViewById(R.id.fragment_schedule_list);
-		TextView empty = (TextView) ((RelativeLayout)layouts.get(position))
+		TextView empty = (TextView) (layouts.get(position))
 			.findViewById(R.id.emptySchedule);
 		if(lessons.get(position).size() == 0)
 		{
@@ -142,6 +142,15 @@ public class ScheduleViewGroupAdapter extends PagerAdapter
 		{
 			empty.setVisibility(View.GONE);
 			recyclerView.setVisibility(View.VISIBLE);
+		}
+	}
+
+	public void setTextToEmpty(String text)
+	{
+		int size = layouts.size();
+		for(int i = 0; i < size; i++)
+		{
+			((TextView) layouts.valueAt(i).findViewById(R.id.emptySchedule)).setText(text);
 		}
 	}
 

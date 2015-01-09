@@ -23,11 +23,12 @@ public class Interfaces
 		public void listItemSelected(String type, String item);
 		public void listItemInEditSelected(String type, String item);
 		public void editTypeSelected(String type);
+		public void dismissProgressView();
 	}
 
 	public abstract interface dialogCallback
 	{
-		public void dialogDone(MainActivity.dialogs dialogs);
+		public void dialogDone(MainActivity.Dialogs dialogs);
 	}
 
 }

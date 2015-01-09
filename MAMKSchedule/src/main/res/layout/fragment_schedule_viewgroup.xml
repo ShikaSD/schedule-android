@@ -4,16 +4,25 @@
 			  android:layout_height = "match_parent"
 			  android:layout_width = "match_parent">
 
-	<ru.shika.android.SlidingTabLayout
-		android:id="@+id/tabs"
-		android:layout_width = "wrap_content"
+	<FrameLayout
+		android:layout_width = "match_parent"
 		android:layout_height = "wrap_content"
-		android:layout_centerHorizontal="true"/>
+		android:background="@color/light_blue"
+		android:id="@+id/tabs_container">
+
+		<ru.shika.android.SlidingTabLayout
+			android:id="@+id/tabs"
+			android:layout_width = "wrap_content"
+			android:layout_height = "wrap_content"
+			android:layout_gravity="center_horizontal"/>
+
+	</FrameLayout>
 
 	<android.support.v4.view.ViewPager
+		android:layout_marginTop="5dp"
 		android:id = "@+id/pager"
 		android:layout_width = "match_parent"
 		android:layout_height = "match_parent"
-		android:layout_below="@+id/tabs">
+		android:layout_below="@+id/tabs_container">
 	</android.support.v4.view.ViewPager>
 </RelativeLayout>

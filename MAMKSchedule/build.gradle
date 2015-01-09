@@ -1,8 +1,15 @@
+apply plugin: 'com.parse'
+
 buildscript {
     repositories {
         jcenter()
+        mavenCentral()
+        maven {
+            url 'https://maven.parse.com/repo'
+        }
     }
     dependencies {
+        classpath 'com.parse.tools:gradle:1.+'
         classpath 'com.android.tools.build:gradle:0.14.2'
     }
 }
@@ -12,9 +19,16 @@ repositories {
     jcenter()
 }
 
+parse {
+    applicationId "eR4X3CWg0H0dQiykPaWPymOLuceIj7XlCWu3SLLi"
+    masterKey "AafJe4bHembFbmp1GxJzobtsLTNQE4u3SXAhgDB0"
+    uploadSymbols true
+    retries 3
+}
+
 android {
     compileSdkVersion 21
-    buildToolsVersion "21.1.1"
+    buildToolsVersion "21.1.2"
 
     defaultConfig {
         applicationId "ru.shika.mamkschedule.mamkschedule"
@@ -33,10 +47,13 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:support-v4:21.0.0'
-    compile 'com.android.support:appcompat-v7:21.0.0'
-    compile 'com.android.support:cardview-v7:21.0.0'
-    compile 'com.android.support:recyclerview-v7:21.0.0'
-    compile 'com.parse.bolts:bolts-android:1.1.2'
+    compile 'com.android.support:support-v4:21.0.3'
+    compile 'com.android.support:appcompat-v7:21.0.3'
+    compile 'com.android.support:cardview-v7:21.0.3'
+    compile 'com.android.support:recyclerview-v7:21.0.3'
+
+    compile 'com.parse.bolts:bolts-android:1.+'
+    compile fileTree(dir: 'libs', include: 'Parse-*.jar')
+    compile fileTree(dir: 'libs', include: 'ParseCrashReporting-*.jar')
     //compile 'com.nineoldandroids:library:2.4.0.+'
 }

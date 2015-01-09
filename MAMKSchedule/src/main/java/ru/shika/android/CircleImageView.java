@@ -32,8 +32,8 @@ public class CircleImageView extends ImageView {
     // PX
     private static final float X_OFFSET = 0f;
     private static final float Y_OFFSET = 1.75f;
-    private float SHADOW_RADIUS = 8f;
-    private int SHADOW_ELEVATION = 8;
+    private float SHADOW_RADIUS = 5f;
+    private int SHADOW_ELEVATION = 5;
 
     private Animation.AnimationListener mListener;
     private int mShadowRadius;

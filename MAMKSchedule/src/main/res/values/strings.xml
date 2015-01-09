@@ -13,6 +13,7 @@
     </array>
 
     <string name = "no_lessons">There are no lessons that day</string>
+    <string name = "updating">Updating…</string>
     <string name = "no_items">There are no items in that list</string>
 
     <string name = "dialog_delete_title">Delete courses</string>
@@ -26,20 +27,21 @@
         <item name="edit">Edit schedule</item>
     </string-array>
     <string-array name="drawer_drawables">
-        <item>@drawable/ic_action_paste</item>
-        <item>@drawable/ic_action_group</item>
-        <item>@drawable/ic_action_search</item>
-        <item>@drawable/ic_action_search</item>
-        <item>@drawable/ic_action_search</item>
+        <item>@drawable/ic_schedule</item>
+        <item>@drawable/ic_groups</item>
+        <item>@drawable/ic_teachers</item>
+        <item>@drawable/ic_courses</item>
+        <item>@drawable/ic_edit</item>
     </string-array>
 
     <string name = "edit_empty">Your personal schedule is empty\nTry to add courses with button below</string>
 
-    <string name = "edit_header">Look for courses with:</string>
+    <string name = "edit_header">Choose course by:</string>
+    <string name = "edit_list_header">Chosen courses:</string>
     <string-array name = "edit_strings">
-        <item>Group</item>
-        <item>Teacher</item>
-        <item>Name</item>
+        <item>Groups</item>
+        <item>Teachers</item>
+        <item>Names</item>
     </string-array>
 
     <string name = "add">ADD</string>

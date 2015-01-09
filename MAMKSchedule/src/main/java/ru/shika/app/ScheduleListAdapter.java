@@ -46,7 +46,7 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 	public ScheduleListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
 	{
 		View v = LayoutInflater.from(parent.getContext())
-			                   .inflate(R.layout.fragment_schedule_card, parent, false);
+			.inflate(R.layout.fragment_schedule_item, parent, false);
 
 		return new ViewHolder(v, ids++);
 	}

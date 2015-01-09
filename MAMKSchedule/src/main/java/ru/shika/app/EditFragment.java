@@ -1,50 +1,50 @@
 package ru.shika.app;
 
 import android.app.Activity;
-import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.view.ActionMode;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.*;
 import ru.shika.mamkschedule.mamkschedule.R;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class EditFragment extends Fragment
 {
 	private Interfaces.groupFragmentCallback callback;
 
 	//To sort them by course id
-	private Map<String, Integer> keys; //Ids
+	private SparseArray <String> keys; //Ids
 	private ArrayList <ArrayList <String>> names; //Full name
 
 	private Button add;
 	private TextView empty;
 
 	private ListView list;
-	private DrawerListAdapter editAdapter;
+	private SimpleAdapter editAdapter;
 	private ListFragmentAdapter listAdapter;
 	private TextView header;
 
 	private String[] strings;
 	private String[] titles;
-	private TypedArray drawables;
-	private ArrayList <Lesson.DrawerItem> drawerItems;
 
 	private ActionMode actionMode;
 
 	private DBHelper dbh;
 
 	public boolean wasInEditMode = false;
+
+	private Animation editOpen, editClose;
 
 
 	@Override
@@ -60,24 +60,18 @@ public class EditFragment extends Fragment
 	{
 		super.onCreate(savedInstanceState);
 
-		keys = new HashMap<String, Integer>();
+		keys = new SparseArray<String>();
 		names = new ArrayList<ArrayList <String>>();
 
 		titles = getResources().getStringArray(R.array.drawer_strings);
-
 		strings = getResources().getStringArray(R.array.edit_strings);
-		drawables = getResources().obtainTypedArray(R.array.drawer_drawables);
 
-		drawerItems = new ArrayList<Lesson.DrawerItem>();
+		dbh = getDBH();
 
-		for(int i = 0; i < strings.length; i++)
-			drawerItems.add(new Lesson.DrawerItem(strings[i], drawables.getDrawable(i)));
-		drawables.recycle();
-
-		dbh = new DBHelper(getActivity());
-
-		editAdapter = new DrawerListAdapter(getActivity(), drawerItems);
+		editAdapter = new SimpleAdapter(getActivity(), strings);
 		listAdapter = new ListFragmentAdapter(getActivity(), keys, names, true);
+
+		animationInit();
 	}
 
 	@Override
@@ -111,7 +105,11 @@ public class EditFragment extends Fragment
 		update();
 
 		if(wasInEditMode)
+		{
 			list.setAdapter(editAdapter);
+			list.setPadding(list.getPaddingLeft() + (int) getResources().getDimension(R.dimen.activity_horizontal_margin),
+				list.getListPaddingTop(), list.getPaddingRight(), list.getPaddingBottom());
+		}
 		if(list.getAdapter() == null)
 			list.setAdapter(listAdapter);
 
@@ -126,43 +124,85 @@ public class EditFragment extends Fragment
 						actionMode = ((MainActivity) getActivity()).startSupportActionMode((MainActivity) getActivity());
 
 					listAdapter.toggle(i);
+
+					if(listAdapter.getCheckedAmount() == 0)
+						actionMode.finish();
+
 					return;
 				}
 
-				switch (i)
-				{
-					case 0:
-						callback.editTypeSelected(titles[1]);
-						break;
-					case 1:
-						callback.editTypeSelected(titles[2]);
-						break;
-					case 2:
-						callback.editTypeSelected(titles[3]);
-						break;
-				}
+				callback.editTypeSelected(titles[i + 1]);
+			}
+		});
+	}
+
+	//For working with activity dbh
+	private DBHelper getDBH()
+	{
+		return ((MainActivity) getActivity()).getDBHelper();
+	}
+
+	private void addDBConnection()
+	{
+		((MainActivity) getActivity()).addDBConnection();
+	}
+
+	private void closeDatabase()
+	{
+		((MainActivity) getActivity()).closeDatabase();
+	}
+
+	private void animationInit()
+	{
+		editOpen = AnimationUtils.loadAnimation(getActivity(), R.anim.calendar_open);
+		editOpen.setAnimationListener(new Animation.AnimationListener()
+		{
+			@Override
+			public void onAnimationStart(Animation animation)
+			{
+				switchToEdit();
+				header.setVisibility(View.INVISIBLE);
+			}
+
+			@Override
+			public void onAnimationEnd(Animation animation)
+			{
+				header.setVisibility(View.VISIBLE);
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation)
+			{
+
+			}
+		});
+		editClose = AnimationUtils.loadAnimation(getActivity(), R.anim.calendar_close);
+		editClose.setAnimationListener(new Animation.AnimationListener()
+		{
+			@Override
+			public void onAnimationStart(Animation animation)
+			{
+				header.setVisibility(View.INVISIBLE);
+			}
+
+			@Override
+			public void onAnimationEnd(Animation animation)
+			{
+				switchToNormal();
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation)
+			{
+
 			}
 		});
 	}
 
 	public void backPressed()
 	{
-		list.setAdapter(listAdapter);
-		list.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
-
-		if(keys.size() > 0)
-		{
-			header.setText("Your courses are:");
-			add.setVisibility(View.GONE);
-			empty.setVisibility(View.GONE);
-		}
-		else
-		{
-			header.setVisibility(View.GONE);
-			list.setVisibility(View.GONE);
-			add.setVisibility(View.VISIBLE);
-			empty.setVisibility(View.VISIBLE);
-		}
+		if(wasInEditMode)
+			list.startAnimation(editClose);
 
 		wasInEditMode = false;
 	}
@@ -175,15 +215,9 @@ public class EditFragment extends Fragment
 
 	public void addClick(View v)
 	{
+		list.startAnimation(editOpen);
+
 		wasInEditMode = true;
-
-		empty.setVisibility(View.GONE);
-		add.setVisibility(View.GONE);
-
-		header.setVisibility(View.VISIBLE);
-		list.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
-		list.setVisibility(View.VISIBLE);
-		list.setAdapter(editAdapter);
 	}
 
 	private void cursorParse(Cursor c)
@@ -201,13 +235,21 @@ public class EditFragment extends Fragment
 				else
 					courseId = c.getString(id);
 
-				if (!keys.containsKey(courseId))
+				int index = -1;
+
+				for(int i = 0; i < keys.size(); i++)
+					if(keys.valueAt(i).equals(courseId))
+					{
+						index = keys.keyAt(i);
+						break;
+					}
+
+				if (index < 0)
 				{
 					names.add(new ArrayList<String>());
-					keys.put(courseId, names.size() - 1);
+					keys.put(names.size() - 1, courseId);
+					index = names.size() - 1;
 				}
-
-				int index = keys.get(courseId);
 
 				if (!names.get(index).contains(c.getString(name)))
 					names.get(index).add(c.getString(name));
@@ -219,8 +261,7 @@ public class EditFragment extends Fragment
 		{
 			//Toast.makeText(getActivity(), "No "+fragmentType.toLowerCase()+" found", Toast.LENGTH_SHORT).show();
 		}
-		c.close();
-		dbh.close();
+		closeDatabase();
 	}
 
 	public void showCheckboxes(boolean show)
@@ -237,29 +278,84 @@ public class EditFragment extends Fragment
 
 	public void update()
 	{
-		names.clear();
-		keys.clear();
+		((MainActivity) getActivity()).showProgressView();
+		Thread thread = new Thread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				names.clear();
+				keys.clear();
 
-		SQLiteDatabase db = dbh.getReadableDatabase();
-		Cursor c = db.rawQuery("select * from Courses where isEnrolled = 1", null);
-		Log.w("Shika", c.getCount() + " in Edit fragment");
-		cursorParse(c);
+				SQLiteDatabase db = dbh.getReadableDatabase();
+				addDBConnection();
+				Cursor c = db.rawQuery("select * from Courses where isEnrolled = 1", null);
+				Log.d("Shika", c.getCount() + " in Edit fragment");
+				cursorParse(c);
 
+				getActivity().runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+
+						if (keys.size() > 0)
+						{
+							header.setText("Your courses are:");
+							header.setVisibility(View.VISIBLE);
+							add.setVisibility(View.GONE);
+							empty.setVisibility(View.GONE);
+						} else
+						{
+							list.setVisibility(View.GONE);
+							header.setVisibility(View.GONE);
+							add.setVisibility(View.VISIBLE);
+							empty.setVisibility(View.VISIBLE);
+						}
+
+						listAdapter.notifyDataSetChanged();
+
+						((MainActivity) getActivity()).dismissProgressView();
+					}
+				});
+			}
+		});
+		thread.start();
+	}
+
+	private void switchToEdit()
+	{
+		list.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
+		list.setVisibility(View.VISIBLE);
+		list.setAdapter(editAdapter);
+		list.setPadding(list.getPaddingLeft() + (int) getResources().getDimension(R.dimen.activity_horizontal_margin),
+			list.getListPaddingTop(), list.getPaddingRight(), list.getPaddingBottom());
+
+		header.setText(R.string.edit_header);
+
+		empty.setVisibility(View.GONE);
+		add.setVisibility(View.GONE);
+	}
+
+	private void switchToNormal()
+	{
+		list.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
+		list.setAdapter(listAdapter);
+		list.setPadding(list.getPaddingLeft() - (int) getResources().getDimension(R.dimen.activity_horizontal_margin),
+			list.getListPaddingTop(), list.getPaddingRight(), list.getPaddingBottom());
 		if(keys.size() > 0)
 		{
-			header.setText("Your courses are:");
+			header.setText(R.string.edit_list_header);
 			header.setVisibility(View.VISIBLE);
 			add.setVisibility(View.GONE);
 			empty.setVisibility(View.GONE);
 		}
 		else
 		{
-			list.setVisibility(View.GONE);
 			header.setVisibility(View.GONE);
+			list.setVisibility(View.GONE);
 			add.setVisibility(View.VISIBLE);
 			empty.setVisibility(View.VISIBLE);
 		}
-
-		listAdapter.notifyDataSetChanged();
 	}
 }

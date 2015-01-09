@@ -71,7 +71,7 @@ public class DialogCallbackFragment extends android.support.v4.app.DialogFragmen
 		switch (view.getId())
 		{
 			case R.id.dialog_yes:
-				callback.dialogDone(MainActivity.dialogs.DIALOG_REMOVE);
+				callback.dialogDone(MainActivity.Dialogs.DIALOG_REMOVE);
 				dismiss();
 				break;
 			case R.id.dialog_no:

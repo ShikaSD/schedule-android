@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<dimen name = "function_button_padding">14dp</dimen>
+	<dimen name = "function_button_add_padding">20dp</dimen>
+
+	<dimen name = "toast_top_padding">17dp</dimen>
+	<dimen name = "toast_bottom_padding">16dp</dimen>
+	<dimen name = "toast_horizontal_padding">24dp</dimen>
+	<dimen name = "toast_text_size">15sp</dimen>
+</resources>
