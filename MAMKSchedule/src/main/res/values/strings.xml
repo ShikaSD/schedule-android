@@ -10,6 +10,8 @@
         <item>WED</item>
         <item>THU</item>
         <item>FRI</item>
+        <item>SAT</item>
+        <item>SUN</item>
     </array>
 
     <string name = "no_lessons">There are no lessons that day</string>
@@ -53,6 +55,8 @@
     <string name = "no">NO</string>
     <string name = "dialog_text">Do you want to add this course?</string>
     <string name = "dialog_header">Course adding</string>
+
+    <string name = "error_network_not_connected">Network error occurred. Please check your internet connection</string>
 
     <!--CalendarView strings -->
     <string name="day_name_format">EEE</string>

@@ -88,7 +88,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		super.onCreate(savedInstanceState);
 
 		lessonsArr = new ArrayList<ArrayList<Lesson>>();
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < 7; i++)
 			lessonsArr.add(new ArrayList<Lesson>());
 
 		dbh = getDBH();
@@ -103,7 +103,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		globalDate = Calendar.getInstance();
 		globalDate.setTimeInMillis(getArguments().getLong("date"));
 		globalDate.setFirstDayOfWeek(Calendar.MONDAY);
-		dayOfWeek = getWeek(globalDate);
+		dayOfWeek = getWeekDay(globalDate);
 
 		animationInit();
 
@@ -303,12 +303,14 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		if(d.get(Calendar.WEEK_OF_YEAR) != globalDate.get(Calendar.WEEK_OF_YEAR))
 		{
 			getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
-			lessonsArr.clear();
+			for(ArrayList<Lesson> i : lessonsArr)
+				i.clear();
 		}
 
-		globalDate.setTime(date);
-		dayOfWeek = getWeek(globalDate);
-		globalDate.setFirstDayOfWeek(Calendar.MONDAY);
+		globalDate = d;
+		dayOfWeek = getWeekDay(globalDate);
+
+		Log.d("Shika", date.toString() + " in Fragment");
 
 		viewPager.setCurrentItem(dayOfWeek);
 		didUpdate = false;
@@ -322,6 +324,9 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	@Override
 	public Loader<Cursor> onCreateLoader(int i, Bundle bundle)
 	{
+		if(dbh == null)
+			dbh = getDBH();
+
 		//Log.w("Shika", "onCreate Loader");
 		return new ScheduleLoader(getActivity(), dbh, group,
 			teacher, course, globalDate, isOwnSchedule);
@@ -450,20 +455,20 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 	public static class ScheduleLoader extends CursorLoader
 	{
-		DBHelper db;
+		DBHelper dbh;
 		String group;
 		String teacher;
 		String course;
 		Calendar date;
 		boolean isOwnSchedule = false;
 
-		int argumentsArrayLength = 5;
+		int argumentsArrayLength = 7;
 
-		public ScheduleLoader(Context context, DBHelper db, String group, String teacher, String course,
+		public ScheduleLoader(Context context, DBHelper dbh, String group, String teacher, String course,
 							  Calendar date, boolean isOwnSchedule)
 		{
 			super(context);
-			this.db = db;
+			this.dbh = dbh;
 			this.group = group;
 			this.teacher = teacher;
 			this.course = course;
@@ -477,7 +482,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		public Cursor loadInBackground()
 		{
 			Cursor cursor = null;
-			SQLiteDatabase sqdb = db.getReadableDatabase();
+			SQLiteDatabase sqdb = dbh.getReadableDatabase();
 			//As it is "static context"
 			MainActivity.dbConnections++;
 
@@ -506,26 +511,28 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 				String query = "select * from Courses inner join Schedule on(Courses.courseId = Schedule.courseId and" +
 					" Courses.name = Schedule.lesson and Courses.teacher = Schedule.teacher and Courses.groups = " +
 					"Schedule.groups) where isEnrolled = 1 and " +
-					"(date like ? or date like ? or date like ? or date like ? or date like ?)";
+					"(date like ? or date like ? or date like ? or date like ? or date like ? or date like ? or date " +
+					"like ?)";
 				cursor = sqdb.rawQuery(query, dates);
 			}
 			else
 			if(group != null)
 			{
 				cursor = sqdb.query("Schedule", null, "groups like '" + group + "%' and (date like ? or date like ? " +
-					"or date like ? or date like ? or date like ?)", dates, null, null, "start");
+					"or date like ? or date like ? or date like ? or date like ? or date " +
+					"like ?)", dates, null, null, "start");
 			}
 			else
 			if(teacher != null)
 			{
-				cursor = sqdb.query("Schedule", null, "teacher like '" + teacher + "%'and (date like ? or date like ?" +
-					" or date like ? or date like ? or date like ?)", dates, null, null, "start");
+				cursor = sqdb.query("Schedule", null, "teacher like '" + teacher + "%' and (date like ? or date like " +
+					"? or date like ? or date like ? or date like ?  or date like ? or date like ?)", dates, null, null, "start");
 			}
 			else
 			if(course != null)
 			{
 				cursor = sqdb.query("Schedule", null, "(courseId like '" + course + "%' or lesson like ?) and (date " +
-					"like ? or date like ? or date like ? or date like ? or date like ?)", dates, null, null, "start");
+					"like ? or date like ? or date like ? or date like ? or date like ?  or date like ? or date like ?)", dates, null, null, "start");
 			}
 
 			Log.d("Shika", cursor.getCount() + " found in database");
@@ -592,7 +599,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		return calendar;
 	}
 
-	private int getWeek(Calendar calendar)
+	private int getWeekDay(Calendar calendar)
 	{
 		switch (calendar.get(Calendar.DAY_OF_WEEK))
 		{
@@ -607,9 +614,9 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 			case Calendar.FRIDAY:
 				return 4;
 			case Calendar.SATURDAY:
-				return 4;
+				return 5;
 			case Calendar.SUNDAY:
-				return 4;
+				return 7;
 
 			default:
 				return 0;
@@ -630,6 +637,10 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 				return Calendar.THURSDAY;
 			case 4:
 				return Calendar.FRIDAY;
+			case 5:
+				return Calendar.SATURDAY;
+			case 6:
+				return Calendar.SUNDAY;
 
 			default:
 				return Calendar.MONDAY;

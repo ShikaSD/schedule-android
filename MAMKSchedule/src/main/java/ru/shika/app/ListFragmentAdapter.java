@@ -216,7 +216,13 @@ public class ListFragmentAdapter extends BaseAdapter
 		@Override
 		public int compare(String o1, String o2)
 		{
-			return o1.toLowerCase().compareTo(o2.toLowerCase());
+			if(o1.length() > o2.length())
+				return 1;
+
+			if(o1.length() == o2.length())
+				return 0;
+
+			return -1;
 		}
 	}
 

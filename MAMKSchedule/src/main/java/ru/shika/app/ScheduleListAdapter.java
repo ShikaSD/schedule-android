@@ -68,12 +68,17 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 
 	public void swapData(ArrayList<Lesson> data)
 	{
-		notifyItemRangeRemoved(0, lessons.size());
+		int size = lessons.size();
+
+		for(int i = 0; i < size; i++)
+			notifyItemRemoved(i);
+
 		lessons = data;
 
-		//Log.w("Shika", lessons.size()+" lessons in adapter");
+		size = data.size();
 
-		notifyItemRangeInserted(0, lessons.size());
+		for(int i = 0; i < size; i++)
+			notifyItemRemoved(0);
 	}
 
 	@Override

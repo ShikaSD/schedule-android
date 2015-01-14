@@ -290,10 +290,10 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			from = keys.size() - 1;
 		if(from < 0 || keys == null) from = 0;
 
+		isFinished = true;
+
 		if(getActivity() != null)
 		{
-			isFinished = true;
-
 			if (progressView.getVisibility() != View.VISIBLE)
 			{
 				progressView.startAnimation(appear);
@@ -309,6 +309,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 
 			if(isVisible())
 			{
+				Log.d("Shika", "restart loader");
 				if (typeName != null)
 					getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_EDIT, null, this);
 				else
@@ -379,6 +380,9 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	@Override
 	public Loader<Cursor> onCreateLoader(int i, Bundle bundle)
 	{
+		if(dbh == null)
+			dbh = getDBH();
+
 		if(i == MainActivity.LOADER_EDIT)
 			return new ListLoader(getActivity(), dbh, typeName, -1);
 
@@ -394,6 +398,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			public void run()
 			{
 				cursorParse(cursor);
+				closeDatabase();
 
 				if(getActivity() != null)
 					getActivity().runOnUiThread(new Runnable()
@@ -401,14 +406,16 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 						@Override
 						public void run()
 						{
-							closeDatabase();
 
 							adapter.notifyDataSetChanged();
 
 							if(adapter.isCheckingList)
 								adapter.check(checks);
 
-							callback.dismissProgressView();
+							Log.d("Shika", isFinished + "");
+
+							if(isFinished || keys.size() > 0)
+								callback.dismissProgressView();
 
 							if(keys.size() == 0)
 							{
@@ -454,7 +461,6 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			SQLiteDatabase db = dbh.getReadableDatabase();
 			//As it is "static context"
 			MainActivity.dbConnections++;
-			Log.d("Shika", MainActivity.dbConnections + " in ListFragment");
 
 			if(from >= 0)
 				c = db.rawQuery("select * from "+ type +" order by name limit "+from+", 10000", null);
