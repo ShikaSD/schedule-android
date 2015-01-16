@@ -3,7 +3,6 @@ package ru.shika.app;
 import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -52,7 +51,6 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 	protected CircleImageView progress;
 	protected MaterialProgressDrawable progressDrawable;
-	private int mCircleWidth, mCircleHeight;
 
 	private Animation appear, disappear;
 
@@ -130,8 +128,6 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 		viewPager = (ViewPager) view.findViewById(R.id.pager);
 		tabLayout = (SlidingTabLayout) view.findViewById(R.id.tabs);
-
-		getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
 	}
 
 	private void createProgressView(ViewGroup rootView) {
@@ -139,7 +135,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		int mCircleWidth = (int) (40 * metrics.density);
 		int mCircleHeight = (int) (40 * metrics.density);
 
-		progress = new CircleImageView(getActivity(), getResources().getColor(R.color.background), 40/2);
+		progress = new CircleImageView(getActivity(), getResources().getColor(R.color.white), 40/2);
 		progressDrawable = new MaterialProgressDrawable(getActivity(), progress);
 
 		RelativeLayout.LayoutParams lParams =
@@ -160,16 +156,6 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	private DBHelper getDBH()
 	{
 		return ((MainActivity) getActivity()).getDBHelper();
-	}
-
-	private void addDBConnection()
-	{
-		((MainActivity) getActivity()).addDBConnection();
-	}
-
-	private void closeDatabase()
-	{
-		((MainActivity) getActivity()).closeDatabase();
 	}
 
 	private void animationInit()
@@ -303,8 +289,10 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		if(d.get(Calendar.WEEK_OF_YEAR) != globalDate.get(Calendar.WEEK_OF_YEAR))
 		{
 			getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
+
 			for(ArrayList<Lesson> i : lessonsArr)
 				i.clear();
+			pagerAdapter.notifyDataSetChanged(lessonsArr);
 		}
 
 		globalDate = d;
@@ -318,7 +306,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 	public void showError()
 	{
-		((MainActivity) getActivity()).showToast("Network error occured. Please check your internet connection");
+		((MainActivity) getActivity()).showToast(getString(R.string.error_network_not_connected));
 	}
 
 	@Override
@@ -327,9 +315,13 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		if(dbh == null)
 			dbh = getDBH();
 
+		//To avoid date changes
+		Calendar date = Calendar.getInstance();
+		date.setTime(globalDate.getTime());
+
 		//Log.w("Shika", "onCreate Loader");
 		return new ScheduleLoader(getActivity(), dbh, group,
-			teacher, course, globalDate, isOwnSchedule);
+			teacher, course, date, isOwnSchedule);
 	}
 
 	//Loader methods, here we update arrays
@@ -339,112 +331,114 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		//Log.w("Shika", "Finish: "+group+"+"+ teacher +"+"+ course+"+"+isOwnSchedule);
 		lessonsArr.clear();
 
-		if(cursor.moveToFirst())
+		try
 		{
-			HashMap <String, Lesson> lessons = new HashMap<String, Lesson>();
-
-			int start = cursor.getColumnIndex("start");
-			int end = cursor.getColumnIndex("end");
-			int room = cursor.getColumnIndex("room");
-			int lesson = cursor.getColumnIndex("lesson");
-			int teacher = cursor.getColumnIndex("teacher");
-			int date = cursor.getColumnIndex("date");
-			int lessonId = cursor.getColumnIndex("lessonId");
-			int group = cursor.getColumnIndex("groups");
-
-			do
+			if (cursor.moveToFirst())
 			{
-				String id = cursor.getString(lessonId);
-				if(lessons.containsKey(id))
+				HashMap<String, Lesson> lessons = new HashMap<String, Lesson>();
+
+				int start = cursor.getColumnIndex("start");
+				int end = cursor.getColumnIndex("end");
+				int room = cursor.getColumnIndex("room");
+				int lesson = cursor.getColumnIndex("lesson");
+				int teacher = cursor.getColumnIndex("teacher");
+				int date = cursor.getColumnIndex("date");
+				int lessonId = cursor.getColumnIndex("lessonId");
+				int group = cursor.getColumnIndex("groups");
+
+				do
 				{
-					if(lessons.get(id).teacher == null)
+					String id = cursor.getString(lessonId);
+					if (lessons.containsKey(id))
 					{
-						Log.w("Shika", "Teacher null on Course name = " + lessons.get(id).name);
+						if (lessons.get(id).teacher == null)
+						{
+							Log.w("Shika", "Teacher null on Course name = " + lessons.get(id).name);
+							continue;
+						}
+						if (lessons.get(id).group == null)
+						{
+							Log.w("Shika", "Group null on Course name = " + lessons.get(id).name);
+							continue;
+						}
+
+						if (!lessons.get(id).teacher.equals(cursor.getString(teacher)))
+							lessons.get(id).teacher += ", " + cursor.getString(teacher);
+						if (!lessons.get(id).group.equals(cursor.getString(group)))
+							lessons.get(id).group += ", " + cursor.getString(group);
 						continue;
 					}
-					if(lessons.get(id).group == null)
-					{
-						Log.w("Shika", "Group null on Course name = " + lessons.get(id).name);
-						continue;
-					}
 
-					if(!lessons.get(id).teacher.equals(cursor.getString(teacher)))
-						lessons.get(id).teacher += ", "+cursor.getString(teacher);
-					if(!lessons.get(id).group.equals(cursor.getString(group)))
-						lessons.get(id).group += ", "+cursor.getString(group);
-					continue;
+					String dateFormat = cursor.getString(date);
+
+					Calendar calendar = Calendar.getInstance();
+					calendar.set(Calendar.YEAR, Integer.parseInt("20" + dateFormat.substring(0, 2)));
+					calendar = setMonth(calendar, dateFormat);
+					calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dateFormat.substring(4)));
+					calendar.setFirstDayOfWeek(Calendar.MONDAY);
+
+					int day = calendar.get(Calendar.DAY_OF_WEEK) - 1;
+
+					lessons.put(cursor.getString(lessonId), new Lesson(cursor.getString(start), cursor.getString(end),
+						cursor.getString(room), cursor.getString(lesson), cursor.getString(teacher), null, cursor.getString(group), day));
 				}
+				while (cursor.moveToNext());
 
-				String dateFormat = cursor.getString(date);
+				ArrayList<Lesson> result;
 
-				Calendar calendar = Calendar.getInstance();
-				calendar.set(Calendar.YEAR, Integer.parseInt("20"+dateFormat.substring(0,2)));
-				calendar = setMonth(calendar, dateFormat);
-				calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dateFormat.substring(4)));
-				calendar.setFirstDayOfWeek(Calendar.MONDAY);
-
-				int day = calendar.get(Calendar.DAY_OF_WEEK) - 1;
-				//Log.w("Shika", "Day : " + day + " " + cursor.getString(lesson));
-
-				lessons.put(cursor.getString(lessonId), new Lesson(cursor.getString(start), cursor.getString(end),
-					cursor.getString(room), cursor.getString(lesson), cursor.getString(teacher), cursor.getString(group),
-					null, day));
-			}
-			while (cursor.moveToNext());
-
-			ArrayList <Lesson> result;
-
-			for(int i = 1; i <= days.length; i++)
-			{
-				result = new ArrayList<Lesson>();
-				for (Lesson temp : lessons.values())
+				for (int i = 1; i <= days.length; i++)
 				{
-					if (temp.day == i)
-						result.add(temp);
+					result = new ArrayList<Lesson>();
+					for (Lesson temp : lessons.values())
+					{
+						if (temp.day == i)
+							result.add(temp);
+					}
+					//Log.w("Shika", "result: " + result.size());
+					lessonsArr.add(result);
 				}
-				//Log.w("Shika", "result: " + result.size());
-				lessonsArr.add(result);
-			}
 
-			pagerAdapter.notifyDataSetChanged(lessonsArr);
-			viewPager.setCurrentItem(dayOfWeek);
+				pagerAdapter.notifyDataSetChanged(lessonsArr);
+				viewPager.setCurrentItem(dayOfWeek);
 
-			if(!didUpdate)
+				if (!didUpdate)
+				{
+					//To avoid date changes
+					Calendar dateArg = Calendar.getInstance();
+					dateArg.setTime(globalDate.getTime());
+
+					progress.startAnimation(appear);
+
+					pagerAdapter.setTextToEmpty(getString(R.string.updating));
+
+					downloader.needDownload(this.group, this.teacher, course, dateArg);
+					didUpdate = true;
+				}
+			} else
 			{
+				for (int i = 0; i < days.length; i++)
+					lessonsArr.add(new ArrayList<Lesson>());
+
+				pagerAdapter.notifyDataSetChanged(lessonsArr);
+
+				progress.startAnimation(appear);
+
+				Log.d("Shika", "Found nothing in database, need download");
+
 				//To avoid date changes
 				Calendar dateArg = Calendar.getInstance();
 				dateArg.setTime(globalDate.getTime());
 
-				progress.startAnimation(appear);
+				didUpdate = true;
 
 				pagerAdapter.setTextToEmpty(getString(R.string.updating));
 
-				downloader.needDownload(this.group, this.teacher, course, dateArg);
-				didUpdate = true;
+				downloader.needDownload(group, teacher, course, dateArg);
 			}
-		} else
-		{
-			for(int i = 0; i < days.length; i++)
-				lessonsArr.add(new ArrayList<Lesson>());
-
-			pagerAdapter.notifyDataSetChanged(lessonsArr);
-
-			progress.startAnimation(appear);
-
-			Log.d("Shika", "Found nothing in database, need download");
-
-			//To avoid date changes
-			Calendar dateArg = Calendar.getInstance();
-			dateArg.setTime(globalDate.getTime());
-
-			didUpdate = true;
-
-			pagerAdapter.setTextToEmpty(getString(R.string.updating));
-
-			downloader.needDownload(group, teacher, course, dateArg);
 		}
+		catch (Exception e){if(e.getMessage() != null) Log.w("Shika", e.getMessage());}
 
-		closeDatabase();
+		cursor.close();
 	}
 
 	@Override
@@ -481,10 +475,9 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		@Override
 		public Cursor loadInBackground()
 		{
+			Log.d("Shika", date.getTime() + "");
+
 			Cursor cursor = null;
-			SQLiteDatabase sqdb = dbh.getReadableDatabase();
-			//As it is "static context"
-			MainActivity.dbConnections++;
 
 			String[] dates;
 			
@@ -502,40 +495,44 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 				dates[i] = date.get(Calendar.YEAR) - 2000 + "" +
 					(date.get(Calendar.MONTH) + 1 > 9 ? date.get(Calendar.MONTH) + 1 : "0" + (1 + date.get(Calendar.MONTH)))+
 					(date.get(Calendar.DAY_OF_MONTH) > 9 ? date.get(Calendar.DAY_OF_MONTH) : "0" + date.get(Calendar.DAY_OF_MONTH));
-				//Log.w("Shika", "Dates are: " + dates[i] + " Group is: " + group);
+				//Log.w("Shika", "Dates are: " + dates[i]);
 				date.add(Calendar.DATE, 1);
 			}
+			//To avoid date changes
+			date.add(Calendar.DATE, -argumentsArrayLength);
 
 			if(isOwnSchedule)
 			{
+				Log.d("Shika", "Here is my own schedule");
 				String query = "select * from Courses inner join Schedule on(Courses.courseId = Schedule.courseId and" +
 					" Courses.name = Schedule.lesson and Courses.teacher = Schedule.teacher and Courses.groups = " +
 					"Schedule.groups) where isEnrolled = 1 and " +
 					"(date like ? or date like ? or date like ? or date like ? or date like ? or date like ? or date " +
 					"like ?)";
-				cursor = sqdb.rawQuery(query, dates);
+				cursor = dbh.rawQuery(query, dates);
 			}
 			else
 			if(group != null)
 			{
-				cursor = sqdb.query("Schedule", null, "groups like '" + group + "%' and (date like ? or date like ? " +
+				Log.d("Shika", "Here is group schedule");
+				cursor = dbh.query("Schedule", null, "groups like '" + group + "%' and (date like ? or date like ? " +
 					"or date like ? or date like ? or date like ? or date like ? or date " +
 					"like ?)", dates, null, null, "start");
 			}
 			else
 			if(teacher != null)
 			{
-				cursor = sqdb.query("Schedule", null, "teacher like '" + teacher + "%' and (date like ? or date like " +
+				Log.d("Shika", "Here is teacher schedule");
+				cursor = dbh.query("Schedule", null, "teacher like '" + teacher + "%' and (date like ? or date like " +
 					"? or date like ? or date like ? or date like ?  or date like ? or date like ?)", dates, null, null, "start");
 			}
 			else
 			if(course != null)
 			{
-				cursor = sqdb.query("Schedule", null, "(courseId like '" + course + "%' or lesson like ?) and (date " +
+				Log.d("Shika", "Here is course schedule");
+				cursor = dbh.query("Schedule", null, "(courseId like '" + course + "%' or lesson like ?) and (date " +
 					"like ? or date like ? or date like ? or date like ? or date like ?  or date like ? or date like ?)", dates, null, null, "start");
 			}
-
-			Log.d("Shika", cursor.getCount() + " found in database");
 
 			return cursor;
 		}
@@ -543,7 +540,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 	public void setDayOfWeek(int day)
 	{
-		globalDate.set(Calendar.DAY_OF_WEEK, getWeekDayNumber(day));
+		globalDate.set(Calendar.DAY_OF_WEEK, getWeekDay(day));
 		dayOfWeek = day;
 
 		((MainActivity) getActivity()).setGlobalDate(globalDate.getTime());
@@ -601,29 +598,11 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 	private int getWeekDay(Calendar calendar)
 	{
-		switch (calendar.get(Calendar.DAY_OF_WEEK))
-		{
-			case Calendar.MONDAY:
-				return 0;
-			case Calendar.TUESDAY:
-				return 1;
-			case Calendar.WEDNESDAY:
-				return 2;
-			case Calendar.THURSDAY:
-				return 3;
-			case Calendar.FRIDAY:
-				return 4;
-			case Calendar.SATURDAY:
-				return 5;
-			case Calendar.SUNDAY:
-				return 7;
-
-			default:
-				return 0;
-		}
+		Log.d("Shika", calendar.get(Calendar.DAY_OF_WEEK) - 2 + " item is in ViewPAger");
+		return calendar.get(Calendar.DAY_OF_WEEK) - 2;
 	}
 
-	private int getWeekDayNumber(int i)
+	private int getWeekDay(int i)
 	{
 		switch (i)
 		{

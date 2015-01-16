@@ -17,6 +17,7 @@
     <string name = "no_lessons">There are no lessons that day</string>
     <string name = "updating">Updating…</string>
     <string name = "no_items">There are no items in that list</string>
+    <string name = "no_courses">There are no courses in your schedule list. Please add them in edit schedule section.</string>
 
     <string name = "dialog_delete_title">Delete courses</string>
     <string name = "dialog_delete_text">Do you want to delete these courses from your schedule?</string>

@@ -2,7 +2,6 @@ package ru.shika.app;
 
 import android.app.Activity;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.view.ActionMode;
@@ -42,7 +41,7 @@ public class EditFragment extends Fragment
 
 	private DBHelper dbh;
 
-	public boolean wasInEditMode = false;
+	public boolean wasInEditMode;
 
 	private Animation editOpen, editClose;
 
@@ -70,6 +69,8 @@ public class EditFragment extends Fragment
 
 		editAdapter = new SimpleAdapter(getActivity(), strings);
 		listAdapter = new ListFragmentAdapter(getActivity(), keys, names, true);
+
+		wasInEditMode = false;
 
 		animationInit();
 	}
@@ -107,9 +108,8 @@ public class EditFragment extends Fragment
 		if(wasInEditMode)
 		{
 			list.setAdapter(editAdapter);
-			list.setPadding(list.getPaddingLeft() + (int) getResources().getDimension(R.dimen.activity_horizontal_margin),
-				list.getListPaddingTop(), list.getPaddingRight(), list.getPaddingBottom());
 		}
+
 		if(list.getAdapter() == null)
 			list.setAdapter(listAdapter);
 
@@ -140,16 +140,6 @@ public class EditFragment extends Fragment
 	private DBHelper getDBH()
 	{
 		return ((MainActivity) getActivity()).getDBHelper();
-	}
-
-	private void addDBConnection()
-	{
-		((MainActivity) getActivity()).addDBConnection();
-	}
-
-	private void closeDatabase()
-	{
-		((MainActivity) getActivity()).closeDatabase();
 	}
 
 	private void animationInit()
@@ -261,7 +251,8 @@ public class EditFragment extends Fragment
 		{
 			//Toast.makeText(getActivity(), "No "+fragmentType.toLowerCase()+" found", Toast.LENGTH_SHORT).show();
 		}
-		closeDatabase();
+
+		c.close();
 	}
 
 	public void showCheckboxes(boolean show)
@@ -287,9 +278,7 @@ public class EditFragment extends Fragment
 				names.clear();
 				keys.clear();
 
-				SQLiteDatabase db = dbh.getReadableDatabase();
-				addDBConnection();
-				Cursor c = db.rawQuery("select * from Courses where isEnrolled = 1", null);
+				Cursor c = dbh.rawQuery("select * from Courses where isEnrolled = 1", null);
 				Log.d("Shika", c.getCount() + " in Edit fragment");
 				cursorParse(c);
 
@@ -299,18 +288,27 @@ public class EditFragment extends Fragment
 					public void run()
 					{
 
-						if (keys.size() > 0)
+						if(!wasInEditMode)
 						{
-							header.setText("Your courses are:");
+							if (keys.size() > 0)
+							{
+								header.setText("Your courses are:");
+								header.setVisibility(View.VISIBLE);
+								add.setVisibility(View.GONE);
+								empty.setVisibility(View.GONE);
+							} else
+							{
+								list.setVisibility(View.GONE);
+								header.setVisibility(View.GONE);
+								add.setVisibility(View.VISIBLE);
+								empty.setVisibility(View.VISIBLE);
+							}
+						}
+						else
+						{
 							header.setVisibility(View.VISIBLE);
 							add.setVisibility(View.GONE);
 							empty.setVisibility(View.GONE);
-						} else
-						{
-							list.setVisibility(View.GONE);
-							header.setVisibility(View.GONE);
-							add.setVisibility(View.VISIBLE);
-							empty.setVisibility(View.VISIBLE);
 						}
 
 						listAdapter.notifyDataSetChanged();

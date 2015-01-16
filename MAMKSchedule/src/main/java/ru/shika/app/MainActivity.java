@@ -7,7 +7,8 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.OvalShape;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -51,8 +52,11 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
     public final static int END_OF_DOWNLOAD = -1;
 
-    public enum Dialogs
-    {DIALOG_ADD, DIALOG_REMOVE}
+    public enum Dialogs {
+        DIALOG_ADD, DIALOG_REMOVE
+    };
+
+    public static boolean isActivityRunning;
 
     protected HashMap<String, Interfaces.Download> interfaces;
 
@@ -81,7 +85,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     private ActionBarDrawerToggle toggle;
 
     protected static DBHelper dbh;
-    protected static int dbConnections;
 
     protected static SharedPreferences pref;
     protected static SharedPreferences.Editor editor;
@@ -103,7 +106,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     private View.OnClickListener calendarButtonClick, addButtonClick;
 
     //We need it in actionMode callbacks
-    private boolean isActionModeActive = false;
+    private boolean isActionModeActive;
     private ActionMode actionMode;
     private String[] itemsToDelete;
 
@@ -128,9 +131,11 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+        isActionModeActive = false;
+        isActivityRunning = true;
+
         //Database init
         dbh = new DBHelper(this);
-        dbConnections = 0;
 
         interfaces = new HashMap<String, Interfaces.Download>();
 
@@ -142,11 +147,14 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         editor = pref.edit();
 
         //Parse init
-        ParseCrashReporting.enable(this);
+        if(!ParseCrashReporting.isCrashReportingEnabled())
+            ParseCrashReporting.enable(this);
+
         Parse.initialize(this, "eR4X3CWg0H0dQiykPaWPymOLuceIj7XlCWu3SLLi", "tZ8L3pIHV1nXUmXj5GASyM2JdbwKFHUDYDuqhKR7");
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        ShapeDrawable bar = new ShapeDrawable(new OvalShape());
 
         //Get drawer's items from resources
         titles = getResources().getStringArray(R.array.drawer_strings);
@@ -225,6 +233,14 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         snackBar = (RelativeLayout) findViewById(R.id.snackbar);
         snackBarText = (TextView) findViewById(R.id.snackbar_text);
         snackBarButton = (TextView) findViewById(R.id.snackbar_button);
+
+        float dp = getResources().getDisplayMetrics().widthPixels * getResources().getDisplayMetrics().density;
+        Log.d("Shika", dp + "");
+        if(dp < 820)
+        {
+            dp -= 70;
+            snackBarText.setMaxWidth((int) dp);
+        }
 
         snackBar.setOnClickListener(new View.OnClickListener()
         {
@@ -485,7 +501,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         mCircleWidth = (int) (56 * metrics.density);
         mCircleHeight = (int) (56 * metrics.density);
 
-        progress = new CircleImageView(this, getResources().getColor(R.color.background), 56/2);
+        progress = new CircleImageView(this, getResources().getColor(R.color.white), 56/2);
         progressDrawable = new MaterialProgressDrawable(this, progress);
 
         FrameLayout.LayoutParams lParams =
@@ -680,6 +696,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     {
         super.onDestroy();
 
+        isActivityRunning = false;
+
         if(scheduleDownloader != null)
             scheduleDownloader.cancel(true);
 
@@ -706,14 +724,14 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         if(visibleFragmentTag.endsWith("ViewGroup") || visibleFragmentTag.endsWith("Chooser"))
         {
             ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
-            ft.setTransition(FragmentTransaction.TRANSIT_EXIT_MASK);
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
         }
         else
         {
             if(!visibleFragmentTag.equals(""))
                 ft.detach(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
 
-            ft.setTransition(FragmentTransaction.TRANSIT_EXIT_MASK);
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
         }
 
         backStack.push(visibleFragmentTag);
@@ -784,7 +802,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         }
 
         ft.attach(fragment);
-        ft.setTransition(FragmentTransaction.TRANSIT_ENTER_MASK);
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.commit();
 
         visibleFragmentTag = tag;
@@ -924,19 +942,14 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                     @Override
                     public void run()
                     {
-                        SQLiteDatabase db = dbh.getWritableDatabase();
-                        addDBConnection();
-
                         ContentValues cv = new ContentValues();
                         cv.put("isEnrolled", 0);
 
                         for (String item : itemsToDelete)
                         {
                             String where = "courseId = ? or (name = ? and courseId = '')";
-                            db.update("Courses", cv, where, new String[]{item, item});
+                            dbh.update("Courses", cv, where, new String[]{item, item});
                         }
-
-                        closeDatabase();
 
                         runOnUiThread(new Runnable()
                         {
@@ -1111,20 +1124,18 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
                     for (ParseObject i : parseObjects)
                     {
-                        SQLiteDatabase db = dbh.getWritableDatabase();
-                        addDBConnection();
-
                         if(param.equals("Courses"))
                         {
-                            Cursor x = db.rawQuery("select count(*) from Courses where courseId = ? and name = ? and " +
-                                    "groups = ? and teacher = ?",
+                            Cursor x = dbh.rawQuery("select count(*) from Courses where courseId = ? and name = ? and" +
+                                    " groups = ? and teacher = ?",
                                 new String[]{i.getString("courseId"), i.getString("name"), i.getString("group"), i.getString("teacher")});
                             if(x.moveToFirst())
                                 if(x.getInt(0) > 0)
                                 {
-                                    closeDatabase();
+                                    x.close();
                                     continue;
                                 }
+                            x.close();
 
                             cv.put("courseId", i.getString("courseId"));
                             cv.put("groups", i.getString("group"));
@@ -1134,11 +1145,10 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                         String name = i.getString("name");
                         cv.put("name", name);
 
-                        db.insert(param, null, cv);
+                        dbh.insert(param, null, cv);
 
                         downloaded++;
                         lastDownloaded = i.getString("name");
-                        closeDatabase();
                     }
 
                     editor.putInt(param + "downloaded", downloaded);
@@ -1150,14 +1160,17 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
                     try
                     {
-                        msg = handler.obtainMessage(downloaded, param);
-                        handler.sendMessage(msg);
+                        if(isActivityRunning)
+                        {
+                            msg = handler.obtainMessage(downloaded, param);
+                            handler.sendMessage(msg);
+                        }
                     }
                     catch (Exception e){e.printStackTrace();}
                 }
             } catch (Exception e)
             {
-                if(handler != null)
+                if(isActivityRunning)
                 {
                     runOnUiThread(new Runnable()
                     {
@@ -1175,21 +1188,22 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 return;
             }
 
-            SQLiteDatabase db = dbh.getReadableDatabase();
-            addDBConnection();
-            
-            Cursor c = db.query(param, null, null, null, null, null, null);
-            isDatabaseEmpty = !c.moveToNext();
+            Cursor c = dbh.rawQuery("select count(*) from '" + param + "'", null);
+            c.moveToFirst();
+            isDatabaseEmpty = (c.getInt(0) <= 0);
 
-            closeDatabase();
+            c.close();
 
             //Remove progress button
             try
             {
-                msg = handler.obtainMessage(END_OF_DOWNLOAD, param);
-                handler.sendMessage(msg);
+                if(isActivityRunning)
+                {
+                    msg = handler.obtainMessage(END_OF_DOWNLOAD, param);
+                    handler.sendMessage(msg);
+                }
             }
-            catch (Exception e){e.printStackTrace();}
+            catch (Exception e){}
 
             long time;
             if (isDatabaseEmpty) time = 0;
@@ -1229,12 +1243,13 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 }
                 catch (Exception e){}
 
-                runOnUiThread(new Runnable()
-                {
-                    @Override
-                    public void run()
+                if(isActivityRunning)
+                    runOnUiThread(new Runnable()
                     {
-                        showToast(getString(R.string.error_network_not_connected));
+                        @Override
+                        public void run()
+                        {
+                            showToast(getString(R.string.error_network_not_connected));
                     }
                 });
                 return;
@@ -1261,7 +1276,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             }
             catch (Exception e)
             {
-                if(getParent() != null)
+                if(isActivityRunning)
                     runOnUiThread(new Runnable()
                     {
                         @Override
@@ -1281,33 +1296,31 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         public void insertValues(ArrayList<ParseObject> parseObjects)
         {
-            SQLiteDatabase db = dbh.getWritableDatabase();
-            addDBConnection();
-            
             ContentValues cv = new ContentValues();
 
             for (ParseObject i : parseObjects)
             {
-                Cursor x = db.rawQuery("select count(*) from Courses where courseId = ? and name = ? and " +
+                Cursor x = dbh.rawQuery("select count(*) from Courses where courseId = ? and name = ? and " +
                         "groups = ? and teacher = ?",
                     new String[]{i.getString("courseId"), i.getString("name"), i.getString("group"), i.getString("teacher")});
                 if(x.moveToFirst())
                     if(x.getInt(0) > 0)
                     {
-                        closeDatabase();
+                        x.close();
                         continue;
                     }
 
+                x.close();
+                cv.put("courseId", i.getString("courseId"));
                 cv.put("courseId", i.getString("courseId"));
                 cv.put("groups", i.getString("group"));
                 cv.put("teacher", i.getString("teacher"));
                 cv.put("name", i.getString("name"));
-                db.insert("Courses", null, cv);
+                dbh.insert("Courses", null, cv);
             }
 
-            handler.sendEmptyMessage(parseObjects.size());
-
-            closeDatabase();
+            if(isActivityRunning)
+                handler.sendEmptyMessage(parseObjects.size());
         }
     }
 
@@ -1389,8 +1402,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             try
             {
                 schedule = (ArrayList<ParseObject>) query.find();
-                SQLiteDatabase db = dbh.getWritableDatabase();
-                addDBConnection();
                 
                 ContentValues cv = new ContentValues();
                 for (ParseObject i : schedule)
@@ -1408,26 +1419,21 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                     counter++;
 
                     //If the same lesson is in the database
-                    Cursor x = db.rawQuery("select * from Schedule where lessonId = ?", new String[]{i.getString("lessonId")});
+                    Cursor x = dbh.rawQuery("select * from Schedule where lessonId = ?", new String[]{i.getString
+                        ("lessonId")});
                     //check for equality
                     if(x.moveToFirst())
                     {
-                        int start = x.getColumnIndex("start");
-                        int group = x.getColumnIndex("groups");
-                        //These two are enough
-                        if(x.getString(start).equals(i.getString("start")) && x.getString(group).equals(i.getString("group")))
-                            continue;
-
-                        db.update("Schedule", cv, "lessonId = ?", new String[]{i.getString("lessonId")});
+                        dbh.update("Schedule", cv, "lessonId = ?", new String[]{i.getString("lessonId")});
+                        x.close();
                         continue;
                     }
 
-                    db.insert("schedule", null, cv);
+                    x.close();
+                    dbh.insert("schedule", null, cv);
                 }
-                closeDatabase();
             } catch (Exception e)
             {
-                e.printStackTrace();
             }
 
             return null;
@@ -1435,10 +1441,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         protected String downloadSchedule(Lesson... lessons)
         {
-            SQLiteDatabase db = dbh.getReadableDatabase();
-            addDBConnection();
-            
-            Cursor c = db.rawQuery("select * from Courses where isEnrolled = 1", null);
+            Cursor c = dbh.rawQuery("select * from Courses where isEnrolled = 1", null);
 
             if(!c.moveToNext())
                 return "no courses";
@@ -1458,19 +1461,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 {
                     ParseQuery <ParseObject> query = new ParseQuery<ParseObject>("Lessons");
 
-                    db = dbh.getReadableDatabase();
-                    addDBConnection();
-
-                    Cursor x = db.rawQuery("select count(*) from Schedule where lesson = ? and courseId = ? and date = ?",
-                        new String[]{c.getString(name), c.getString(courseId), lesson.date});
-                    if(x.moveToFirst())
-                        if(x.getInt(0) > 0)
-                        {
-                            closeDatabase();
-                            counter++;
-                            continue;
-                        }
-
                     query.whereEqualTo("name", c.getString(name));
                     query.whereEqualTo("courseId", c.getString(courseId));
                     query.whereEqualTo("date", lesson.date);
@@ -1478,15 +1468,13 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                     query.whereEqualTo("group", c.getString(group));
 
                     queries.add(query);
-
-                    closeDatabase();
                 }
                 while (c.moveToNext());
 
                 parseQuery(ParseQuery.or(queries));
             }
 
-            closeDatabase();
+            c.close();
 
             if(counter == 0)
             {
@@ -1506,8 +1494,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             {
                 showSnackBar("There are no courses in your schedule list. Please add them in edit schedule section.", "ADD");
             }
-
-            closeDatabase();
 
             //Let's tell fragment that we have done something
             for(Interfaces.Download iFace : interfaces.values())
@@ -1544,26 +1530,9 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         calendar.selectDate(date);
     }
 
-    public void closeDatabase()
-    {
-        //Log.d("Shika", (dbConnections) + " out");
-        if(dbConnections > 1)
-        {
-            dbConnections--;
-            return;
-        }
-        dbh.close();
-    }
-
     public DBHelper getDBHelper()
     {
         return dbh;
-    }
-
-    public void addDBConnection()
-    {
-        dbConnections++;
-        //Log.d("Shika", (dbConnections) + " in");
     }
 
     public void showProgressView()
@@ -1576,8 +1545,31 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     @Override
     public void dismissProgressView()
     {
-        progressDrawable.stop();
-        progress.setVisibility(View.GONE);
-        container.setVisibility(View.VISIBLE);
+        new Thread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                try
+                {
+                    Thread.sleep(100, 0);
+                }
+                catch (Exception e){}
+                finally
+                {
+                    runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            progressDrawable.stop();
+                            progress.setVisibility(View.GONE);
+                            container.setVisibility(View.VISIBLE);
+                        }
+                    });
+                }
+            }
+        }).start();
+
     }
 }

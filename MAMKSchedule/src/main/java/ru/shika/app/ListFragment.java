@@ -3,7 +3,6 @@ package ru.shika.app;
 import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -199,17 +198,6 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 		return ((MainActivity) getActivity()).getDBHelper();
 	}
 
-	private void addDBConnection()
-	{
-		((MainActivity) getActivity()).addDBConnection();
-	}
-
-	private void closeDatabase()
-	{
-		if(getActivity() != null)
-			((MainActivity) getActivity()).closeDatabase();
-	}
-
 	private void animationInit()
 	{
 		appear = (TranslateAnimation) AnimationUtils.loadAnimation(getActivity(), R.anim.progress_drawable_appear);
@@ -264,7 +252,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 		int mCircleWidth = (int) (40 * metrics.density);
 		int mCircleHeight = (int) (40 * metrics.density);
 
-		progressView = new CircleImageView(getActivity(), getResources().getColor(R.color.background), 40/2);
+		progressView = new CircleImageView(getActivity(), getResources().getColor(R.color.white), 40/2);
 		progressDrawable = new MaterialProgressDrawable(getActivity(), progressView);
 
 		RelativeLayout.LayoutParams lParams =
@@ -311,9 +299,12 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			{
 				Log.d("Shika", "restart loader");
 				if (typeName != null)
-					getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_EDIT, null, this);
+					getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_EDIT).forceLoad();
 				else
-					getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_LIST, null, this);
+				{
+					ListLoader.setFrom(from);
+					getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_LIST).forceLoad();
+				}
 			}
 		}
 	}
@@ -326,7 +317,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	{
 		if(c.getCount() == 0 && fragmentType.equals("Courses"))
 		{
-			c = dbh.getReadableDatabase().rawQuery("select * from Courses where isEnrolled = 1", null);
+			c = dbh.rawQuery("select * from Courses where isEnrolled = 1", null);
 			Log.w("Shika", "Shit works");
 		}
 
@@ -368,6 +359,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 				{
 					checks.put(index, true);
 				}
+
 			}
 			while (c.moveToNext());
 		}
@@ -375,6 +367,8 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 		{
 			//Toast.makeText(getActivity(), "No "+fragmentType.toLowerCase()+" found", Toast.LENGTH_SHORT).show();
 		}
+
+		c.close();
 	}
 
 	@Override
@@ -392,45 +386,47 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	@Override
 	public void onLoadFinished(Loader<Cursor> loader, final Cursor cursor)
 	{
-		Thread thread = new Thread(new Runnable()
+		new Thread(new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				cursorParse(cursor);
-				closeDatabase();
 
-				if(getActivity() != null)
-					getActivity().runOnUiThread(new Runnable()
-					{
-						@Override
-						public void run()
+				try
+				{
+					cursorParse(cursor);
+				}
+				catch (Exception e){if(e.getMessage() != null) Log.e("Shika", e.getMessage());}
+				finally
+				{
+					if (MainActivity.isActivityRunning)
+						getActivity().runOnUiThread(new Runnable()
 						{
-
-							adapter.notifyDataSetChanged();
-
-							if(adapter.isCheckingList)
-								adapter.check(checks);
-
-							Log.d("Shika", isFinished + "");
-
-							if(isFinished || keys.size() > 0)
-								callback.dismissProgressView();
-
-							if(keys.size() == 0)
+							@Override
+							public void run()
 							{
-								list.setVisibility(View.GONE);
-								empty.setVisibility(View.VISIBLE);
+
+								adapter.notifyDataSetChanged();
+
+								if (adapter.isCheckingList)
+									adapter.check(checks);
+
+								if (isFinished || keys.size() > 0)
+									callback.dismissProgressView();
+
+								if (keys.size() == 0)
+								{
+									list.setVisibility(View.GONE);
+									empty.setVisibility(View.VISIBLE);
+								} else
+								{
+									list.setVisibility(View.VISIBLE);
+								}
 							}
-							else
-							{
-								list.setVisibility(View.VISIBLE);
-							}
-						}
-					});
+						});
+				}
 			}
-		});
-		thread.start();
+		}).start();
 	}
 
 	@Override
@@ -443,7 +439,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	{
 		DBHelper dbh;
 		String type;
-		int from;
+		public static int from;
 
 		public ListLoader(Context context, DBHelper dbh, String type, int from)
 		{
@@ -453,19 +449,20 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			this.from = from;
 		}
 
+		public static void setFrom(int from)
+		{
+			ListLoader.from = from;
+		}
+
 		@Override
 		public Cursor loadInBackground()
 		{
 			Cursor c;
 
-			SQLiteDatabase db = dbh.getReadableDatabase();
-			//As it is "static context"
-			MainActivity.dbConnections++;
-
 			if(from >= 0)
-				c = db.rawQuery("select * from "+ type +" order by name limit "+from+", 10000", null);
+				c = dbh.rawQuery("select * from "+ type +" order by name limit "+from+", 10000", null);
 			else
-				c = db.rawQuery("select * from Courses where groups like '%"+type+"%' or teacher like '%"+type+"%' " +
+				c = dbh.rawQuery("select * from Courses where groups like '%"+type+"%' or teacher like '%"+type+"%' " +
 					"order by name", null);
 
 			return c;

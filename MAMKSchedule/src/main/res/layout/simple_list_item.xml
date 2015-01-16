@@ -10,6 +10,7 @@
 		android:layout_height = "wrap_content"
 		android:id="@+id/text"
 		android:textSize="16sp"
+		android:paddingLeft="@dimen/activity_horizontal_margin"
 		android:paddingTop="16dp"
 		android:paddingBottom="20dp"/>
 

@@ -19,7 +19,7 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 	{
 		public CardView layout;
 
-		public TextView start, end, room, name, teacher;
+		public TextView start, end, room, name, teacher, group;
 
 		public long id;
 
@@ -32,6 +32,7 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 			room = (TextView) layout.findViewById(R.id.room);
 			name = (TextView) layout.findViewById(R.id.lessonName);
 			teacher = (TextView) layout.findViewById(R.id.teacher);
+			group = (TextView) layout.findViewById(R.id.group);
 
 			this.id = id;
 		}
@@ -59,6 +60,7 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 		holder.room.setText(lessons.get(position).room);
 		holder.name.setText(lessons.get(position).name);
 		holder.teacher.setText(lessons.get(position).teacher);
+		holder.group.setText(lessons.get(position).group);
 	}
 
 	@Override
@@ -77,8 +79,9 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 
 		size = data.size();
 
-		for(int i = 0; i < size; i++)
-			notifyItemRemoved(0);
+		if(size > 0)
+			for(int i = 0; i < size; i++)
+				notifyItemInserted(0);
 	}
 
 	@Override

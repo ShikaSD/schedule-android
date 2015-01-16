@@ -24,34 +24,39 @@
 
                 <RelativeLayout
                     style="@style/AppTheme.SnackBar"
-                    android:orientation="horizontal"
                     android:id="@+id/snackbar"
-                    android:visibility="gone"
                     android:clickable="true"
-                    android:focusable="true">
+                    android:focusable="true"
+                    android:layout_gravity = "bottom"
+                    android:visibility="gone">
 
                     <TextView
                         android:layout_width = "wrap_content"
                         android:layout_height = "wrap_content"
                         android:id="@+id/snackbar_text"
+                        style="@style/AppTheme.SnackBar.Text"
                         android:textSize="14sp"
-                        android:paddingRight="5dp"
                         android:textColor="@color/white"
-                        android:layout_centerVertical="true"
-                        android:text="There are no courses in your schedule list. Please add them in edit schedule section."
-                        android:layout_toLeftOf="@+id/snackbar_button"/>
+                        android:text="@string/no_courses"
+                        android:layout_alignParentTop="false"
+                        android:layout_alignParentBottom="false"
+                        android:layout_centerVertical="true"/>
 
                     <TextView
                         android:layout_width = "wrap_content"
-                        android:layout_height = "wrap_content"
+                        android:layout_height = "match_parent"
                         android:id="@+id/snackbar_button"
                         style="@style/AppTheme.SnackBar.Button"
                         android:text="@string/add"
                         android:clickable="true"
                         android:focusable="true"
                         android:focusableInTouchMode="true"
-                        android:layout_alignTop = "@+id/snackbar_text"
-                        android:layout_alignParentRight = "true"/>
+                        android:gravity="center"
+                        android:layout_gravity="center_vertical"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentTop="false"
+                        android:layout_alignParentBottom="false"
+                        android:layout_toRightOf="@+id/snackbar_text"/>
                 </RelativeLayout>
 
                 <android.support.v7.widget.CardView

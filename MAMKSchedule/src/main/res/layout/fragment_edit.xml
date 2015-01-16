@@ -18,7 +18,9 @@
 		android:id="@+id/fragment_edit_list"
 		android:layout_below="@+id/fragment_edit_list_header"
 		android:layout_marginTop="@dimen/activity_vertical_margin"
-		android:layout_marginBottom="@dimen/activity_vertical_margin"/>
+		android:layout_marginBottom="@dimen/activity_vertical_margin"
+		android:dividerHeight="0dp"
+		android:divider="@android:color/transparent"/>
 
 	<TextView
 		android:layout_width = "wrap_content"

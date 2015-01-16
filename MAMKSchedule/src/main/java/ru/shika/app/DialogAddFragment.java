@@ -2,7 +2,6 @@ package ru.shika.app;
 
 import android.app.Activity;
 import android.content.ContentValues;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -72,25 +71,12 @@ public class DialogAddFragment extends android.support.v4.app.DialogFragment imp
 		return ((MainActivity) getActivity()).getDBHelper();
 	}
 
-	private void addDBConnection()
-	{
-		((MainActivity) getActivity()).addDBConnection();
-	}
-
-	private void closeDatabase()
-	{
-		((MainActivity) getActivity()).closeDatabase();
-	}
-
 	@Override
 	public void onClick(View view)
 	{
 		switch (view.getId())
 		{
 			case R.id.dialog_yes:
-				SQLiteDatabase db = dbh.getWritableDatabase();
-				addDBConnection();
-
 				ContentValues cv = new ContentValues();
 				cv.put("isEnrolled", 1);
 
@@ -98,11 +84,9 @@ public class DialogAddFragment extends android.support.v4.app.DialogFragment imp
 				String[] args = new String[] {name, name, item, item};
 				if(!item.equals("Courses"))
 					where += " and (groups = ? or teacher = ?)";
-				int res = db.update("Courses", cv, where, args);
+				int res = dbh.update("Courses", cv, where, args);
 
 				Log.d("Shika", where + " " + res);
-
-				closeDatabase();
 
 				callback.dialogDone(MainActivity.Dialogs.DIALOG_ADD);
 

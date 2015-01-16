@@ -31,8 +31,16 @@ public class ListFragmentAdapter extends BaseAdapter
 	public ListFragmentAdapter(Context ctx, SparseArray <String> keys, ArrayList<ArrayList<String>> names, boolean
 		isCheckingList)
 	{
+		/*this.keys = new SparseArray<String>();
+		this.names = new ArrayList<ArrayList<String>>();
+
+		int size = keys.size();
+		for(int i = 0; i < size; i++)
+			this.keys.append(keys.keyAt(i), keys.valueAt(i));this.names.addAll(names);    */
+
 		this.keys = keys;
 		this.names = names;
+
 		context = ctx;
 		layoutInflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
@@ -108,14 +116,24 @@ public class ListFragmentAdapter extends BaseAdapter
 	}
 
 	@Override
-	public void notifyDataSetChanged()
+	public void notifyDataSetChanged(/*SparseArray <String> keys, ArrayList<ArrayList<String>> names*/)
 	{
-		int size = names.size();
+		/*this.keys.clear();
+
+		int size = keys.size();
+
+		for(int i = 0; i < size; i++)
+			this.keys.append(keys.keyAt(i), keys.valueAt(i));
+
+		this.names.clear();
+		this.names.addAll(names); */
+
+		int size = this.names.size();
 
 		StringComparator comparator = new StringComparator();
 		for(int i = 0; i < size; i++)
 		{
-			Collections.sort(names.get(i), comparator);
+			Collections.sort(this.names.get(i), comparator);
 		}
 
 		//Collections.sort(names, new ArrayComparator());
