@@ -5,12 +5,10 @@
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
 	android:minHeight="48dp"
-	style="@style/AppTheme.ListItem"
 	android:background="@android:color/transparent">
 
 	<TextView android:layout_width="0dp"
 			  android:layout_height="wrap_content"
-			  android:paddingLeft="@dimen/activity_horizontal_margin"
 			  android:paddingRight="10dp"
 			  android:id="@+id/fragment_list_name"
 			  android:textSize="14sp"

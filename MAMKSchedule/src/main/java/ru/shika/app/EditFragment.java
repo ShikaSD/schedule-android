@@ -107,7 +107,7 @@ public class EditFragment extends Fragment
 
 		if(wasInEditMode)
 		{
-			list.setAdapter(editAdapter);
+			switchToEdit();
 		}
 
 		if(list.getAdapter() == null)
@@ -326,8 +326,6 @@ public class EditFragment extends Fragment
 		list.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
 		list.setVisibility(View.VISIBLE);
 		list.setAdapter(editAdapter);
-		list.setPadding(list.getPaddingLeft() + (int) getResources().getDimension(R.dimen.activity_horizontal_margin),
-			list.getListPaddingTop(), list.getPaddingRight(), list.getPaddingBottom());
 
 		header.setText(R.string.edit_header);
 
@@ -339,8 +337,7 @@ public class EditFragment extends Fragment
 	{
 		list.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
 		list.setAdapter(listAdapter);
-		list.setPadding(list.getPaddingLeft() - (int) getResources().getDimension(R.dimen.activity_horizontal_margin),
-			list.getListPaddingTop(), list.getPaddingRight(), list.getPaddingBottom());
+
 		if(keys.size() > 0)
 		{
 			header.setText(R.string.edit_list_header);

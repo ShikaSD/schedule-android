@@ -10,8 +10,11 @@
 		android:layout_height = "match_parent"
 		android:id="@+id/groupsList"
 
+		style="@style/AppTheme.List"
+
 		android:layout_marginTop="@dimen/activity_vertical_margin"
 		android:layout_marginBottom="@dimen/activity_vertical_margin"
+
 		android:dividerHeight="0dp"
 		android:divider="@android:color/transparent"/>
 

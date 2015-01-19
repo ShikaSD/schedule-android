@@ -66,7 +66,6 @@ public class ScheduleViewGroupAdapter extends PagerAdapter
 		if(adapter == null)
 		{
 			adapter = new ScheduleListAdapter(lessons.get(position));
-			adapter.setHasStableIds(false);
 			adapters.put(position, adapter);
 			//Log.w("Shika", "Add new adapter on position: "+position);
 		}

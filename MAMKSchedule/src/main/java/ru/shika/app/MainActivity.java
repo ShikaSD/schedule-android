@@ -147,8 +147,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         editor = pref.edit();
 
         //Parse init
-        if(!ParseCrashReporting.isCrashReportingEnabled())
-            ParseCrashReporting.enable(this);
+       /* if(!ParseCrashReporting.isCrashReportingEnabled())
+            ParseCrashReporting.enable(this);*/
 
         Parse.initialize(this, "eR4X3CWg0H0dQiykPaWPymOLuceIj7XlCWu3SLLi", "tZ8L3pIHV1nXUmXj5GASyM2JdbwKFHUDYDuqhKR7");
 

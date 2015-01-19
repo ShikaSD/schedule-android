@@ -39,7 +39,7 @@
         <item name = "android:textStyle">bold</item>
     </style>
 
-    <style name = "AppTheme.ListItem" parent="AppTheme">
+    <style name = "AppTheme.List" parent="AppTheme">
         <item name = "android:paddingLeft">@dimen/activity_horizontal_margin</item>
         <item name = "android:paddingRight">@dimen/activity_horizontal_margin</item>
     </style>
