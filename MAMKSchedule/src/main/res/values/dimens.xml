@@ -10,8 +10,10 @@
     <dimen name = "function_button_diameter">56dp</dimen>
     <dimen name = "function_button_padding">10dp</dimen>
     <dimen name = "function_button_add_padding">16dp</dimen>
+
+    <integer name = "snackbar_width">140</integer>
     
-    <dimen name = "calendar_width">240dp</dimen>
+    <dimen name = "calendar_width">300dp</dimen>
 
     <dimen name="calendar_day_headers_paddingbottom">4dp</dimen>
     <dimen name="calendar_month_topmargin">16dp</dimen>

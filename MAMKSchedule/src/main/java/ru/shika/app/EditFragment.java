@@ -31,7 +31,7 @@ public class EditFragment extends Fragment
 
 	private ListView list;
 	private SimpleAdapter editAdapter;
-	private ListFragmentAdapter listAdapter;
+	private EditListAdapter listAdapter;
 	private TextView header;
 
 	private String[] strings;
@@ -68,7 +68,7 @@ public class EditFragment extends Fragment
 		dbh = getDBH();
 
 		editAdapter = new SimpleAdapter(getActivity(), strings);
-		listAdapter = new ListFragmentAdapter(getActivity(), keys, names, true);
+		listAdapter = new EditListAdapter(getActivity(), keys, names, true);
 
 		wasInEditMode = false;
 
@@ -118,7 +118,7 @@ public class EditFragment extends Fragment
 			@Override
 			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
 			{
-				if(list.getAdapter() instanceof ListFragmentAdapter)
+				if(list.getAdapter() instanceof EditListAdapter)
 				{
 					if(listAdapter.getCheckedAmount() == 0)
 						actionMode = ((MainActivity) getActivity()).startSupportActionMode((MainActivity) getActivity());

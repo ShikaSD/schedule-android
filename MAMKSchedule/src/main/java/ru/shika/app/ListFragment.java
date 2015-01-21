@@ -8,6 +8,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -42,7 +44,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	private SparseArray <Boolean> checks;
 
 	private ListFragmentAdapter adapter;
-	private ListView list;
+	private RecyclerView list;
 	private TextView empty;
 
 	private CircleImageView progressView;
@@ -133,11 +135,11 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 
 		if(fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser") )
 		{
-			adapter = new ListFragmentAdapter(getActivity(), keys, names, true);
+			adapter = new ListFragmentAdapter(keys, names, true);
 			adapter.showCheckboxes(true);
 		}
 		else
-			adapter = new ListFragmentAdapter(getActivity(), keys, names, false);
+			adapter = new ListFragmentAdapter(keys, names, false);
 	}
 
 	@Override
@@ -145,39 +147,39 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	{
 		View rootView = inflater.inflate(R.layout.fragment_list, container, false);
 
-		list = (ListView) rootView.findViewById(R.id.groupsList);
+		list = (RecyclerView) rootView.findViewById(R.id.groupsList);
 		empty = (TextView) rootView.findViewById(R.id.empty);
 
 		list.setAdapter(adapter);
-		list.setOnItemClickListener(new AdapterView.OnItemClickListener()
+		list.setLayoutManager(new LinearLayoutManager(getActivity()));
+		list.addOnItemTouchListener(new RecyclerItemClickListener(getActivity(), new RecyclerItemClickListener.OnItemClickListener()
 		{
 			@Override
-			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
+			public void onItemClick(View view, int i)
 			{
-				if(isEditFragment && (fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser")) &&
+				if (isEditFragment && (fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser")) &&
 					adapter.isChecked(i))
 					return;
 
 				String item;
-				if(fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser") )
+				if (fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser"))
 				{
 					item = keys.get(i);
-				}
-				else
+				} else
 					item = names.get(i).get(0);
 
-				if(isEditFragment && typeName == null)
+				Log.d("Shika", i + ": " + item);
+
+				if (isEditFragment && typeName == null)
 				{
 					callback.listItemInEditSelected(fragmentType, item);
-				}
-				else if(typeName != null)
+				} else if (typeName != null)
 				{
 					callback.listItemInEditSelected("Courses", item);
-				}
-				else
+				} else
 					callback.listItemSelected(fragmentType, item);
 			}
-		});
+		}));
 
 		progressInit();
 
@@ -313,7 +315,24 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 	public void onDateChanged(Date date)
 	{}
 
-	private void cursorParse(Cursor c)
+	private int updateList(final int counter)
+	{
+		if(MainActivity.isActivityRunning)
+		{
+			getActivity().runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					adapter.swapData(counter);
+				}
+			});
+			return 0;
+		}
+		return counter;
+	}
+
+	private int cursorParse(Cursor c)
 	{
 		if(c.getCount() == 0 && fragmentType.equals("Courses"))
 		{
@@ -322,6 +341,8 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 		}
 
 		checks.clear();
+		int counter = 0;
+
 		if(c.moveToFirst())
 		{
 			int name = c.getColumnIndex("name");
@@ -329,6 +350,12 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			int isEnrolled = c.getColumnIndex("isEnrolled");
 			do
 			{
+				if(counter > 50)
+				{
+					counter = updateList(counter);
+				}
+
+				boolean flag = false;
 				String courseId;
 
 				if(id == -1 || c.getString(id).equals(""))
@@ -350,15 +377,29 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 					names.add(new ArrayList<String>());
 					keys.put(names.size() - 1, courseId);
 					index = names.size() - 1;
+
+					counter++;
 				}
 
-				if (!names.get(index).contains(c.getString(name)))
-					names.get(index).add(c.getString(name));
+				for(String i : names.get(index))
+				{
+					if(i.replaceAll("[ ,.:;\\\\/-]+", "").toLowerCase().equals(c.getString(name).replaceAll("[ ,.:;\\\\/-]+", "").toLowerCase())
+						|| (fragmentType.contains("Courses") && c.getString(name).equals(courseId)))
+					{
+						flag = true;
+						break;
+					}
+				}
 
 				if(isEnrolled != -1 && c.getInt(isEnrolled) == 1)
 				{
 					checks.put(index, true);
 				}
+
+				if(flag)
+					continue;
+
+				names.get(index).add(c.getString(name));
 
 			}
 			while (c.moveToNext());
@@ -369,6 +410,8 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 		}
 
 		c.close();
+
+		return counter;
 	}
 
 	@Override
@@ -392,13 +435,19 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 			public void run()
 			{
 
+				int counter = 0;
 				try
 				{
-					cursorParse(cursor);
+					counter = cursorParse(cursor);
 				}
-				catch (Exception e){if(e.getMessage() != null) Log.e("Shika", e.getMessage());}
+				catch (Exception e)
+				{
+					if(e.getMessage() != null)
+						Log.e("Shika", e.getMessage());
+				}
 				finally
 				{
+					final int amount = counter;
 					if (MainActivity.isActivityRunning)
 						getActivity().runOnUiThread(new Runnable()
 						{
@@ -406,7 +455,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 							public void run()
 							{
 
-								adapter.notifyDataSetChanged();
+								adapter.swapData(amount);
 
 								if (adapter.isCheckingList)
 									adapter.check(checks);

@@ -2,7 +2,6 @@ package ru.shika.app;
 
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +15,7 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 	private ArrayList<Lesson> lessons;
 	private long ids;
 
-	public static class ViewHolder extends RecyclerView.ViewHolder
+	public class ViewHolder extends RecyclerView.ViewHolder
 	{
 		public CardView layout;
 

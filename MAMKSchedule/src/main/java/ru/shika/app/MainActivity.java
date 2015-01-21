@@ -15,6 +15,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -32,7 +33,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.*;
 import com.parse.Parse;
-import com.parse.ParseCrashReporting;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import ru.shika.android.CalendarPickerView;
@@ -54,7 +54,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
     public enum Dialogs {
         DIALOG_ADD, DIALOG_REMOVE
-    };
+    }
 
     public static boolean isActivityRunning;
 
@@ -154,7 +154,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        ShapeDrawable bar = new ShapeDrawable(new OvalShape());
 
         //Get drawer's items from resources
         titles = getResources().getStringArray(R.array.drawer_strings);
@@ -234,13 +233,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         snackBarText = (TextView) findViewById(R.id.snackbar_text);
         snackBarButton = (TextView) findViewById(R.id.snackbar_button);
 
-        float dp = getResources().getDisplayMetrics().widthPixels * getResources().getDisplayMetrics().density;
-        Log.d("Shika", dp + "");
-        if(dp < 820)
-        {
-            dp -= 70;
-            snackBarText.setMaxWidth((int) dp);
-        }
+        changeSnackBarSize();
 
         snackBar.setOnClickListener(new View.OnClickListener()
         {
@@ -335,26 +328,17 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     public void onConfigurationChanged(Configuration newConfig)
     {
         super.onConfigurationChanged(newConfig);
-        Resources resources = getResources();
-
-        //TODO:change configuration with 820dp changes
-        if(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE)
-            calendarContainer.getLayoutParams().width = (int) resources.getDimension(R.dimen.calendar_width);
-        else
-            calendarContainer.getLayoutParams().width = FrameLayout.LayoutParams.MATCH_PARENT;
+        changeSnackBarSize();
     }
 
     @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState)
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState)
     {
         super.onRestoreInstanceState(savedInstanceState);
 
-        if(savedInstanceState != null)
-        {
-            visibleFragmentTag = savedInstanceState.getString("Fragment");
-            visibleFragmentTagParam = savedInstanceState.getString("FragmentParam");
-            showFragment(visibleFragmentTag, visibleFragmentTagParam);
-        }
+        visibleFragmentTag = savedInstanceState.getString("Fragment");
+        visibleFragmentTagParam = savedInstanceState.getString("FragmentParam");
+        showFragment(visibleFragmentTag, visibleFragmentTagParam);
     }
 
     private void animationsInit()
@@ -498,14 +482,14 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
     private void createProgressView() {
         final DisplayMetrics metrics = getResources().getDisplayMetrics();
-        mCircleWidth = (int) (56 * metrics.density);
+        mCircleWidth = (int) (56 * metrics.density) ;
         mCircleHeight = (int) (56 * metrics.density);
 
         progress = new CircleImageView(this, getResources().getColor(R.color.white), 56/2);
         progressDrawable = new MaterialProgressDrawable(this, progress);
 
         FrameLayout.LayoutParams lParams =
-            new FrameLayout.LayoutParams(mCircleWidth, mCircleHeight);
+            new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         lParams.gravity = Gravity.CENTER;
         progress.setLayoutParams(lParams);
 
@@ -520,16 +504,16 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     private void createFunctionButton()
     {
         Resources resources = getResources();
+        final float density = resources.getDisplayMetrics().density;
 
         final int circleDiameter = (int) resources.getDimension(R.dimen.function_button_diameter);
-
         final int padding = (int) resources.getDimension(R.dimen.function_button_padding);
         mCircleWidth = circleDiameter;
         mCircleHeight = circleDiameter;
         final float xPosition = resources.getDimension(R.dimen.function_button_vertical_margin);
         final float yPosition = resources.getDimension(R.dimen.function_button_horizontal_margin);
 
-        functionButton = new CircleImageView(this, getResources().getColor(R.color.orange_accent), mCircleHeight / 2);
+        functionButton = new CircleImageView(this, getResources().getColor(R.color.orange_accent), (int) (circleDiameter / 2 / density));
 
         RelativeLayout.LayoutParams lParams =
             new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
@@ -539,18 +523,17 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         functionButton.setLayoutParams(lParams);
         functionButton.setPadding(padding, padding, padding, padding);
+        functionButton.setAdjustViewBounds(true);
+        functionButton.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 
         functionButton.setFocusable(true);
         functionButton.setClickable(true);
-        functionButton.setAdjustViewBounds(true);
 
         functionButton.setImageDrawable(resources.getDrawable(R.drawable.ic_calendar));
         ((ViewGroup)(findViewById(R.id.activity_container))).addView(functionButton);
 
         functionButton.setOnClickListener(calendarButtonClick);
         isFunctionButtonVisible = true;
-
-        Log.w("Shika", getResources().getDisplayMetrics().xdpi + "");
     }
 
     public void showToast(String text)
@@ -656,7 +639,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             EditFragment fragment = ((EditFragment)getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
             if(fragment.wasInEditMode)
             {
-                ((EditFragment) getSupportFragmentManager().findFragmentByTag(visibleFragmentTag)).backPressed();
+                fragment.backPressed();
                 functionButton.startAnimation(buttonOpen);
                 return;
             }
@@ -1397,48 +1380,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             return "success";
         }
 
-        protected String parseQuery(ParseQuery <ParseObject> query)
-        {
-            try
-            {
-                schedule = (ArrayList<ParseObject>) query.find();
-                
-                ContentValues cv = new ContentValues();
-                for (ParseObject i : schedule)
-                {
-                    cv.put("groups", i.getString("group"));
-                    cv.put("date", i.getString("date"));
-                    cv.put("lesson", i.getString("name"));
-                    cv.put("teacher", i.getString("teacher"));
-                    cv.put("room", i.getString("room"));
-                    cv.put("start", i.getString("start"));
-                    cv.put("end", i.getString("end"));
-                    cv.put("lessonId", i.getString("lessonId"));
-                    cv.put("courseId", i.getString("courseId"));
-
-                    counter++;
-
-                    //If the same lesson is in the database
-                    Cursor x = dbh.rawQuery("select * from Schedule where lessonId = ?", new String[]{i.getString
-                        ("lessonId")});
-                    //check for equality
-                    if(x.moveToFirst())
-                    {
-                        dbh.update("Schedule", cv, "lessonId = ?", new String[]{i.getString("lessonId")});
-                        x.close();
-                        continue;
-                    }
-
-                    x.close();
-                    dbh.insert("schedule", null, cv);
-                }
-            } catch (Exception e)
-            {
-            }
-
-            return null;
-        }
-
         protected String downloadSchedule(Lesson... lessons)
         {
             Cursor c = dbh.rawQuery("select * from Courses where isEnrolled = 1", null);
@@ -1482,6 +1423,48 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             }
 
             return "success";
+        }
+
+        protected String parseQuery(ParseQuery <ParseObject> query)
+        {
+            try
+            {
+                schedule = (ArrayList<ParseObject>) query.find();
+                
+                ContentValues cv = new ContentValues();
+                for (ParseObject i : schedule)
+                {
+                    cv.put("groups", i.getString("group"));
+                    cv.put("date", i.getString("date"));
+                    cv.put("lesson", i.getString("name"));
+                    cv.put("teacher", i.getString("teacher"));
+                    cv.put("room", i.getString("room"));
+                    cv.put("start", i.getString("start"));
+                    cv.put("end", i.getString("end"));
+                    cv.put("lessonId", i.getString("lessonId"));
+                    cv.put("courseId", i.getString("courseId"));
+
+                    counter++;
+
+                    //If the same lesson is in the database
+                    Cursor x = dbh.rawQuery("select * from Schedule where lessonId = ?", new String[]{i.getString
+                        ("lessonId")});
+                    //check for equality
+                    if(x.moveToFirst())
+                    {
+                        dbh.update("Schedule", cv, "lessonId = ?", new String[]{i.getString("lessonId")});
+                        x.close();
+                        continue;
+                    }
+
+                    x.close();
+                    dbh.insert("schedule", null, cv);
+                }
+            } catch (Exception e)
+            {
+            }
+
+            return null;
         }
 
         @Override
@@ -1545,31 +1528,22 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     @Override
     public void dismissProgressView()
     {
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                try
-                {
-                    Thread.sleep(100, 0);
-                }
-                catch (Exception e){}
-                finally
-                {
-                    runOnUiThread(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            progressDrawable.stop();
-                            progress.setVisibility(View.GONE);
-                            container.setVisibility(View.VISIBLE);
-                        }
-                    });
-                }
-            }
-        }).start();
+        progressDrawable.stop();
+        progress.setVisibility(View.GONE);
+        container.setVisibility(View.VISIBLE);
+    }
 
+    private void changeSnackBarSize()
+    {
+        float dp = getResources().getDisplayMetrics().widthPixels;
+        dp *= .75f;
+        snackBarText.setMaxWidth((int) dp);
+
+        dp = getResources().getDisplayMetrics().widthPixels;
+        dp *= .25f;
+        dp -= 45 * getResources().getDisplayMetrics().density;
+        dp /= 2;
+        snackBarButton.setPadding((int) (dp * getResources().getDisplayMetrics().density), snackBarButton.getPaddingTop(),
+            (int) (dp * getResources().getDisplayMetrics().density), snackBarButton.getPaddingBottom());
     }
 }

@@ -1,14 +1,13 @@
 package ru.shika.app;
 
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.CheckBox;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import ru.shika.mamkschedule.mamkschedule.R;
 
@@ -16,23 +15,24 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapter.ViewHolder>
+public class EditListAdapter extends BaseAdapter
 {
 	private SparseArray <String> keys;
 	private ArrayList <ArrayList <String>> names;
+	private Context context;
+	private LayoutInflater layoutInflater;
 
 	private int layoutId;
 	public boolean isCheckingList;
 	private ArrayList<Boolean> checkedItems;
 	private boolean showCheckboxes;
 
-	private int size;
 
-	public ListFragmentAdapter(SparseArray <String> keys, ArrayList<ArrayList<String>> names, boolean isCheckingList)
+	public EditListAdapter(Context ctx, SparseArray <String> keys, ArrayList<ArrayList<String>> names, boolean
+		isCheckingList)
 	{
 		/*this.keys = new SparseArray<String>();
 		this.names = new ArrayList<ArrayList<String>>();
-
 		int size = keys.size();
 		for(int i = 0; i < size; i++)
 			this.keys.append(keys.keyAt(i), keys.valueAt(i));this.names.addAll(names);    */
@@ -40,7 +40,8 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 		this.keys = keys;
 		this.names = names;
 
-		size = keys.size();
+		context = ctx;
+		layoutInflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 		this.isCheckingList = isCheckingList;
 		showCheckboxes = false;
@@ -54,34 +55,16 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 			layoutId = R.layout.fragment_list_item;
 	}
 
-	public class ViewHolder extends RecyclerView.ViewHolder
+	@Override
+	public int getCount()
 	{
-		public LinearLayout layout;
-
-		public TextView name, courseId;
-		public CheckBox check;
-
-		public ViewHolder(View itemView)
-		{
-			super(itemView);
-
-			layout = (LinearLayout) itemView;
-
-			name = (TextView) layout.findViewById(R.id.fragment_list_name);
-			courseId = (TextView) layout.findViewById(R.id.fragment_list_id);
-
-			if(isCheckingList)
-				check = (CheckBox) layout.findViewById(R.id.list_checkbox);
-		}
+		return names.size();
 	}
 
 	@Override
-	public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i)
+	public Object getItem(int i)
 	{
-		View v = LayoutInflater.from(viewGroup.getContext())
-			.inflate(layoutId, viewGroup, false);
-
-		return new ViewHolder(v);
+		return names.get(i);
 	}
 
 	@Override
@@ -91,24 +74,22 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 	}
 
 	@Override
-	public int getItemCount()
+	public View getView(int i, View view, ViewGroup viewGroup)
 	{
-		return keys.size();
-	}
+		View v = view;
+		if (v == null) {
+			v = layoutInflater.inflate(layoutId, viewGroup, false);
+		}
 
-	@Override
-	public void onBindViewHolder(ViewHolder viewHolder, int i)
-	{
+		int size = names.get(i).size();
 		String name = names.get(i).get(0);
 		/*for(int j = 1; j < size; j++)
 			name += "|"+names.get(i).get(j);*/
 
-		viewHolder.name.setText(name);
+		((TextView) v.findViewById(R.id.fragment_list_name)).setText(name);
 
 		if(!keys.get(i).equals(names.get(i).get(0)))
-			viewHolder.courseId.setText(keys.get(i));
-		else
-			viewHolder.courseId.setText("");
+			((TextView) v.findViewById(R.id.fragment_list_id)).setText(keys.get(i));
 
 		if(isCheckingList)
 		{
@@ -116,19 +97,25 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 				while(checkedItems.size() - 1 < i)
 					checkedItems.add(Boolean.FALSE);
 
-			viewHolder.check.setChecked(checkedItems.get(i));
+			CheckBox checkBox = ((CheckBox) v.findViewById(R.id.list_checkbox));
+			checkBox.setChecked(checkedItems.get(i));
 
 			if(showCheckboxes)
 			{
-				viewHolder.check.setVisibility(View.VISIBLE);
-				viewHolder.check.setButtonDrawable(R.drawable.checkbox);
+				checkBox.setVisibility(View.VISIBLE);
+				checkBox.setButtonDrawable(R.drawable.checkbox);
 			}
 			else
-				viewHolder.check.setVisibility(View.GONE);
+				checkBox.setVisibility(View.GONE);
 		}
+
+		v.clearFocus();
+
+		return v;
 	}
 
-	public void swapData(int amount)
+	@Override
+	public void notifyDataSetChanged()
 	{
 		int size = this.names.size();
 
@@ -138,9 +125,9 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 			Collections.sort(this.names.get(i), comparator);
 		}
 
-		notifyDataSetChanged();
-
 		//Collections.sort(names, new ArrayComparator());
+
+		super.notifyDataSetChanged();
 	}
 
 	public void toggle(int key)
@@ -218,7 +205,7 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 			}
 
 		return ans;
- 	}
+	}
 
 	public boolean isChecked(int position)
 	{

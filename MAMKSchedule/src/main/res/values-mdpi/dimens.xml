@@ -3,6 +3,8 @@
 	<dimen name = "function_button_padding">18dp</dimen>
 	<dimen name = "function_button_add_padding">24dp</dimen>
 
+	<dimen name = "calendar_width">300dp</dimen>
+
 	<dimen name = "toast_top_padding">10dp</dimen>
 	<dimen name = "toast_bottom_padding">9dp</dimen>
 	<dimen name = "toast_horizontal_padding">17dp</dimen>
