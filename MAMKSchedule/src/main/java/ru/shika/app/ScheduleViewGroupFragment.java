@@ -343,31 +343,38 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 				int lesson = cursor.getColumnIndex("lesson");
 				int teacher = cursor.getColumnIndex("teacher");
 				int date = cursor.getColumnIndex("date");
-				int lessonId = cursor.getColumnIndex("lessonId");
 				int group = cursor.getColumnIndex("groups");
+				int courseId = cursor.getColumnIndex("courseId");
 
 				do
 				{
-					String id = cursor.getString(lessonId);
-					if (lessons.containsKey(id))
+					String id = cursor.getString(courseId);
+
+					boolean equals = false;
+
+					while (lessons.containsKey(id))
 					{
-						if (lessons.get(id).teacher == null)
+						Lesson temp = lessons.get(id);
+
+						if(temp.date.equals(cursor.getString(date)) && temp.start.equals(cursor.getString(start))
+							&& temp.end.equals(cursor.getString(end)) && temp.room.equals(cursor.getString(room))
+							&& temp.name.equals(cursor.getString(lesson)))
 						{
-							Log.w("Shika", "Teacher null on Course name = " + lessons.get(id).name);
-							continue;
-						}
-						if (lessons.get(id).group == null)
-						{
-							Log.w("Shika", "Group null on Course name = " + lessons.get(id).name);
-							continue;
+							if(!temp.group.equals(cursor.getString(group)))
+								temp.group += ", " + cursor.getString(group);
+
+							if(!temp.teacher.equals(cursor.getString(teacher)))
+								temp.teacher += ", " + cursor.getString(teacher);
+
+							equals = true;
+							break;
 						}
 
-						if (!lessons.get(id).teacher.equals(cursor.getString(teacher)))
-							lessons.get(id).teacher += ", " + cursor.getString(teacher);
-						if (!lessons.get(id).group.equals(cursor.getString(group)))
-							lessons.get(id).group += ", " + cursor.getString(group);
-						continue;
+						id += "$";
 					}
+
+					if(equals)
+						continue;
 
 					String dateFormat = cursor.getString(date);
 
@@ -379,8 +386,8 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 					int day = calendar.get(Calendar.DAY_OF_WEEK) - 1;
 
-					lessons.put(cursor.getString(lessonId), new Lesson(cursor.getString(start), cursor.getString(end),
-						cursor.getString(room), cursor.getString(lesson), cursor.getString(teacher), null, cursor.getString(group), day));
+					lessons.put(id, new Lesson(cursor.getString(start), cursor.getString(end),
+						cursor.getString(room), cursor.getString(lesson), cursor.getString(teacher), dateFormat, cursor.getString(group), day));
 				}
 				while (cursor.moveToNext());
 
