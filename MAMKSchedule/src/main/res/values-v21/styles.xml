@@ -2,7 +2,7 @@
 <resources>
 	<style name = "AppTheme.Button" parent="TextAppearance.AppCompat.Button">
 		<item name = "android:background">@drawable/button</item>
-		<item name="android:textColor">@drawable/button_text_color</item>
+		<item name="android:textColor">@color/light_blue</item>
 		<item name = "android:textStyle">bold</item>
 		<item name = "android:textSize">16sp</item>
 		<item name = "android:minWidth">64dp</item>

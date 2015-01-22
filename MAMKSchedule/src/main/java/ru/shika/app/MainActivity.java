@@ -7,8 +7,6 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.database.Cursor;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -29,8 +27,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.*;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
+import android.view.animation.*;
 import android.widget.*;
 import com.parse.Parse;
 import com.parse.ParseObject;
@@ -57,6 +54,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     }
 
     public static boolean isActivityRunning;
+    public static boolean isProgressRunning;
 
     protected HashMap<String, Interfaces.Download> interfaces;
 
@@ -120,6 +118,12 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     private Animation snackBarOpen;
     private Animation snackBarClose;
 
+    private TranslateAnimation progressMainShow;
+    private TranslateAnimation progressMainDismiss;
+
+    private TranslateAnimation containerShow;
+    private TranslateAnimation containerDismiss;
+
     //SnackBar
     protected RelativeLayout snackBar;
     protected TextView snackBarText;
@@ -132,6 +136,9 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         setContentView(R.layout.main);
 
         isActionModeActive = false;
+        isProgressRunning = false;
+        isFunctionButtonVisible = true;
+
         isActivityRunning = true;
 
         //Database init
@@ -212,21 +219,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
-
-        backStack = new Stack<String>();
-        //Fragment init
-        if(savedInstanceState == null)
-        {
-            visibleFragmentTag = "";
-            showFragment(titles[0], titles[0]);
-            backStack.clear();
-        }
-        else
-        {
-            visibleFragmentTag = savedInstanceState.getString("Fragment");
-            visibleFragmentTagParam = savedInstanceState.getString("FragmentParam");
-            showFragment(visibleFragmentTag, visibleFragmentTagParam);
-        }
 
         //SnackBar Init
         snackBar = (RelativeLayout) findViewById(R.id.snackbar);
@@ -313,6 +305,21 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         //Init animations
         animationsInit();
+
+        backStack = new Stack<String>();
+        //Fragment init
+        if(savedInstanceState == null)
+        {
+            visibleFragmentTag = "";
+            showFragment(titles[0], titles[0]);
+            backStack.clear();
+        }
+        else
+        {
+            visibleFragmentTag = savedInstanceState.getString("Fragment");
+            visibleFragmentTagParam = savedInstanceState.getString("FragmentParam");
+            showFragment(visibleFragmentTag, visibleFragmentTagParam);
+        }
     }
 
     @Override
@@ -653,10 +660,10 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
-            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+           // ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
 
             ft.attach(getSupportFragmentManager().findFragmentByTag(prevFragment));
-            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+           // ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
             ft.commit();
 
             visibleFragmentTag = prevFragment;
@@ -689,7 +696,10 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
     public void showFragment(String tag, String param)
     {
-        if(snackBar != null && snackBar.getVisibility() == View.VISIBLE)
+        if(progress.getVisibility() == View.VISIBLE)
+            dismissProgressView();
+
+        if(snackBar.getVisibility() == View.VISIBLE)
             snackBar.startAnimation(snackBarClose);
 
         if(isActionModeActive)
@@ -707,14 +717,14 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         if(visibleFragmentTag.endsWith("ViewGroup") || visibleFragmentTag.endsWith("Chooser"))
         {
             ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
-            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+           // ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
         }
         else
         {
             if(!visibleFragmentTag.equals(""))
                 ft.detach(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
 
-            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
+           // ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
         }
 
         backStack.push(visibleFragmentTag);
@@ -785,7 +795,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         }
 
         ft.attach(fragment);
-        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        //ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.commit();
 
         visibleFragmentTag = tag;
@@ -1342,7 +1352,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             ArrayList <ParseQuery <ParseObject>> queries = new ArrayList<ParseQuery<ParseObject>>();
             for(Lesson lesson : lessons)
             {
-                //TODO: lessonsid with update... Parse base update
                 ParseQuery<ParseObject> query = ParseQuery.getQuery("Lessons");
 
                 if(lesson == null){ Log.d("Shika", "lesson == null"); continue;}
@@ -1386,7 +1395,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
             if(!c.moveToNext())
                 return "no courses";
-
+            //
             int courseId = c.getColumnIndex("courseId");
             int name = c.getColumnIndex("name");
             int teacher = c.getColumnIndex("teacher");
@@ -1520,6 +1529,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
     public void showProgressView()
     {
+        isProgressRunning = true;
+
         container.setVisibility(View.GONE);
         progress.setVisibility(View.VISIBLE);
         progressDrawable.start();
@@ -1528,6 +1539,8 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     @Override
     public void dismissProgressView()
     {
+        isProgressRunning = false;
+
         progressDrawable.stop();
         progress.setVisibility(View.GONE);
         container.setVisibility(View.VISIBLE);

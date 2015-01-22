@@ -4,6 +4,6 @@
 	<dimen name = "function_button_horizontal_margin">16dp</dimen>
 
 	<dimen name = "function_button_diameter">64dp</dimen>
-	<dimen name = "function_button_padding">20dp</dimen>
-	<dimen name = "function_button_add_padding">26dp</dimen>
+	<dimen name = "function_button_padding">18dp</dimen>
+	<dimen name = "function_button_add_padding">24dp</dimen>
 </resources>

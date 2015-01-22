@@ -1,0 +1,10 @@
+android {
+    signingConfigs {
+        release {
+            storeFile file("C:\\Ghjuf\\Android\\keystore\\keystore.jks")
+                    storePassword "Oo3WcEf"
+                    keyAlias "Shika"
+                    keyPassword "Oo3WcEf"
+        }
+    }
+}

@@ -102,14 +102,14 @@ public class ScheduleViewGroupAdapter extends PagerAdapter
 		object = null;
 	}
 
-	public void notifyDataSetChanged(ArrayList <ArrayList <Lesson>> list)
+	public void notifyDataSetChanged()
 	{
-		for(int i = 0; i < list.size(); i++)
+		for(int i = 0; i < lessons.size(); i++)
 		{
-			Collections.sort(list.get(i), comparator);
+			Collections.sort(lessons.get(i), comparator);
 			try
 			{
-				adapters.get(i).swapData(list.get(i));
+				adapters.get(i).notifyDataSetChanged();
 				//Log.w("Shika", "Adapter in update: "+i);
 				updateVisibility(i);
 			}
@@ -117,7 +117,6 @@ public class ScheduleViewGroupAdapter extends PagerAdapter
 		}
 		//Log.w("Shika", "Adapter array contains: "+adapters.size());
 		//logArray(adapters);
-		lessons = list;
 	}
 
 	@Override

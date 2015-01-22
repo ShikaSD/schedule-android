@@ -1,4 +1,5 @@
 apply plugin: 'com.parse'
+apply from: 'signing.gradle'
 
 buildscript {
     repositories {
@@ -36,11 +37,12 @@ android {
         targetSdkVersion 21
         versionCode 1
         versionName "1.0"
-    }
-    buildTypes {
-        release {
-            runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+        buildTypes {
+            release {
+                runProguard true
+                proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            }
         }
     }
 }

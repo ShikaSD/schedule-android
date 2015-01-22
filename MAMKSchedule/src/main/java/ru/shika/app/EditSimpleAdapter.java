@@ -8,14 +8,14 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 import ru.shika.mamkschedule.mamkschedule.R;
 
-public class SimpleAdapter extends BaseAdapter
+public class EditSimpleAdapter extends BaseAdapter
 {
 	private Context context;
 	private LayoutInflater layoutInflater;
 	private String[] items;
 
 
-	public SimpleAdapter(Context ctx, String[] items)
+	public EditSimpleAdapter(Context ctx, String[] items)
 	{
 		context = ctx;
 		layoutInflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);

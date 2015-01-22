@@ -139,8 +139,6 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 		}
 
 		notifyDataSetChanged();
-
-		//Collections.sort(names, new ArrayComparator());
 	}
 
 	public void toggle(int key)

@@ -2,6 +2,7 @@ package ru.shika.app;
 
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -66,23 +67,6 @@ public class ScheduleListAdapter extends RecyclerView.Adapter <ScheduleListAdapt
 	@Override
 	public int getItemCount() {
 		return lessons.size();
-	}
-
-	public void swapData(ArrayList<Lesson> data)
-	{
-		//Big bug here
-		int size = lessons.size();
-
-		for(int i = 0; i < size; i++)
-			notifyItemRemoved(0);
-
-		lessons = data;
-
-		size = data.size();
-
-		if(size > 0)
-			for(int i = 0; i < size; i++)
-				notifyItemInserted(0);
 	}
 
 	@Override

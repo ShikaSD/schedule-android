@@ -71,6 +71,20 @@ public class DialogAddFragment extends android.support.v4.app.DialogFragment imp
 		return ((MainActivity) getActivity()).getDBHelper();
 	}
 
+	private void addToSchedule(final String where, final String[] args, final ContentValues cv)
+	{
+		new Thread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				int res = dbh.update("Courses", cv, where, args);
+
+				Log.d("Shika", where + " " + res);
+			}
+		}).start();
+	}
+
 	@Override
 	public void onClick(View view)
 	{
@@ -84,9 +98,8 @@ public class DialogAddFragment extends android.support.v4.app.DialogFragment imp
 				String[] args = new String[] {name, name, item, item};
 				if(!item.equals("Courses"))
 					where += " and (groups = ? or teacher = ?)";
-				int res = dbh.update("Courses", cv, where, args);
 
-				Log.d("Shika", where + " " + res);
+				addToSchedule(where, args, cv);
 
 				callback.dialogDone(MainActivity.Dialogs.DIALOG_ADD);
 

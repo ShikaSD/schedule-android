@@ -30,7 +30,7 @@ public class EditFragment extends Fragment
 	private TextView empty;
 
 	private ListView list;
-	private SimpleAdapter editAdapter;
+	private EditSimpleAdapter editAdapter;
 	private EditListAdapter listAdapter;
 	private TextView header;
 
@@ -67,7 +67,7 @@ public class EditFragment extends Fragment
 
 		dbh = getDBH();
 
-		editAdapter = new SimpleAdapter(getActivity(), strings);
+		editAdapter = new EditSimpleAdapter(getActivity(), strings);
 		listAdapter = new EditListAdapter(getActivity(), keys, names, true);
 
 		wasInEditMode = false;

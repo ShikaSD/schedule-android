@@ -258,11 +258,12 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		if(result.equals("nothing") || result.equals("no courses"))
 		{
 			Log.d("Shika", "Found nothing");
-			/*int size = lessonsArr.size();
+
+			int size = lessonsArr.size();
 			for(int i = 0; i < size; i++)
 				lessonsArr.get(i).clear();
 
-			pagerAdapter.notifyDataSetChanged(lessonsArr);*/
+			pagerAdapter.notifyDataSetChanged();
 		}
 		else
 		{
@@ -288,17 +289,17 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 		if(d.get(Calendar.WEEK_OF_YEAR) != globalDate.get(Calendar.WEEK_OF_YEAR))
 		{
-			getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
+			globalDate.setTime(date);
 
 			for(ArrayList<Lesson> i : lessonsArr)
 				i.clear();
-			pagerAdapter.notifyDataSetChanged(lessonsArr);
+			pagerAdapter.notifyDataSetChanged();
+
+			getActivity().getSupportLoaderManager().restartLoader(MainActivity.LOADER_SCHEDULE, getArguments(), this);
 		}
 
-		globalDate = d;
+		globalDate.setTime(date);
 		dayOfWeek = getWeekDay(globalDate);
-
-		Log.d("Shika", date.toString() + " in Fragment");
 
 		viewPager.setCurrentItem(dayOfWeek);
 		didUpdate = false;
@@ -316,8 +317,8 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 			dbh = getDBH();
 
 		//To avoid date changes
-		Calendar date = Calendar.getInstance();
-		date.setTime(globalDate.getTime());
+		Calendar date;
+		date = (Calendar) globalDate.clone();
 
 		//Log.w("Shika", "onCreate Loader");
 		return new ScheduleLoader(getActivity(), dbh, group,
@@ -329,7 +330,9 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 	public void onLoadFinished(Loader<Cursor> loader, Cursor cursor)
 	{
 		//Log.w("Shika", "Finish: "+group+"+"+ teacher +"+"+ course+"+"+isOwnSchedule);
-		lessonsArr.clear();
+
+		for(ArrayList<Lesson> i : lessonsArr)
+			i.clear();
 
 		try
 		{
@@ -391,21 +394,16 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 				}
 				while (cursor.moveToNext());
 
-				ArrayList<Lesson> result;
-
 				for (int i = 1; i <= days.length; i++)
 				{
-					result = new ArrayList<Lesson>();
 					for (Lesson temp : lessons.values())
 					{
 						if (temp.day == i)
-							result.add(temp);
+							lessonsArr.get(i).add(temp);
 					}
-					//Log.w("Shika", "result: " + result.size());
-					lessonsArr.add(result);
 				}
 
-				pagerAdapter.notifyDataSetChanged(lessonsArr);
+				pagerAdapter.notifyDataSetChanged();
 				viewPager.setCurrentItem(dayOfWeek);
 
 				if (!didUpdate)
@@ -423,10 +421,7 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 				}
 			} else
 			{
-				for (int i = 0; i < days.length; i++)
-					lessonsArr.add(new ArrayList<Lesson>());
-
-				pagerAdapter.notifyDataSetChanged(lessonsArr);
+				pagerAdapter.notifyDataSetChanged();
 
 				progress.startAnimation(appear);
 
@@ -482,8 +477,6 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 		@Override
 		public Cursor loadInBackground()
 		{
-			Log.d("Shika", date.getTime() + "");
-
 			Cursor cursor = null;
 
 			String[] dates;
@@ -605,7 +598,6 @@ public class ScheduleViewGroupFragment extends Fragment implements Interfaces.Do
 
 	private int getWeekDay(Calendar calendar)
 	{
-		Log.d("Shika", calendar.get(Calendar.DAY_OF_WEEK) - 2 + " item is in ViewPAger");
 		return calendar.get(Calendar.DAY_OF_WEEK) - 2;
 	}
 

@@ -304,8 +304,8 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 					getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_EDIT).forceLoad();
 				else
 				{
-					ListLoader.setFrom(from);
-					getActivity().getSupportLoaderManager().getLoader(MainActivity.LOADER_LIST).forceLoad();
+					//ListLoader.setFrom(from);
+					getActivity().getSupportLoaderManager().initLoader(MainActivity.LOADER_LIST, null, this);
 				}
 			}
 		}
@@ -384,7 +384,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 				for(String i : names.get(index))
 				{
 					if(i.replaceAll("[ ,.:;\\\\/-]+", "").toLowerCase().equals(c.getString(name).replaceAll("[ ,.:;\\\\/-]+", "").toLowerCase())
-						|| (fragmentType.contains("Courses") && c.getString(name).equals(courseId)))
+						|| (fragmentType.contains("Courses") && c.getString(name).equals(courseId)) || i.matches("[0-9]{2,}"))
 					{
 						flag = true;
 						break;
@@ -460,7 +460,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 								if (adapter.isCheckingList)
 									adapter.check(checks);
 
-								if (isFinished || keys.size() > 0)
+								if ((isFinished || keys.size() > 0) && MainActivity.isProgressRunning)
 									callback.dismissProgressView();
 
 								if (keys.size() == 0)
@@ -484,6 +484,7 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 
 	}
 
+	//FIXME: replace with thread
 	public static class ListLoader extends CursorLoader
 	{
 		DBHelper dbh;
@@ -507,6 +508,8 @@ public class ListFragment extends Fragment implements Interfaces.Download, Loade
 		public Cursor loadInBackground()
 		{
 			Cursor c;
+
+			Log.d("Shika", from + " from");
 
 			if(from >= 0)
 				c = dbh.rawQuery("select * from "+ type +" order by name limit "+from+", 10000", null);
