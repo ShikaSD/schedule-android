@@ -29,7 +29,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
-import ru.shika.mamkschedule.mamkschedule.R;
+import ru.shika.app.R;
 
 /**
  * To be used with ViewPager to provide a tab indicator component which give constant feedback as to

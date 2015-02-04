@@ -1,112 +1,62 @@
 package ru.shika.app;
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.database.Cursor;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.view.ActionMode;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.*;
-import android.view.animation.*;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.*;
-import com.parse.Parse;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
-import ru.shika.android.CalendarPickerView;
+import com.squareup.timessquare.CalendarPickerView;
+import ru.shika.Application;
 import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
-import ru.shika.mamkschedule.mamkschedule.R;
+import ru.shika.app.adapters.DrawerListAdapter;
+import ru.shika.app.interfaces.ActivityInterface;
+import ru.shika.app.interfaces.ControllerInterface;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 
-public class MainActivity extends ActionBarActivity implements Interfaces.needDownload, Interfaces.groupFragmentCallback,
-                                                                ActionMode.Callback, Interfaces.dialogCallback
+public class MainActivity extends ActionBarActivity implements ActivityInterface
 {
-    public final static int LOADER_LIST = 1;
-    public final static int LOADER_SCHEDULE = 0;
-    public final static int LOADER_EDIT = 2;
+    private ControllerInterface controller;
 
-    public final static int END_OF_DOWNLOAD = -1;
-
-    public enum Dialogs {
-        DIALOG_ADD, DIALOG_REMOVE
-    }
-
-    public static boolean isActivityRunning;
-    public static boolean isProgressRunning;
-
-    protected HashMap<String, Interfaces.Download> interfaces;
+    Toolbar toolbar;
 
     //ProgressBar in the center
-    protected CircleImageView progress;
+    private CircleImageView progress;
     private int mCircleWidth;
     private int mCircleHeight;
     private MaterialProgressDrawable progressDrawable;
 
     //Function button
-    protected CircleImageView functionButton;
-    protected boolean isFunctionButtonVisible;
+    private CircleImageView functionButton;
+    public static boolean isFunctionButtonVisible;
 
     //Different views fo calendar
     private CalendarPickerView calendar;
     private CardView calendarContainer;
 
-    private ArrayList<Lesson.DrawerItem> drawerItems;
     private DrawerLayout drawerLayout;
     private ListView drawerList;
 
-    //Drawer items
-    protected String[] titles;
-    protected TypedArray drawables;
-
     private ActionBarDrawerToggle toggle;
 
-    protected static DBHelper dbh;
-
-    protected static SharedPreferences pref;
-    protected static SharedPreferences.Editor editor;
-
-    protected ScheduleDownloader scheduleDownloader;
-    protected Handler handler;
-
     //Container for fragment
-    protected RelativeLayout container;
-
-    protected Date globalDate = new Date();
-
-    //Backstack items
-    protected String visibleFragmentTag;
-    protected String visibleFragmentTagParam;
-    protected Stack<String> backStack;
+    private RelativeLayout container;
 
     //Listeners fo function button
     private View.OnClickListener calendarButtonClick, addButtonClick;
-
-    //We need it in actionMode callbacks
-    private boolean isActionModeActive;
-    private ActionMode actionMode;
-    private String[] itemsToDelete;
 
     //Animations
     private Animation buttonOpen;
@@ -118,16 +68,13 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     private Animation snackBarOpen;
     private Animation snackBarClose;
 
-    private TranslateAnimation progressMainShow;
-    private TranslateAnimation progressMainDismiss;
-
-    private TranslateAnimation containerShow;
-    private TranslateAnimation containerDismiss;
-
     //SnackBar
-    protected RelativeLayout snackBar;
-    protected TextView snackBarText;
-    protected TextView snackBarButton;
+    private RelativeLayout snackBar;
+    private TextView snackBarText;
+    private TextView snackBarButton;
+
+    //Drawer titles
+    private String[] titles;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -135,97 +82,22 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        isActionModeActive = false;
-        isProgressRunning = false;
+        controller = Application.getController();
+
         isFunctionButtonVisible = true;
 
-        isActivityRunning = true;
-
-        //Database init
-        dbh = new DBHelper(this);
-
-        interfaces = new HashMap<String, Interfaces.Download>();
-
-        //For debug
-       // deleteDatabase("scheduleDB");
-
-        //Let's find last update date
-        pref = getPreferences(MODE_PRIVATE);
-        editor = pref.edit();
-
-        //Parse init
-       /* if(!ParseCrashReporting.isCrashReportingEnabled())
-            ParseCrashReporting.enable(this);*/
-
-        Parse.initialize(this, "eR4X3CWg0H0dQiykPaWPymOLuceIj7XlCWu3SLLi", "tZ8L3pIHV1nXUmXj5GASyM2JdbwKFHUDYDuqhKR7");
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        //Get drawer's items from resources
-        titles = getResources().getStringArray(R.array.drawer_strings);
-        drawables = getResources().obtainTypedArray(R.array.drawer_drawables);
-
-        drawerItems = new ArrayList<Lesson.DrawerItem>();
-
-        //Init drawer list
-        for (int i = 0; i < titles.length; i++)
-        {
-            drawerItems.add(new Lesson.DrawerItem(titles[i], drawables.getDrawable(i)));
-        }
-        //Recycle that array after using
-        drawables.recycle();
-
-        //Init drawer
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawerList = (ListView) findViewById(R.id.drawer_list);
-
-        drawerList.setAdapter(new DrawerListAdapter(this, drawerItems));
-        drawerList.setOnItemClickListener(new onDrawerItemClickListener());
-
-        //Init actionbar toggle(left button)
-        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close)
-        {
-            @Override
-            public void onDrawerSlide(View view, float v)
-            {
-                super.onDrawerSlide(view, v);
-            }
-
-            @Override
-            public void onDrawerOpened(View view)
-            {
-                super.onDrawerOpened(view);
-
-                if(isFunctionButtonVisible) functionButton.startAnimation(buttonClose);
-                if(calendarContainer.getVisibility() == View.VISIBLE) calendarContainer.startAnimation(calendarClose);
-            }
-
-            @Override
-            public void onDrawerClosed(View view)
-            {
-                super.onDrawerClosed(view);
-
-                if(isFunctionButtonVisible) functionButton.startAnimation(buttonOpen);
-            }
-
-            @Override
-            public void onDrawerStateChanged(int i)
-            {
-                super.onDrawerStateChanged(i);
-            }
-        };
-        drawerLayout.setDrawerListener(toggle);
-
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeButtonEnabled(true);
+        //Create drawer
+        drawerInit();
 
         //SnackBar Init
         snackBar = (RelativeLayout) findViewById(R.id.snackbar);
         snackBarText = (TextView) findViewById(R.id.snackbar_text);
         snackBarButton = (TextView) findViewById(R.id.snackbar_button);
 
-        changeSnackBarSize();
+        updateSnackBarSize();
 
         snackBar.setOnClickListener(new View.OnClickListener()
         {
@@ -258,7 +130,7 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             @Override
             public void onClick(View view)
             {
-                onAddClick(view);
+               controller.addClick();
             }
         };
 
@@ -273,79 +145,18 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         container = (RelativeLayout) findViewById(R.id.main_container);
 
-        //Init threads handler
-        handler = new Handler()
-        {
-            public void handleMessage(android.os.Message msg)
-            {
-
-                if(msg.obj != null && interfaces.containsKey(msg.obj))
-                {
-                    interfaces.get(msg.obj).updateInProgress(msg.what);
-
-                    if(visibleFragmentTag.equals(msg.obj))
-                        dismissProgressView();
-                }
-                else
-                {
-                    for (Interfaces.Download iFace : interfaces.values())
-                        iFace.updateInProgress(msg.what);
-                    dismissProgressView();
-                }
-
-                if(msg.what == END_OF_DOWNLOAD)
-                {
-                    //Show fragment
-                    //dismissProgressView();
-
-                    Log.d("Shika", "ListDownloader finish " + new Date(Calendar.getInstance().getTimeInMillis()));
-                }
-            }
-        };
-
         //Init animations
         animationsInit();
 
-        backStack = new Stack<String>();
-        //Fragment init
-        if(savedInstanceState == null)
-        {
-            visibleFragmentTag = "";
-            showFragment(titles[0], titles[0]);
-            backStack.clear();
-        }
-        else
-        {
-            visibleFragmentTag = savedInstanceState.getString("Fragment");
-            visibleFragmentTagParam = savedInstanceState.getString("FragmentParam");
-            showFragment(visibleFragmentTag, visibleFragmentTagParam);
-        }
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState)
-    {
-        super.onSaveInstanceState(outState);
-
-        outState.putString("Fragment", visibleFragmentTag);
-        outState.putString("FragmentParam", visibleFragmentTagParam);
+        controller.setActivity(this);
+        showFragment("My schedule", "My schedule");
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig)
     {
         super.onConfigurationChanged(newConfig);
-        changeSnackBarSize();
-    }
-
-    @Override
-    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState)
-    {
-        super.onRestoreInstanceState(savedInstanceState);
-
-        visibleFragmentTag = savedInstanceState.getString("Fragment");
-        visibleFragmentTagParam = savedInstanceState.getString("FragmentParam");
-        showFragment(visibleFragmentTag, visibleFragmentTagParam);
+        updateSnackBarSize();
     }
 
     private void animationsInit()
@@ -487,6 +298,71 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         });
     }
 
+    private void drawerInit()
+    {
+        //Drawer items
+        ArrayList<Lesson.DrawerItem> drawerItems;
+        TypedArray drawables;
+
+        //Get drawer's items from resources
+        titles = getResources().getStringArray(R.array.drawer_strings);
+        drawables = getResources().obtainTypedArray(R.array.drawer_drawables);
+
+        drawerItems = new ArrayList<Lesson.DrawerItem>();
+
+        //Init drawer list
+        for (int i = 0; i < titles.length; i++)
+        {
+            drawerItems.add(new Lesson.DrawerItem(titles[i], drawables.getDrawable(i)));
+        }
+        //Recycle that array after using
+        drawables.recycle();
+
+        //Init drawer
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerList = (ListView) findViewById(R.id.drawer_list);
+
+        drawerList.setAdapter(new DrawerListAdapter(this, drawerItems));
+        drawerList.setOnItemClickListener(new onDrawerItemClickListener());
+
+        //Init actionbar toggle(left button)
+        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close)
+        {
+            @Override
+            public void onDrawerSlide(View view, float v)
+            {
+                super.onDrawerSlide(view, v);
+            }
+
+            @Override
+            public void onDrawerOpened(View view)
+            {
+                super.onDrawerOpened(view);
+
+                if(isFunctionButtonVisible) functionButton.startAnimation(buttonClose);
+                if(calendarContainer.getVisibility() == View.VISIBLE) calendarContainer.startAnimation(calendarClose);
+            }
+
+            @Override
+            public void onDrawerClosed(View view)
+            {
+                super.onDrawerClosed(view);
+
+                if(isFunctionButtonVisible) functionButton.startAnimation(buttonOpen);
+            }
+
+            @Override
+            public void onDrawerStateChanged(int i)
+            {
+                super.onDrawerStateChanged(i);
+            }
+        };
+        drawerLayout.setDrawerListener(toggle);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+    }
+
     private void createProgressView() {
         final DisplayMetrics metrics = getResources().getDisplayMetrics();
         mCircleWidth = (int) (56 * metrics.density) ;
@@ -543,9 +419,28 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         isFunctionButtonVisible = true;
     }
 
-    public void showToast(String text)
+    private void showFragment(String name, String arg1)
     {
-        Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show();
+		if(snackBar.getVisibility() == View.VISIBLE)
+			snackBar.startAnimation(snackBarClose);
+
+        controller.showFragment(name, arg1);
+    }
+
+    @Override
+    public void showError(final String msg)
+    {
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+
+                if(msg.equals(getString(R.string.no_courses)))
+                    showSnackBar(msg, getString(R.string.add));
+            }
+        });
     }
 
     public void showSnackBar(String text, String btnText)
@@ -579,20 +474,11 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             @Override
             public void onDateSelected(Date date)
             {
-                for(Interfaces.Download iFace : interfaces.values())
-                {
-                    Fragment temp = (Fragment)iFace;
-                    if(temp.isVisible())
-                        iFace.onDateChanged(date);
+                controller.dateChanged(date);
 
-                    calendar.selectDate(date, true);
-                    calendarContainer.startAnimation(calendarClose);
-                    functionButton.startAnimation(buttonOpen);
-                }
-
-                globalDate = date;
-
-                Log.d("Shika", date.toString());
+                calendar.selectDate(date, true);
+                calendarContainer.startAnimation(calendarClose);
+                functionButton.startAnimation(buttonOpen);
             }
 
             @Override
@@ -615,6 +501,13 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
     {
         super.onPostCreate(savedInstanceState);
         toggle.syncState();
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        controller.setActivity(this);
     }
 
     @Override
@@ -641,323 +534,20 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             return;
         }
 
-        if(visibleFragmentTag.equals(titles[4]) && !isActionModeActive)
-        {
-            EditFragment fragment = ((EditFragment)getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
-            if(fragment.wasInEditMode)
-            {
-                fragment.backPressed();
-                functionButton.startAnimation(buttonOpen);
-                return;
-            }
-        }
+        controller.backPressed();
+    }
 
-        if(!backStack.empty())
-        {
-            dismissProgressView();
-
-            String prevFragment = backStack.pop();
-
-            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-            ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
-           // ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-
-            ft.attach(getSupportFragmentManager().findFragmentByTag(prevFragment));
-           // ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-            ft.commit();
-
-            visibleFragmentTag = prevFragment;
-            visibleFragmentTagParam = visibleFragmentTag.replace("Edit", "").replace("ViewGroup", "").replace("Chooser", "");
-
-            if(visibleFragmentTag.equals(titles[4]))
-            {
-                functionButton.startAnimation(buttonOpen);
-            }
-
-            if(!visibleFragmentTag.startsWith("Edit")) getSupportActionBar().setTitle(visibleFragmentTag.replace("Edit", ""));
-            else getSupportActionBar().setTitle(visibleFragmentTag);
-        }
-        else
-            super.onBackPressed();
+    //If in controller we have to find back pressed
+    @Override
+    public void backPressed()
+    {
+        super.onBackPressed();
     }
 
     @Override
     protected void onDestroy()
     {
         super.onDestroy();
-
-        isActivityRunning = false;
-
-        if(scheduleDownloader != null)
-            scheduleDownloader.cancel(true);
-
-        dbh.close();
-    }
-
-    public void showFragment(String tag, String param)
-    {
-        if(progress.getVisibility() == View.VISIBLE)
-            dismissProgressView();
-
-        if(snackBar.getVisibility() == View.VISIBLE)
-            snackBar.startAnimation(snackBarClose);
-
-        if(isActionModeActive)
-            actionMode.finish();
-
-        if(visibleFragmentTag.equals(tag))
-            return;
-
-        String title = param;
-
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
-        Fragment fragment;
-
-        if(visibleFragmentTag.endsWith("ViewGroup") || visibleFragmentTag.endsWith("Chooser"))
-        {
-            ft.remove(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
-           // ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-        }
-        else
-        {
-            if(!visibleFragmentTag.equals(""))
-                ft.detach(getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
-
-           // ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-        }
-
-        backStack.push(visibleFragmentTag);
-
-        fragment = fm.findFragmentByTag(tag);
-        if (fragment == null)
-        {
-            //If it's a ViewGroup in Groups/Teachers/Courses
-            if(tag.endsWith("ViewGroup"))
-            {
-                String type = tag.replace("ViewGroup", "");
-                if(type.equals(titles[1]))
-                    fragment = ScheduleViewGroupFragment.newInstance(false, param, null, null, globalDate);
-                else
-                if(type.equals(titles[2]))
-                    fragment = ScheduleViewGroupFragment.newInstance(false, null, param, null, globalDate);
-                else
-                if(type.equals(titles[3]))
-                    fragment = ScheduleViewGroupFragment.newInstance(false, null, null, param, globalDate);
-            }
-            else
-            //If it is a Chooser list
-            if(tag.endsWith("Chooser"))
-            {
-                String type = tag.replace("Chooser", "");
-
-                Thread thread = new Thread(new ListEditDownloader(type, param));
-                thread.start();
-
-                fragment = ListFragment.newEditInstance(tag, param);
-            }
-            else
-            //If it is a list of Groups/Teachers/Courses in Edit Fragment
-            if(tag.endsWith("Edit"))
-            {
-                String type = tag.replace("Edit", "");
-
-                Thread thread = new Thread(new ListDownloader(type));
-                thread.start();
-
-                fragment = ListFragment.newInstance(type, true);
-
-                title = type;
-            }
-            else
-            //Or main categories
-            if(tag.equals(titles[0]))
-            {
-                fragment = ScheduleViewGroupFragment.newInstance(true, null, null, null, globalDate);
-            }
-            else
-            if(tag.equals(titles[titles.length - 1]))
-            {
-                fragment = new EditFragment();
-            }
-            else
-            {
-                Thread thread = new Thread(new ListDownloader(tag));
-                thread.start();
-
-                fragment = ListFragment.newInstance(tag, false);
-            }
-            if(!tag.startsWith("Edit"))
-                interfaces.put(tag, (Interfaces.Download) fragment);
-
-            ft.add(R.id.main_container, fragment, tag);
-            Log.d("Shika", "New Fragment made");
-        }
-
-        ft.attach(fragment);
-        //ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-        ft.commit();
-
-        visibleFragmentTag = tag;
-        visibleFragmentTagParam = param;
-
-        getSupportActionBar().setTitle(title);
-    }
-
-    public boolean isNetworkConnection()
-    {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-
-        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-    }
-
-    @Override
-    public void listItemSelected(String type, String item)
-    {
-        showFragment(type + "ViewGroup", item);
-    }
-
-    @Override
-    public void listItemInEditSelected(String type, String item)
-    {
-        if(type.equals(titles[3]))
-        {
-            DialogAddFragment newFragment = DialogAddFragment.newInstance(item, getSupportActionBar().getTitle().toString());
-            newFragment.show(getSupportFragmentManager().beginTransaction(), "dialog");
-            return;
-        }
-
-        String tag = type + "Chooser";
-        showFragment(tag, item);
-    }
-
-    @Override
-    public void editTypeSelected(String tag)
-    {
-        showFragment(tag+"Edit", tag);
-    }
-
-    @Override
-    public boolean onCreateActionMode(ActionMode actionMode, Menu menu)
-    {
-        this.actionMode = actionMode;
-
-        MenuInflater inflater = actionMode.getMenuInflater();
-        inflater.inflate(R.menu.edit_actionmode, menu);
-
-        if(visibleFragmentTag.equals(titles[4]))
-        {
-            EditFragment fragment = (EditFragment) getSupportFragmentManager().findFragmentByTag(visibleFragmentTag);
-            fragment.showCheckboxes(true);
-        }
-
-        actionMode.setTitle("Delete items");
-
-        isActionModeActive = true;
-
-        functionButton.startAnimation(buttonClose);
-        isFunctionButtonVisible = false;
-
-        return true;
-    }
-
-    @Override
-    public boolean onPrepareActionMode(ActionMode actionMode, Menu menu)
-    {
-        return false;
-    }
-
-    @Override
-    public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem)
-    {
-        this.actionMode = actionMode;
-        switch (menuItem.getItemId())
-        {
-            case R.id.delete:
-                deleteItems();
-                return true;
-
-            default:
-                return false;
-        }
-    }
-
-    @Override
-    public void onDestroyActionMode(ActionMode actionMode)
-    {
-        if(visibleFragmentTag.equals(titles[4]))
-        {
-            ((EditFragment) getSupportFragmentManager().findFragmentByTag(visibleFragmentTag)).showCheckboxes(false);
-        }
-
-        isActionModeActive = false;
-        functionButton.startAnimation(buttonOpen);
-    }
-
-    public void deleteItems()
-    {
-        itemsToDelete = ((EditFragment) getSupportFragmentManager().findFragmentByTag(visibleFragmentTag)).getChecked();
-
-        DialogFragment fragment = DialogCallbackFragment.newInstance(getResources().getString(R.string.dialog_delete_title),
-            getResources().getString(R.string.dialog_delete_text));
-        fragment.show(getSupportFragmentManager(), "DialogDelete");
-    }
-
-    @Override
-    public void dialogDone(Dialogs dialogs)
-    {
-        int loader;
-        if(visibleFragmentTag.equals("Courses"))
-            loader = LOADER_LIST;
-        else
-            loader = LOADER_EDIT;
-
-        switch (dialogs)
-        {
-            case DIALOG_ADD:
-                ListFragment fragment = ((ListFragment) getSupportFragmentManager().findFragmentByTag(visibleFragmentTag));
-                fragment.from = 0;
-                if (getSupportLoaderManager().getLoader(loader) == null)
-                    getSupportLoaderManager().initLoader(loader, null, fragment);
-                else
-                    getSupportLoaderManager().getLoader(loader).forceLoad();
-
-                showToast("Course added to your schedule");
-                return;
-
-            case DIALOG_REMOVE:
-
-                actionMode.finish();
-                Thread thread = new Thread(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        ContentValues cv = new ContentValues();
-                        cv.put("isEnrolled", 0);
-
-                        for (String item : itemsToDelete)
-                        {
-                            String where = "courseId = ? or (name = ? and courseId = '')";
-                            dbh.update("Courses", cv, where, new String[]{item, item});
-                        }
-
-                        runOnUiThread(new Runnable()
-                        {
-                            @Override
-                            public void run()
-                            {
-                                ((EditFragment) getSupportFragmentManager().findFragmentByTag(visibleFragmentTag)).update();
-                            }
-                        });
-                    }
-                });
-
-                thread.start();
-                break;
-        }
     }
 
     private class onDrawerItemClickListener implements ListView.OnItemClickListener
@@ -973,9 +563,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
 
         private void replaceFragment(String tag)
         {
-            if(visibleFragmentTag.equals(tag))
-                return;
-
             showFragment(tag, tag);
 
             functionButton.setVisibility(View.VISIBLE);
@@ -985,9 +572,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
                 functionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_new));
                 int p = (int) getResources().getDimension(R.dimen.function_button_add_padding);
                 functionButton.setPadding(p, p, p, p);
-
-                if(getSupportFragmentManager().findFragmentByTag(titles[4]) != null)
-                    ((EditFragment) getSupportFragmentManager().findFragmentByTag(titles[4])).wasInEditMode = false;
             }
             else
             {
@@ -998,502 +582,6 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
             }
             functionButton.setVisibility(View.INVISIBLE);
             isFunctionButtonVisible = true;
-
-            //Clear back stack, as we started new category
-            backStack.clear();
-        }
-    }
-
-    //Interface method called from fragments
-    @Override
-    public void needDownload(String group, String teacher, String course, Calendar date)
-    {
-        date.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
-
-        Lesson[] lessons = new Lesson[7];
-        String dateFormat;
-
-        if(scheduleDownloader != null)
-            scheduleDownloader.cancel(true);
-
-        scheduleDownloader = new ScheduleDownloader();
-
-        //Adding different items (some dirty code)
-        for(int i = 0; i < lessons.length; i++)
-        {
-            dateFormat = date.get(Calendar.YEAR) - 2000 + "" +
-                (date.get(Calendar.MONTH) + 1 > 9 ? date.get(Calendar.MONTH) + 1 : "0" + (1 + date.get(Calendar.MONTH)))+
-                (date.get(Calendar.DAY_OF_MONTH) > 9 ? date.get(Calendar.DAY_OF_MONTH) : "0" + date.get(Calendar.DAY_OF_MONTH));
-            
-            lessons[i] = new Lesson(null, null, null, course, teacher, dateFormat, group, 0);
-            date.add(Calendar.DATE, 1);
-        }
-
-        scheduleDownloader.execute(lessons);
-    }
-
-
-
-    /*AsyncTasks classes to download group's and lesson's rows*/
-    public class ListDownloader implements Runnable
-    {
-        private boolean isDatabaseEmpty;
-        private boolean isConnection;
-        private String param;
-        private Date lastUpdate;
-        private Message msg;
-
-        public ListDownloader(String param)
-        {
-            this.param = param;
-            isDatabaseEmpty = false;
-
-            isConnection = isNetworkConnection();
-
-            //Show progress bar
-            showProgressView();
-
-            Log.d("Shika", "ListDownloader exec");
-        }
-
-        @Override
-        public void run()
-        {
-            if(!isConnection)
-            {
-                try
-                {
-                    msg = handler.obtainMessage(END_OF_DOWNLOAD, param);
-                    handler.sendMessage(msg);
-
-                    runOnUiThread(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            showToast(getString(R.string.error_network_not_connected));
-                        }
-                    });
-                }
-                catch (Exception e){}
-
-                return;
-            }
-            Log.d("Shika", "Param is: " + param);
-
-            //looking for last updates
-            lastUpdate = new Date(pref.getLong(param+"lastUpdate", 0));
-            Log.d("Shika", "lastUpdate at " + lastUpdate.toString());
-
-            ArrayList<ParseObject> parseObjects;
-            ParseQuery<ParseObject> query = ParseQuery.getQuery(param);
-
-            try
-            {
-                int downloaded = 0;
-                String lastDownloaded = "";
-
-                if(lastUpdate.getTime() > 0)
-                    query.whereGreaterThan("createdAt", lastUpdate);
-                else
-                {
-                    downloaded = pref.getInt(param + "downloaded", 0);
-                    lastDownloaded = pref.getString(param + "last", "");
-                }
-
-                int amount = query.count();
-
-                while (amount > downloaded)
-                {
-                    query.setLimit(50);
-
-                    query.setSkip(downloaded);
-
-                    query.whereDoesNotExist("last");
-                    query.addAscendingOrder("name");
-
-                    parseObjects = (ArrayList<ParseObject>) query.find();
-                    ContentValues cv = new ContentValues();
-
-                    for (ParseObject i : parseObjects)
-                    {
-                        if(param.equals("Courses"))
-                        {
-                            Cursor x = dbh.rawQuery("select count(*) from Courses where courseId = ? and name = ? and" +
-                                    " groups = ? and teacher = ?",
-                                new String[]{i.getString("courseId"), i.getString("name"), i.getString("group"), i.getString("teacher")});
-                            if(x.moveToFirst())
-                                if(x.getInt(0) > 0)
-                                {
-                                    x.close();
-                                    continue;
-                                }
-                            x.close();
-
-                            cv.put("courseId", i.getString("courseId"));
-                            cv.put("groups", i.getString("group"));
-                            cv.put("teacher", i.getString("teacher"));
-                        }
-
-                        String name = i.getString("name");
-                        cv.put("name", name);
-
-                        dbh.insert(param, null, cv);
-
-                        downloaded++;
-                        lastDownloaded = i.getString("name");
-                    }
-
-                    editor.putInt(param + "downloaded", downloaded);
-                    editor.putString(param + "last", lastDownloaded);
-                    editor.commit();
-
-                    if(parseObjects.size() == 0)
-                        break;
-
-                    try
-                    {
-                        if(isActivityRunning)
-                        {
-                            msg = handler.obtainMessage(downloaded, param);
-                            handler.sendMessage(msg);
-                        }
-                    }
-                    catch (Exception e){e.printStackTrace();}
-                }
-            } catch (Exception e)
-            {
-                if(isActivityRunning)
-                {
-                    runOnUiThread(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            showToast(getString(R.string.error_network_not_connected));
-                        }
-                    });
-
-                    msg = handler.obtainMessage(END_OF_DOWNLOAD, param);
-                    handler.sendMessage(msg);
-                }
-
-                return;
-            }
-
-            Cursor c = dbh.rawQuery("select count(*) from '" + param + "'", null);
-            c.moveToFirst();
-            isDatabaseEmpty = (c.getInt(0) <= 0);
-
-            c.close();
-
-            //Remove progress button
-            try
-            {
-                if(isActivityRunning)
-                {
-                    msg = handler.obtainMessage(END_OF_DOWNLOAD, param);
-                    handler.sendMessage(msg);
-                }
-            }
-            catch (Exception e){}
-
-            long time;
-            if (isDatabaseEmpty) time = 0;
-            else time = Calendar.getInstance().getTimeInMillis();
-
-            editor.putLong(param+"lastUpdate", time);
-            editor.commit();
-        }
-    }
-
-    public class ListEditDownloader implements Runnable
-    {
-
-        private String type;
-        private String name;
-
-        private boolean isConnection;
-
-        public ListEditDownloader(String type, String name)
-        {
-            Log.d("Shika", "ListEditDownloader exec");
-            this.type = type;
-            this.name = name;
-            isConnection = isNetworkConnection();
-
-            showProgressView();
-        }
-
-        @Override
-        public void run()
-        {
-            if (!isConnection)
-            {
-                try
-                {
-                    handler.sendEmptyMessage(END_OF_DOWNLOAD);
-                }
-                catch (Exception e){}
-
-                if(isActivityRunning)
-                    runOnUiThread(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            showToast(getString(R.string.error_network_not_connected));
-                    }
-                });
-                return;
-            }
-
-            ArrayList<ParseObject> parseObjects;
-            ParseQuery<ParseObject> query = ParseQuery.getQuery("Courses");
-
-            try
-            {
-                int amount = query.count();
-                query.setLimit(amount);
-                query.addAscendingOrder("name");
-
-                if(type.equals("Groups"))
-                    query.whereEqualTo("group", name);
-
-                if(type.equals("Teachers"))
-                    query.whereEqualTo("teacher", name);
-
-                parseObjects = (ArrayList<ParseObject>) query.find();
-
-                insertValues(parseObjects);
-            }
-            catch (Exception e)
-            {
-                if(isActivityRunning)
-                    runOnUiThread(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            showToast(getString(R.string.error_network_not_connected));
-                        }
-                    });
-            }
-
-            try
-            {
-                handler.sendEmptyMessage(END_OF_DOWNLOAD);
-            }
-            catch (Exception e){e.printStackTrace();}
-        }
-
-        public void insertValues(ArrayList<ParseObject> parseObjects)
-        {
-            ContentValues cv = new ContentValues();
-
-            for (ParseObject i : parseObjects)
-            {
-                Cursor x = dbh.rawQuery("select count(*) from Courses where courseId = ? and name = ? and " +
-                        "groups = ? and teacher = ?",
-                    new String[]{i.getString("courseId"), i.getString("name"), i.getString("group"), i.getString("teacher")});
-                if(x.moveToFirst())
-                    if(x.getInt(0) > 0)
-                    {
-                        x.close();
-                        continue;
-                    }
-
-                x.close();
-                cv.put("courseId", i.getString("courseId"));
-                cv.put("courseId", i.getString("courseId"));
-                cv.put("groups", i.getString("group"));
-                cv.put("teacher", i.getString("teacher"));
-                cv.put("name", i.getString("name"));
-                dbh.insert("Courses", null, cv);
-            }
-
-            if(isActivityRunning)
-                handler.sendEmptyMessage(parseObjects.size());
-        }
-    }
-
-    public class ScheduleDownloader extends AsyncTask <Lesson, Void, String>
-    {
-        private boolean isMySchedule;
-        private ArrayList<ParseObject> schedule;
-        private int counter;
-        private boolean isConnection;
-
-        @Override
-        protected void onPreExecute()
-        {
-            super.onPreExecute();
-            Log.d("Shika", "ScheduleDownloader exec");
-
-            isMySchedule = visibleFragmentTag.equals(titles[0]);
-
-            counter = 0;
-
-            isConnection = isNetworkConnection();
-        }
-
-        @Override
-        protected String doInBackground(Lesson... lessons)
-        {
-            if(!isConnection)
-                return "error";
-
-            if(isMySchedule)
-            {
-                //Log.w("Shika", "We have own schedule here " + visibleFragmentTag);
-                return downloadSchedule(lessons);
-            }
-
-            ArrayList <ParseQuery <ParseObject>> queries = new ArrayList<ParseQuery<ParseObject>>();
-            for(Lesson lesson : lessons)
-            {
-                ParseQuery<ParseObject> query = ParseQuery.getQuery("Lessons");
-
-                if(lesson == null){ Log.d("Shika", "lesson == null"); continue;}
-
-                if(lesson.group != null)
-                    query.whereEqualTo("group", lesson.group);
-                else
-                if(lesson.teacher != null)
-                    query.whereEqualTo("teacher", lesson.teacher);
-                else
-                if(lesson.name != null)
-                {
-                    query.whereEqualTo("courseId", lesson.name);
-                    query.whereStartsWith("date", lesson.date);
-                    queries.add(query);
-
-                    query = ParseQuery.getQuery("Lessons");
-                    query.whereEqualTo("name", lesson.name);
-                }
-
-                query.whereStartsWith("date", lesson.date);
-
-                queries.add(query);
-            }
-
-            parseQuery(ParseQuery.or(queries));
-
-            //Log.w("Shika", "Schedule counter: " + counter+"");
-
-            if(counter == 0)
-            {
-                return "nothing";
-            }
-
-            return "success";
-        }
-
-        protected String downloadSchedule(Lesson... lessons)
-        {
-            Cursor c = dbh.rawQuery("select * from Courses where isEnrolled = 1", null);
-
-            if(!c.moveToNext())
-                return "no courses";
-            //
-            int courseId = c.getColumnIndex("courseId");
-            int name = c.getColumnIndex("name");
-            int teacher = c.getColumnIndex("teacher");
-            int group = c.getColumnIndex("groups");
-
-            ArrayList <ParseQuery <ParseObject>> queries = new ArrayList<ParseQuery<ParseObject>>();
-            for(Lesson lesson : lessons)
-            {
-                queries.clear();
-                //Log.w("Shika", "date: " + lesson.date);
-                c.moveToFirst();
-                do
-                {
-                    ParseQuery <ParseObject> query = new ParseQuery<ParseObject>("Lessons");
-
-                    query.whereEqualTo("name", c.getString(name));
-                    query.whereEqualTo("courseId", c.getString(courseId));
-                    query.whereEqualTo("date", lesson.date);
-                    query.whereEqualTo("teacher", c.getString(teacher));
-                    query.whereEqualTo("group", c.getString(group));
-
-                    queries.add(query);
-                }
-                while (c.moveToNext());
-
-                parseQuery(ParseQuery.or(queries));
-            }
-
-            c.close();
-
-            if(counter == 0)
-            {
-                return "nothing";
-            }
-
-            return "success";
-        }
-
-        protected String parseQuery(ParseQuery <ParseObject> query)
-        {
-            try
-            {
-                schedule = (ArrayList<ParseObject>) query.find();
-                
-                ContentValues cv = new ContentValues();
-                for (ParseObject i : schedule)
-                {
-                    cv.put("groups", i.getString("group"));
-                    cv.put("date", i.getString("date"));
-                    cv.put("lesson", i.getString("name"));
-                    cv.put("teacher", i.getString("teacher"));
-                    cv.put("room", i.getString("room"));
-                    cv.put("start", i.getString("start"));
-                    cv.put("end", i.getString("end"));
-                    cv.put("lessonId", i.getString("lessonId"));
-                    cv.put("courseId", i.getString("courseId"));
-
-                    counter++;
-
-                    //If the same lesson is in the database
-                    Cursor x = dbh.rawQuery("select * from Schedule where lessonId = ?", new String[]{i.getString
-                        ("lessonId")});
-                    //check for equality
-                    if(x.moveToFirst())
-                    {
-                        dbh.update("Schedule", cv, "lessonId = ?", new String[]{i.getString("lessonId")});
-                        x.close();
-                        continue;
-                    }
-
-                    x.close();
-                    dbh.insert("schedule", null, cv);
-                }
-            } catch (Exception e)
-            {
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String string)
-        {
-            super.onPostExecute(string);
-            Log.d("Shika", "ScheduleDownloader finished with result " + string);
-
-            if(string.equals("no courses"))
-            {
-                showSnackBar("There are no courses in your schedule list. Please add them in edit schedule section.", "ADD");
-            }
-
-            //Let's tell fragment that we have done something
-            for(Interfaces.Download iFace : interfaces.values())
-            {
-                Fragment temp = (Fragment) iFace;
-                if(temp.isVisible())
-                    iFace.onDownloadEnd(string);
-            }
         }
     }
 
@@ -1506,47 +594,60 @@ public class MainActivity extends ActionBarActivity implements Interfaces.needDo
         }
     }
 
-    public void onAddClick(View view)
+    @Override
+    public void showProgress()
     {
-        EditFragment fragment = (EditFragment) getSupportFragmentManager().findFragmentByTag(titles[4]);
-        fragment.addClick(view);
-
-        functionButton.startAnimation(buttonClose);
-        isFunctionButtonVisible = false;
-    }
-
-    public void setGlobalDate(Date date)
-    {
-        globalDate = date;
-
-        calendar.selectDate(date);
-    }
-
-    public DBHelper getDBHelper()
-    {
-        return dbh;
-    }
-
-    public void showProgressView()
-    {
-        isProgressRunning = true;
-
         container.setVisibility(View.GONE);
         progress.setVisibility(View.VISIBLE);
         progressDrawable.start();
     }
 
     @Override
-    public void dismissProgressView()
+    public void dismissProgress()
     {
-        isProgressRunning = false;
-
-        progressDrawable.stop();
-        progress.setVisibility(View.GONE);
-        container.setVisibility(View.VISIBLE);
+        runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                progressDrawable.stop();
+                progress.setVisibility(View.GONE);
+                container.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
-    private void changeSnackBarSize()
+    @Override
+    public void showFunctionButton()
+    {
+        functionButton.startAnimation(buttonOpen);
+    }
+
+    @Override
+    public void dismissFunctionButton()
+    {
+        functionButton.startAnimation(buttonClose);
+    }
+
+    @Override
+    public void setTitle(String title)
+    {
+        getSupportActionBar().setTitle(title);
+    }
+
+    @Override
+    public String getActionTitle()
+    {
+        return getSupportActionBar().getTitle().toString();
+    }
+
+    @Override
+    public void notifyDateChanged()
+    {
+        calendar.selectDate(controller.getDate().getTime());
+    }
+
+    private void updateSnackBarSize()
     {
         float dp = getResources().getDisplayMetrics().widthPixels;
         dp *= .75f;

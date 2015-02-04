@@ -15,7 +15,19 @@ public class DBHelper extends SQLiteOpenHelper
 	private Context context;
 	private String databaseName;
 
-	public DBHelper(Context ctx)
+	private static DBHelper instance;
+
+	public synchronized static DBHelper getInstance(Context ctx)
+	{
+		if(instance == null)
+		{
+			instance = new DBHelper(ctx);
+		}
+
+		return instance;
+	}
+
+	private DBHelper(Context ctx)
 	{
 		super(ctx, "scheduleDB", null, 1);
 
