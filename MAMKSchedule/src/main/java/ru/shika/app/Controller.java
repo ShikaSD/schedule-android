@@ -7,7 +7,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.view.ActionMode;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -15,29 +14,25 @@ import ru.shika.app.fragments.*;
 import ru.shika.app.interfaces.*;
 import ru.shika.app.loaders.LoaderCenter;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Stack;
+import java.util.*;
 
 public class Controller implements ControllerInterface, DialogCallback, ActionMode.Callback
 {
+	//TODO: fix viewgroup loading, add check new courses
 	public enum Dialog {
 		DIALOG_ADD, DIALOG_REMOVE
 	}
 
 	//For loader fabric
-	public static SparseArray <Lesson> items;
+	public static Map<String, Lesson> items;
 
 	//Basic things and some interfaces
 	private LoaderCenter loaderCenter;
-	private SparseArray <ViewInterface> viewInterfaces;
+	private Map<String, ViewInterface> viewInterfaces;
 	private DateInterface dateInterface;
 	private EditInterface editInterface;
 	private ActivityInterface activity;
 	private Context ctx;
-
-	private int id;
-	private int visibleId;
 
 	//Chosen date
 	private Calendar globalDate;
@@ -60,10 +55,10 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 	{
 		this.ctx = ctx;
 
-		items = new SparseArray<Lesson>();
+		items = new Hashtable<String, Lesson>();
 
 		loaderCenter = new LoaderCenter(ctx, this);
-		viewInterfaces = new SparseArray<ViewInterface>();
+		viewInterfaces = new HashMap<String, ViewInterface>();
 		dateInterface = null;
 		editInterface = null;
 
@@ -82,14 +77,26 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 		isActivityProgressRunning = false;
 
 		isActivityRunning = true;
-
-		id = 0;
 	}
 
 	@Override
 	public void setActivity(ActivityInterface activity)
 	{
 		this.activity = activity;
+	}
+
+	@Override
+	public void activityDestroyed()
+	{
+		visibleFragmentTag = "";
+		backStack.clear();
+		globalDate = Calendar.getInstance();
+
+		viewInterfaces.clear();
+		items.clear();
+
+		isActivityRunning = false;
+		isActivityProgressRunning = false;
 	}
 
 	@Override
@@ -100,7 +107,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 		 *@arg2 = name/teacher
 		 *@arg3 = name in schedule objects*/
 
-		Log.d("Shika", "showFragment with " + name + " : " + arg1);
+		Log.d("Shika", "Controller: showFragment with " + name + " : " + arg1 + " last visible was " + visibleFragmentTag);
 
 		if(isActivityProgressRunning)
 			dismissActivityProgress();
@@ -129,6 +136,14 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 		backStack.push(visibleFragmentTag);
 
 		fragment = fm.findFragmentByTag(name);
+
+		for (String tag : tags)
+			if(tag.equals(name))
+			{
+				//We have changed category, clear back stack
+				backStack.clear();
+				break;
+			}
 
 		//To avoid date change
 		Date date = new Date(globalDate.getTimeInMillis());
@@ -166,8 +181,6 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 			else
 			{
 				//Or main categories
-				//We have changed category, clear back stack
-				backStack.clear();
 				EditFragment.wasInEditMode = false;
 
 				if (name.equals(tags[0]))
@@ -186,7 +199,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 			}
 
 			ft.add(R.id.main_container, fragment, name);
-			Log.d("Shika", "New Fragment made");
+			Log.d("Shika", "Controller: New Fragment made");
 		}
 
 		ft.attach(fragment);
@@ -204,7 +217,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 	}
 
 	@Override
-	public void listItemInEditSelected(String type, String item)
+	public void listEditItemSelected(String type, String item)
 	{
 		if(type.equals(tags[3]))
 		{
@@ -218,7 +231,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 	}
 
 	@Override
-	public void editTypeSelected(String tag)
+	public void listChooserTypeSelected(String tag)
 	{
 		showFragment(tag+"Edit", tag);
 	}
@@ -278,47 +291,20 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 
 	//returns id
 	@Override
-	public int register(ViewInterface i)
+	public String register(ViewInterface i)
 	{
-		if(indexOfValue(i) < 0)
-		{
-			while (viewInterfaces.indexOfKey(id) >= 0)
-			{
-				id++;
-				if (id >= LoaderCenter.NETWORK) id = 0;
-			}
+		if(!viewInterfaces.containsKey(visibleFragmentTag))
+			viewInterfaces.put(visibleFragmentTag, i);
 
-			viewInterfaces.put(id, i);
-		}
-
-		int size = viewInterfaces.size();
-		for(int it = 0; it < size; it++)
-			if(viewInterfaces.valueAt(it).visible())
-			{
-				visibleId = viewInterfaces.keyAt(it);
-				break;
-			}
-
-		Log.d("Shika", "Registered id = " + id + " visible = " + visibleId);
-		return id;
+		Log.d("Shika", "Controller: registered id = " + visibleFragmentTag);
+		return visibleFragmentTag;
 	}
 
 	@Override
-	public void unregister(ViewInterface i)
+	public void unregister(String key)
 	{
-		if(indexOfValue(i) >= 0)
-		{
-			viewInterfaces.put(id, i);
-		}
-
-		int size = viewInterfaces.size();
-		for(int it = 0; it < size; it++)
-			if(viewInterfaces.valueAt(it).visible())
-			{
-				Log.d("Shika", "Visible is " + visibleId);
-				visibleId = viewInterfaces.keyAt(it);
-				break;
-			}
+		if(viewInterfaces.containsKey(key))
+			viewInterfaces.remove(key);
 	}
 
 	public void notifyDateChanged()
@@ -330,7 +316,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 	}
 
 	@Override
-	public ViewInterface getInterface(int id)
+	public ViewInterface getView(String id)
 	{
 		return viewInterfaces.get(id);
 	}
@@ -348,49 +334,65 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 	}
 
 	@Override
-	public void dateChanged(Date date)
+	public void dateChanged(long time)
 	{
-		Log.d("Shika", "date changed: current date was " + globalDate.getTime() + " new is " + date);
-		globalDate.setTime(date);
+		//Log.d("Shika", "Controller: date changed: date was " + globalDate.getTime() + " new is " + new Date(time));
+		globalDate.setTimeInMillis(time);
 		globalDate.setFirstDayOfWeek(Calendar.MONDAY);
 		notifyDateChanged();
 	}
 
 	@Override
-	public void load(ViewInterface i, String arg1, String arg2, String arg3)
+	public void load(String key, String arg1, String arg2, String arg3)
 	{
 		/**argument can have different meanings, so it is arg
 		 *@arg1 = param/type/group
 		 *@arg2 = name/teacher
 		 *@arg3 = name in schedule objects*/
 
-		//search for id and load the interface
-		int index = indexOfValue(i);
-		if(index < 0)
-		{
-			register(i);
-			index = indexOfValue(i);
-		}
-
-		int id = viewInterfaces.keyAt(index);
+		Log.d("Shika", "Controller: start loading with id: " + key + ", and args: " + arg1 + ", " + arg2 + ", " + arg3);
 
 		Lesson temp;
-		if(visibleFragmentTag.equals(tags[0]))//it is personal schedule
+		if(arg1.contains("ViewGroup"))//it is schedule
+		{
+			arg1 = arg1.replace("ViewGroup", "");
+			if(arg1.equals("") || arg1.equals("null")) arg1 = null; //If it was empty, make it null
+
 			temp = new Lesson(arg1, arg2, arg3, getDate());
+		}
 		else
 			temp = new Lesson(arg1, arg2, arg3, null);
 
-		items.append(id, temp);
+		items.put(key, temp);
 
-		loaderCenter.load(id);
+		loaderCenter.load(key);
 
 		showActivityProgress();
 	}
 
 	@Override
-	public void updateIsRunning(int id)
+	public void localLoad(String key, String arg1, String arg2, String arg3)
 	{
-		if(isActivityProgressRunning || visibleId == id)
+		Lesson temp;
+		if(arg1.contains("ViewGroup"))//it is schedule
+		{
+			arg1 = arg1.replace("ViewGroup", "");
+			if(arg1.equals("")) arg1 = null; //If it was empty, make it null
+
+			temp = new Lesson(arg1, arg2, arg3, getDate());
+		}
+		else
+			temp = new Lesson(arg1, arg2, arg3, null);
+
+		items.put(key, temp);
+
+		loaderCenter.startLocalLoader(key, -1);
+	}
+
+	@Override
+	public void loadEnded(String id)
+	{
+		if(visibleFragmentTag.equals(id))
 			activity.dismissProgress();
 	}
 
@@ -448,6 +450,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 	@Override
 	public void onDestroyActionMode(ActionMode actionMode)
 	{
+
 		if(visibleFragmentTag.equals(tags[tags.length - 1]))
 		{
 			editInterface.showCheckboxes(false);
@@ -458,7 +461,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 		activity.showFunctionButton();
 	}
 
-	public void deleteItems()
+	private void deleteItems()
 	{
 		String[] itemsToDelete = editInterface.getChecked();
 
@@ -475,17 +478,32 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 		switch (dialogs)
 		{
 			case DIALOG_ADD:
-				//use loader method update in progress to update the list
-				loaderCenter.updateIsRunning(-1, visibleId);
+				//we just need to update the database
+				activity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						loaderCenter.load(visibleFragmentTag, true);
 
-				//show message
-				showError("Course added to your schedule");
+						//show message
+						showError("Course added to your schedule");
+					}
+				});
+
 				return;
 
 			case DIALOG_REMOVE:
 
-				actionMode.finish();
-				loaderCenter.updateIsRunning(-1, visibleId);
+				activity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						actionMode.finish();
+						loaderCenter.load(visibleFragmentTag, true);
+					}
+				});
 				break;
 		}
 	}
@@ -506,18 +524,5 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 
 		isActivityProgressRunning = false;
 		activity.dismissProgress();
-	}
-
-	private int indexOfValue(Object o)
-	{
-		int size = viewInterfaces.size();
-		//Check, whether the array contains value
-		for(int it = 0; it < size; it++)
-			if(viewInterfaces.valueAt(it).equals(o))
-			{
-				return it;
-			}
-
-		return -1;
 	}
 }

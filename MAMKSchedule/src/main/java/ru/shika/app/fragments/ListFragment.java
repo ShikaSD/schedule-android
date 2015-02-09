@@ -55,7 +55,7 @@ public class ListFragment extends Fragment implements ViewInterface
 
 	private TranslateAnimation appear, disappear;
 
-	private int id;
+	private String id;
 
 	public static Fragment newInstance(String listType, boolean isEditFragment)
 	{
@@ -106,12 +106,15 @@ public class ListFragment extends Fragment implements ViewInterface
 
 		if(fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser") )
 		{
-			Log.d("Shika", "Checkboxes showed");
+			Log.d("Shika", "ListFragment: Checkboxes showed");
 			adapter = new ListFragmentAdapter(keys, names, true);
 			adapter.showCheckboxes(true);
 		}
 		else
 			adapter = new ListFragmentAdapter(keys, names, false);
+
+		id = controller.register(this);
+		load();
 	}
 
 	@Override
@@ -140,15 +143,13 @@ public class ListFragment extends Fragment implements ViewInterface
 				} else
 					item = names.get(i).get(0);
 
-				Log.d("Shika", i + ": " + item);
-
 				if (isEditFragment && typeName == null)
 				{
-					controller.listItemInEditSelected(fragmentType, item);
+					controller.listEditItemSelected(fragmentType, item);
 				}
 				else if (typeName != null)
 				{
-					controller.listItemInEditSelected("Courses", item);
+					controller.listEditItemSelected("Courses", item);
 				} else
 					controller.listItemSelected(fragmentType, item);
 			}
@@ -159,8 +160,6 @@ public class ListFragment extends Fragment implements ViewInterface
 		((ViewGroup) rootView).addView(progressView);
 		progressView.setVisibility(View.GONE);
 
-		load();
-
 		return rootView;
 	}
 
@@ -168,8 +167,6 @@ public class ListFragment extends Fragment implements ViewInterface
 	public void onViewCreated(View view, Bundle savedInstanceState)
 	{
 		super.onViewCreated(view, savedInstanceState);
-
-		id = controller.register(this);
 	}
 
 	private void animationInit()
@@ -245,21 +242,31 @@ public class ListFragment extends Fragment implements ViewInterface
 	{
 		super.onDestroy();
 
-		controller.unregister(this);
+		controller.unregister(id);
 	}
 
 	private void load()
 	{
-		Log.d("Shika", "In fragment " + fragmentType + " : " + typeName);
-		controller.load(this, fragmentType, typeName, null);
+		Log.d("Shika", "ListFragment: Start loading with values: " + fragmentType + ", " + typeName);
+		controller.load(id, fragmentType, typeName, null);
 	}
 
 	private void update(Object o)
 	{
+		//Adding some loaded objects to existing array
+		if(o == null)
+			return;
+
 		ArrayList <Object> items = (ArrayList<Object>) o;
 		ArrayList <ArrayList <String>> tempNames = (ArrayList<ArrayList<String>>) items.get(0);
 		SparseArray <String> tempKeys = (SparseArray <String>) items.get(1);
 		final SparseBooleanArray checks = (items.size() > 2) ? (SparseBooleanArray) items.get(2) : null;
+
+		if(items.size() > 3) //It is checks update
+		{
+			updateChecks(tempKeys);
+			return;
+		}
 
 		int tempSize = tempKeys.size();
 		int size = keys.size();
@@ -270,41 +277,107 @@ public class ListFragment extends Fragment implements ViewInterface
 
 			for(int j = 0; j < size; j++)
 			{
-				if(tempKeys.get(i).equals(keys.get(j)))
+				if(tempKeys.valueAt(i).equals(keys.valueAt(j)))
 				{
+					//If we have the same values here, then add them to the index that we know
 					int index = keys.keyAt(j);
 					int ind = tempKeys.keyAt(i);
 
-					if(!names.get(index).equals(tempNames.get(ind)))
-						names.get(index).addAll(tempNames.get(ind));
+					int thisSize = tempNames.get(ind).size();
+					for(int z = 0; z < thisSize; z++) //We have to search for equal values in sub-arrays
+					{
+						String s = tempNames.get(ind).get(z);
+						boolean equal = false;
+
+						for(String p : names.get(index))
+						{
+							if(s.toLowerCase().replaceAll("[-.,:;\\\\/' ]+", "").toLowerCase().equals(p.toLowerCase().replaceAll("[-.,:;\\\\/' ]+", "").toLowerCase()))
+							{
+								equal = true;
+								break;
+							}
+						}
+
+						if(!equal)
+							names.get(index).add(s); //If they are not equal, add it
+					}
 
 					isAdded = true;
 					break;
 				}
 			}
 
-			if(!isAdded)
+			if(!isAdded)//If we haven't found the key, add new
 			{
-				keys.append(tempKeys.keyAt(i), tempKeys.valueAt(i));
+				keys.append(names.size(), tempKeys.valueAt(i));//It id now id previous size of name(last element)
 				names.add(tempNames.get(tempKeys.keyAt(i)));
 			}
 		}
+
+		if(getActivity() != null)
+			getActivity().runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					adapter.swapData();
+
+					if(checks != null)
+						adapter.check(checks);
+
+					if(keys.size() == 0)
+					{
+						//Show that list is empty
+						empty.setVisibility(View.VISIBLE);
+						list.setVisibility(View.GONE);
+					}
+					else
+					{
+						//Or not
+						empty.setVisibility(View.GONE);
+						list.setVisibility(View.VISIBLE);
+					}
+				}
+		});
+	}
+
+	private void updateChecks(SparseArray <String> tempKeys)
+	{
+		SparseBooleanArray checks = new SparseBooleanArray();
+		int tempSize = tempKeys.size();
+		int size = keys.size();
+		for(int i = 0; i < tempSize; i++)
+		{
+			for(int j = 0; j < size; j++)
+			{
+				if(tempKeys.valueAt(i).equals(keys.valueAt(j)))
+				{
+					checks.append(keys.keyAt(j), true);
+					break;
+				}
+			}
+		}
+
+		final SparseBooleanArray temp = checks;
 
 		getActivity().runOnUiThread(new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				adapter.swapData();
-
-				if(checks != null)
-					adapter.check(checks);
+				adapter.check(temp);
 
 				if(keys.size() == 0)
 				{
 					//Show that list is empty
 					empty.setVisibility(View.VISIBLE);
 					list.setVisibility(View.GONE);
+				}
+				else
+				{
+					//Or not
+					empty.setVisibility(View.GONE);
+					list.setVisibility(View.VISIBLE);
 				}
 			}
 		});
@@ -334,28 +407,30 @@ public class ListFragment extends Fragment implements ViewInterface
 	@Override
 	public void showProgress()
 	{
-		getActivity().runOnUiThread(new Runnable()
-		{
-			@Override
-			public void run()
+		if(getActivity() != null)
+			getActivity().runOnUiThread(new Runnable()
 			{
-				if(progressView.getVisibility() != View.VISIBLE)
-					progressView.startAnimation(appear);
-			}
-		});
+				@Override
+				public void run()
+				{
+					if(progressView.getVisibility() != View.VISIBLE)
+						progressView.startAnimation(appear);
+				}
+			});
 	}
 
 	@Override
 	public void dismissProgress()
 	{
-		getActivity().runOnUiThread(new Runnable()
-		{
-			@Override
-			public void run()
+		if(getActivity() != null)
+			getActivity().runOnUiThread(new Runnable()
 			{
-				if(progressView.getVisibility() == View.VISIBLE)
-					progressView.startAnimation(disappear);
-			}
-		});
+				@Override
+				public void run()
+				{
+					if(progressView.getVisibility() == View.VISIBLE)
+						progressView.startAnimation(disappear);
+				}
+			});
 	}
 }

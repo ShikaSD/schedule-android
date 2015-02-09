@@ -4,6 +4,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -19,6 +20,7 @@ import ru.shika.Application;
 import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
 import ru.shika.app.adapters.DrawerListAdapter;
+import ru.shika.app.fragments.InfoDialogFragment;
 import ru.shika.app.interfaces.ActivityInterface;
 import ru.shika.app.interfaces.ControllerInterface;
 
@@ -149,7 +151,6 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         animationsInit();
 
         controller.setActivity(this);
-        showFragment("My schedule", "My schedule");
     }
 
     @Override
@@ -435,10 +436,14 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
             @Override
             public void run()
             {
-                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
 
-                if(msg.equals(getString(R.string.no_courses)))
-                    showSnackBar(msg, getString(R.string.add));
+				if(msg.equals(getString(R.string.no_courses)))
+				{
+					showSnackBar(msg, getString(R.string.add));
+					return;
+				}
+
+				Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -474,7 +479,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
             @Override
             public void onDateSelected(Date date)
             {
-                controller.dateChanged(date);
+                controller.dateChanged(date.getTime());
 
                 calendar.selectDate(date, true);
                 calendarContainer.startAnimation(calendarClose);
@@ -500,6 +505,12 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     protected void onPostCreate(Bundle savedInstanceState)
     {
         super.onPostCreate(savedInstanceState);
+
+		Controller.isActivityRunning = true;
+		dismissProgress(); //Sometimes it is running somehow O_O
+
+		showFragment("My schedule", "My schedule");
+
         toggle.syncState();
     }
 
@@ -507,7 +518,6 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     protected void onResume()
     {
         super.onResume();
-        controller.setActivity(this);
     }
 
     @Override
@@ -521,6 +531,14 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     public boolean onOptionsItemSelected(MenuItem item)
     {
         int id = item.getItemId();
+
+		switch (id)
+		{
+			case R.id.info:
+				DialogFragment fragment = new InfoDialogFragment();
+				fragment.show(getSupportFragmentManager(), "Info");
+				break;
+		}
         return super.onOptionsItemSelected(item);
     }
 
@@ -548,6 +566,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     protected void onDestroy()
     {
         super.onDestroy();
+		controller.activityDestroyed();
     }
 
     private class onDrawerItemClickListener implements ListView.OnItemClickListener
@@ -587,7 +606,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 
     public void onCalendarClick(View view)
     {
-        if(calendarContainer.getVisibility() == View.GONE)
+        if(calendarContainer.getVisibility() != View.VISIBLE)
         {
             calendarContainer.startAnimation(calendarOpen);
             functionButton.startAnimation(buttonClose);
@@ -620,13 +639,15 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     @Override
     public void showFunctionButton()
     {
-        functionButton.startAnimation(buttonOpen);
+		if(functionButton.getVisibility() != View.VISIBLE)
+			functionButton.startAnimation(buttonOpen);
     }
 
     @Override
     public void dismissFunctionButton()
     {
-        functionButton.startAnimation(buttonClose);
+		if(functionButton.getVisibility() == View.VISIBLE)
+        	functionButton.startAnimation(buttonClose);
     }
 
     @Override

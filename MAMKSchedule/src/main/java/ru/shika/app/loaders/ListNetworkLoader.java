@@ -5,8 +5,8 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
-import ru.shika.app.interfaces.NetworkLoaderInterface;
 import ru.shika.app.R;
+import ru.shika.app.interfaces.NetworkLoaderInterface;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -22,7 +22,7 @@ public class ListNetworkLoader extends NetworkLoader
 	//Last updating date
 	private Date lastUpdate;
 
-	public ListNetworkLoader(int id, Context ctx, NetworkLoaderInterface callbackInterface, String param)
+	public ListNetworkLoader(String id, Context ctx, NetworkLoaderInterface callbackInterface, String param)
 	{
 		super(id, ctx, callbackInterface, LoaderCode.LIST);
 		type = param;
@@ -99,7 +99,7 @@ public class ListNetworkLoader extends NetworkLoader
 		c.close();
 
 		//Send signal about ending of download
-		callback.downloadEnd(LoaderCenter.END_OF_DOWNLOAD, id);
+		callback.downloadEnd(id, LoaderCenter.SUCCESS);
 
 		long time;
 		if (isDatabaseEmpty) time = 0;

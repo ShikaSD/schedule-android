@@ -2,7 +2,7 @@ package ru.shika.app.interfaces;
 
 public interface LoaderCenterInterface
 {
-	Object getData(int id);
+	Object getData(String id);
 
-	void ready(int id);
+	void ready(String id);
 }

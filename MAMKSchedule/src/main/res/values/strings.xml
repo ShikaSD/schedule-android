@@ -64,5 +64,7 @@
     <string name="invalid_date">Date must be between %1$s and %2$s.</string>
     <string name="month_name_format">MMMM yyyy</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+	
+	<string name = "info_dialog_text">version 0.9\n© Andrei Shikov</string>
 
 </resources>

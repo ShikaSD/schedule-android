@@ -83,8 +83,8 @@ public class EditListAdapter extends BaseAdapter
 
 		int size = names.get(i).size();
 		String name = names.get(i).get(0);
-		/*for(int j = 1; j < size; j++)
-			name += "|"+names.get(i).get(j);*/
+		for(int j = 1; j < size; j++)
+			name += "|"+names.get(i).get(j);
 
 		((TextView) v.findViewById(R.id.fragment_list_name)).setText(name);
 

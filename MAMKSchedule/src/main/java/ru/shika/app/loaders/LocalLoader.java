@@ -16,12 +16,13 @@ abstract class LocalLoader implements Runnable
 	protected LocalLoaderInterface callback;
 
 	protected LoaderCode code;
-	protected int id;
+	protected String id;
 
 	protected Cursor cursor;
 
-	public LocalLoader(int id, Context ctx, LocalLoaderInterface callback, LoaderCode code)
+	public LocalLoader(String id, Context ctx, LocalLoaderInterface callback, LoaderCode code)
 	{
+		Log.d("Shika", "Start loading from database with id: "+ id);
 		dbh = DBHelper.getInstance(ctx);
 
 		this.id = id;

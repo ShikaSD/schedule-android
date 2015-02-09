@@ -18,12 +18,12 @@ import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
 import ru.shika.android.SlidingTabLayout;
 import ru.shika.app.Lesson;
+import ru.shika.app.R;
 import ru.shika.app.adapters.ScheduleViewGroupAdapter;
 import ru.shika.app.interfaces.ControllerInterface;
 import ru.shika.app.interfaces.DateInterface;
 import ru.shika.app.interfaces.LoaderCenterInterface;
 import ru.shika.app.interfaces.ViewInterface;
-import ru.shika.app.R;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -53,7 +53,7 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 
 	private Animation appear, disappear;
 
-	private int id;
+	private String id;
 
 	public static Fragment newInstance(String group, String teacher, String course, Date date)
 	{
@@ -108,6 +108,7 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 	{
 		View rootView = inflater.inflate(R.layout.fragment_schedule_viewgroup, container, false);
 		createProgressView((ViewGroup) rootView);
+
 		return rootView;
 	}
 
@@ -122,6 +123,7 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 		tabLayout = (SlidingTabLayout) view.findViewById(R.id.tabs);
 
 		id = controller.register(this);
+		load();
 	}
 
 	private void createProgressView(ViewGroup rootView)
@@ -220,9 +222,6 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 				setDayOfWeek(position);
 			}
 		});
-
-		load();
-
 	}
 
 	@Override
@@ -233,30 +232,48 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 
 	private void load()
 	{
-		controller.load(this, group, teacher, course);
-	}
+		controller.load(id, group + "ViewGroup", teacher, course);
+	} //Let controller know, that it is ViewGroup
 
 	private void update(Object o)
 	{
-		lessonsArr.clear();
+		if(o == null)
+			return;
 
-		lessonsArr.addAll((ArrayList<ArrayList<Lesson>>) o);
-		getActivity().runOnUiThread(new Runnable()
+		Log.d("Shika", "In ViewGroup fragment is found " + o);
+		int size = lessonsArr.size();
+
+		for(int i = 0; i < size; i++)
 		{
-			@Override
-			public void run()
+			lessonsArr.get(i).clear();
+			lessonsArr.get(i).addAll(((ArrayList <ArrayList <Lesson>>) o).get(i));
+		}
+
+		if(getActivity() != null)
+			getActivity().runOnUiThread(new Runnable()
 			{
-				pagerAdapter.notifyDataSetChanged();
-			}
-		});
+				@Override
+				public void run()
+				{
+					pagerAdapter.notifyDataSetChanged();
+				}
+			});
 	}
 
 
 	@Override
 	public void notifyDateChanged()
 	{
-		Log.d("Shika", date.getTime() + " : " + controller.getDate().getTime());
-		date = (Calendar) controller.getDate().clone();
+		//Log.d("Shika", "In fragment we have " + date.getTime() + " : and in the controller " + controller.getDate().getTime());
+
+		if(date.get(Calendar.WEEK_OF_YEAR) != controller.getDate().get(Calendar.WEEK_OF_YEAR))
+		{
+			date.setTimeInMillis(controller.getDate().getTimeInMillis()); //As we need it to load the same date that we need
+			load();
+		}
+		else
+			date.setTimeInMillis(controller.getDate().getTimeInMillis());
+
 		date.setFirstDayOfWeek(Calendar.MONDAY);
 		dayOfWeek = getWeekDay(date);
 
@@ -266,14 +283,15 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 	@Override
 	public void downloadEnd()
 	{
-		getActivity().runOnUiThread(new Runnable()
-		{
-			@Override
-			public void run()
+		if(getActivity() != null)
+			getActivity().runOnUiThread(new Runnable()
 			{
-				dismissProgress();
-			}
-		});
+				@Override
+				public void run()
+				{
+					dismissProgress();
+				}
+			});
 	}
 
 	@Override
@@ -316,11 +334,21 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 
 	public void setDayOfWeek(int day)
 	{
-		date.set(Calendar.DAY_OF_WEEK, getWeekDay(day));
+		//Log.d("Shika", "ViewGroup: we had here date: " + date.getTime());
+
+		Calendar temp = Calendar.getInstance(); //To avoid change to another week
+		temp.setTime(date.getTime());
+		temp.set(Calendar.DAY_OF_WEEK, getWeekDay(day));
+		temp.setFirstDayOfWeek(Calendar.MONDAY);
+
+		if(date.get(Calendar.WEEK_OF_YEAR) != temp.get(Calendar.WEEK_OF_YEAR))
+			temp.set(Calendar.WEEK_OF_YEAR, date.get(Calendar.WEEK_OF_YEAR));
+
 		dayOfWeek = day;
 
-		controller.dateChanged(date.getTime());
-		load();
+		//Log.d("Shika", "ViewGroup: and now it is: " + temp.getTime());
+
+		controller.dateChanged(temp.getTimeInMillis());
 	}
 
 	private int getWeekDay(Calendar calendar)

@@ -6,11 +6,12 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.util.Log;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import ru.shika.app.DBHelper;
-import ru.shika.app.interfaces.NetworkLoaderInterface;
 import ru.shika.app.R;
+import ru.shika.app.interfaces.NetworkLoaderInterface;
 
 import java.util.ArrayList;
 
@@ -29,11 +30,12 @@ abstract class NetworkLoader implements Runnable
 
 	private boolean isErrorHappened;
 
-	protected int id;
+	protected String id;
 	public LoaderCode code;
 
-	public NetworkLoader(int id, Context context, NetworkLoaderInterface callback, LoaderCode code)
+	public NetworkLoader(String id, Context context, NetworkLoaderInterface callback, LoaderCode code)
 	{
+		Log.d("Shika", "Start downloading with id: " + id);
 		ctx = context;
 		this.callback = callback;
 		this.id = id;
@@ -112,7 +114,7 @@ abstract class NetworkLoader implements Runnable
 		}
 
 		//Send signal that we have downloaded something
-		callback.updateIsRunning(downloaded, id);
+		callback.updateIsRunning(id, downloaded);
 
 		return lastDownloaded;
 	}
@@ -123,7 +125,7 @@ abstract class NetworkLoader implements Runnable
 
 		callback.showError(msg);
 
-		callback.downloadEnd(LoaderCenter.ERROR, id);
+		callback.downloadEnd(id, LoaderCenter.ERROR);
 	}
 
 	protected String getString(int id)

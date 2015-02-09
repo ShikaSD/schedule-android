@@ -3,11 +3,11 @@ package ru.shika.app.loaders;
 import android.content.Context;
 import ru.shika.app.interfaces.LocalLoaderInterface;
 
-public class EditLocalLoader extends LocalLoader
+public class ChooserCheckLoader extends LocalLoader
 {
-	public EditLocalLoader(String id, Context ctx, LocalLoaderInterface callback)
+	public ChooserCheckLoader(String id, Context ctx, LocalLoaderInterface callback)
 	{
-		super(id, ctx, callback, LoaderCode.EDIT);
+		super(id, ctx, callback, LoaderCode.CHECK);
 	}
 
 	@Override

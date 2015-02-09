@@ -10,8 +10,8 @@ import android.widget.Button;
 import ru.shika.Application;
 import ru.shika.app.Controller;
 import ru.shika.app.DBHelper;
-import ru.shika.app.interfaces.DialogCallback;
 import ru.shika.app.R;
+import ru.shika.app.interfaces.DialogCallback;
 
 public class DialogAddFragment extends android.support.v4.app.DialogFragment implements View.OnClickListener
 {
@@ -80,7 +80,8 @@ public class DialogAddFragment extends android.support.v4.app.DialogFragment imp
 			{
 				int res = dbh.update("Courses", cv, where, args);
 
-				Log.d("Shika", where + " " + res);
+				Log.d("Shika", where + " :rows changed - " + res);
+				callback.dialogDone(Controller.Dialog.DIALOG_ADD);
 			}
 		}).start();
 	}
@@ -95,13 +96,16 @@ public class DialogAddFragment extends android.support.v4.app.DialogFragment imp
 				cv.put("isEnrolled", 1);
 
 				String where = "(courseId = ? or (name = ? and courseId = ''))";
-				String[] args = new String[] {name, name, item, item};
+				String[] args;
 				if(!item.equals("Courses"))
+				{
 					where += " and (groups = ? or teacher = ?)";
+					args = new String[] {name, name, item, item};
+				}
+				else
+					args = new String[] {name, name};
 
 				addToSchedule(where, args, cv);
-
-				callback.dialogDone(Controller.Dialog.DIALOG_ADD);
 
 				dismiss();
 				break;

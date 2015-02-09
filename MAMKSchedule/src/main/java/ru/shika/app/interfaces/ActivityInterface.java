@@ -15,6 +15,7 @@ public interface ActivityInterface
 	void backPressed();
 
 	FragmentManager getSupportFragmentManager();
+	void runOnUiThread(Runnable run);
 	void setTitle(String title);
 	String getActionTitle();
 

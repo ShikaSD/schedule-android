@@ -1,33 +1,32 @@
 package ru.shika.app.interfaces;
 
-import android.app.Activity;
-
 import java.util.Calendar;
-import java.util.Date;
 
 public interface ControllerInterface
 {
 	void setActivity(ActivityInterface activity);
+	void activityDestroyed();
 
 	void showFragment(String name, String arg1);
 	void listItemSelected(String type, String item);
-	void listItemInEditSelected(String type, String item);
-	void editTypeSelected(String type);
+	void listEditItemSelected(String type, String item);
+	void listChooserTypeSelected(String type);
 
 	void backPressed();
 
 	void addClick();
 
-	int register(ViewInterface i);
-	void unregister(ViewInterface i);
-	ViewInterface getInterface(int id);
+	String register(ViewInterface i);
+	void unregister(String key);
+	ViewInterface getView(String id);
 	void setDateInterface(DateInterface i);
 
 	Calendar getDate();
-	void dateChanged(Date date);
+	void dateChanged(long time);
 
-	void load(ViewInterface i, String arg1, String arg2, String arg3);
-	void updateIsRunning(int id);
+	void load(String key, String arg1, String arg2, String arg3);
+	void localLoad(String key, String arg1, String arg2, String arg3);
+	void loadEnded(String id);
 
 	void showError(String msg);
 }

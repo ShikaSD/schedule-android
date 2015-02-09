@@ -7,7 +7,7 @@ public class ChooserLocalLoader extends LocalLoader
 {
 	private String name, type;
 
-	public ChooserLocalLoader(int id, Context ctx,LocalLoaderInterface callback, String type, String name)
+	public ChooserLocalLoader(String id, Context ctx,LocalLoaderInterface callback, String type, String name)
 	{
 		super(id, ctx, callback, LoaderCode.CHOOSER);
 
@@ -18,7 +18,7 @@ public class ChooserLocalLoader extends LocalLoader
 	@Override
 	protected void load()
 	{
-		cursor = dbh.rawQuery("select * from Courses where groups like '%"+ name +"%' or teacher like '%"+ name +"%' " + "order by name", null);
+		cursor = dbh.rawQuery("select courseId, name, isEnrolled from Courses where groups like '%"+ name +"%' or teacher like '%"+ name +"%' " + "order by name", null);
 	}
 
 }

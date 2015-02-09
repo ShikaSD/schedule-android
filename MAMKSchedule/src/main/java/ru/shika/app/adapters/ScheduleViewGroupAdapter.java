@@ -84,7 +84,10 @@ public class ScheduleViewGroupAdapter extends PagerAdapter
 			recyclerView.setVisibility(View.GONE);
 		}
 		else
+		{
+			recyclerView.setVisibility(View.VISIBLE);
 			(layout.findViewById(R.id.emptySchedule)).setVisibility(View.GONE);
+		}
 
 		container.addView(layout);
 		return layout;
@@ -134,11 +137,12 @@ public class ScheduleViewGroupAdapter extends PagerAdapter
 			.findViewById(R.id.emptySchedule);
 		if(lessons.get(position).size() == 0)
 		{
-			recyclerView.setVisibility(View.GONE);
+			recyclerView.setVisibility(View.INVISIBLE);
 			empty.setVisibility(View.VISIBLE);
 		}
 		else
 		{
+			Log.d("Shika", "Adapter: in view " + position + " we have " + lessons.get(position).size() + " objects");
 			empty.setVisibility(View.GONE);
 			recyclerView.setVisibility(View.VISIBLE);
 		}

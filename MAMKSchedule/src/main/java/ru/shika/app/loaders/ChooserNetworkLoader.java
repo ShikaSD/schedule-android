@@ -3,8 +3,8 @@ package ru.shika.app.loaders;
 import android.content.Context;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
-import ru.shika.app.interfaces.NetworkLoaderInterface;
 import ru.shika.app.R;
+import ru.shika.app.interfaces.NetworkLoaderInterface;
 
 import java.util.ArrayList;
 
@@ -12,7 +12,7 @@ public class ChooserNetworkLoader extends NetworkLoader
 {
 	private String type, name;
 
-	public ChooserNetworkLoader(int id, Context context, NetworkLoaderInterface callback, String type, String name)
+	public ChooserNetworkLoader(String id, Context context, NetworkLoaderInterface callback, String type, String name)
 	{
 		super(id, context, callback, LoaderCode.CHOOSER);
 
@@ -59,6 +59,6 @@ public class ChooserNetworkLoader extends NetworkLoader
 	@Override
 	protected void postDownload()
 	{
-		callback.downloadEnd(LoaderCenter.END_OF_DOWNLOAD, id);
+		callback.downloadEnd(id, LoaderCenter.SUCCESS);
 	}
 }

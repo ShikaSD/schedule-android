@@ -8,7 +8,7 @@ public class ListLocalLoader extends LocalLoader
 	private String type;
 	private int downloaded;
 
-	public ListLocalLoader(int id, Context ctx, LocalLoaderInterface callback, String type, int downloaded)
+	public ListLocalLoader(String id, Context ctx, LocalLoaderInterface callback, String type, int downloaded)
 	{
 		super(id, ctx, callback, LoaderCode.LIST);
 

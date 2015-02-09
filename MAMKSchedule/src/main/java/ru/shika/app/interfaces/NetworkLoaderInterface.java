@@ -1,11 +1,9 @@
 package ru.shika.app.interfaces;
 
-import ru.shika.app.loaders.LoaderCode;
-
 public interface NetworkLoaderInterface
 {
 	void showError(String msg);
 
-	void updateIsRunning(int amount, int id);
-	void downloadEnd(int code, int id);
+	void updateIsRunning(String id, int amount);
+	void downloadEnd(String id, int code);
 }

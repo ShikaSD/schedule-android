@@ -17,7 +17,7 @@ public class ScheduleLocalLoader extends LocalLoader
 	private boolean isPersonalSchedule;
 	private Calendar date;
 
-	public ScheduleLocalLoader(int id, Context ctx, LocalLoaderInterface callback,
+	public ScheduleLocalLoader(String id, Context ctx, LocalLoaderInterface callback,
 							   String group,  String teacher, String course, Date date, boolean isPersonalSchedule)
 	{
 		super(id, ctx, callback, LoaderCode.SCHEDULE);
@@ -33,60 +33,44 @@ public class ScheduleLocalLoader extends LocalLoader
 	@Override
 	protected void load()
 	{
-		int argumentsArrayLength = 7;
-
-		String[] dates;
-
 		date.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
 
-		if(course != null)
-		{
-			dates = new String[argumentsArrayLength + 1];
-			dates[0] = course;
-		}
-		else
-			dates = new String[argumentsArrayLength];
+		String startDate = Lesson.convertDateToString(date);
+		date.add(Calendar.DATE, 6);
+		String endDate = Lesson.convertDateToString(date);
 
-		for(int i = dates.length - argumentsArrayLength; i < dates.length; i++)
-		{
-			dates[i] = Lesson.convertDateToString(date);
-			//Log.w("Shika", "Dates are: " + dates[i]);
-			date.add(Calendar.DATE, 1);
-		}
 		//To avoid date changes
-		date.add(Calendar.DATE, -argumentsArrayLength);
+		date.add(Calendar.DATE, -6);
 
 		if(isPersonalSchedule)
 		{
 			Log.d("Shika", "Here is personal schedule");
 			String query = "select * from Courses inner join Schedule on(Courses.courseId = Schedule.courseId and" +
 				" Courses.name = Schedule.lesson and Courses.teacher = Schedule.teacher and Courses.groups = " +
-				"Schedule.groups) where isEnrolled = 1 and " +
-				"(date like ? or date like ? or date like ? or date like ? or date like ? or date like ? or date " +
-				"like ?)";
-			cursor = dbh.rawQuery(query, dates);
+				"Schedule.groups) where Courses.isEnrolled = 1 and " +
+				"(Schedule.date >= ? and Schedule.date <= ?)";
+			cursor = dbh.rawQuery(query, new String[]{startDate, endDate});
 		}
 		else
 		if(group != null)
 		{
 			Log.d("Shika", "Here is group schedule");
-			cursor = dbh.query("Schedule", null, "groups like '" + group + "%' and (date like ? or date like ? " +
-				"or date like ? or date like ? or date like ? or date like ? or date " +
-				"like ?)", dates, null, null, "start");
+			cursor = dbh.query("Schedule", null, "groups = '" + group + "' and (date >= ? and date <= ?)", new String[]{startDate, endDate},
+				null, null, "start");
 		}
 		else
 		if(teacher != null)
 		{
 			Log.d("Shika", "Here is teacher schedule");
-			cursor = dbh.query("Schedule", null, "teacher like '" + teacher + "%' and (date like ? or date like " +
-				"? or date like ? or date like ? or date like ?  or date like ? or date like ?)", dates, null, null, "start");
+			cursor = dbh.query("Schedule", null, "teacher = '" + teacher + "' and (date >= ? and date <= ?)", new String[]{startDate, endDate},
+				null, null, "start");
 		}
 		else
 		if(course != null)
 		{
 			Log.d("Shika", "Here is course schedule");
-			cursor = dbh.query("Schedule", null, "(courseId like '" + course + "%' or lesson like ?) and (date " +
-				"like ? or date like ? or date like ? or date like ? or date like ?  or date like ? or date like ?)", dates, null, null, "start");
+			cursor = dbh.query("Schedule", null, "(courseId like ?' or lesson like ?) and " +
+				"(date >= ? and date <= ?)", new String[]{course, course, startDate, endDate}, null, null, "start");
 		}
 	}
 
@@ -113,8 +97,11 @@ public class ScheduleLocalLoader extends LocalLoader
 				int group = cursor.getColumnIndex("groups");
 				int courseId = cursor.getColumnIndex("courseId");
 
+				Log.d("Shika", cursor.getString(lesson)+ ", " + cursor.getString(teacher));
+
 				do
 				{
+					Log.d("Shika", "name: " + cursor.getString(lesson) + ", group: " + cursor.getString(group));
 					String id = cursor.getString(courseId);
 
 					boolean equals = false;

@@ -1,6 +1,7 @@
 package ru.shika.app;
 
 import android.graphics.drawable.Drawable;
+import android.support.annotation.Nullable;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -25,12 +26,14 @@ public class Lesson
 		this.day = day;
 	}
 
-	public Lesson(String group, String teacher, String name, Calendar date)
+	public Lesson(String group, String teacher, String name, @Nullable Calendar date)
 	{
 		this.group = group;
 		this.teacher = teacher;
 		this.name = name;
-		calendar = new Date(date.getTimeInMillis());
+
+		if(date != null)
+			calendar = new Date(date.getTimeInMillis());
 	}
 
 	public static String convertDateToString(Calendar date)

@@ -19,42 +19,42 @@ public class LoaderFabric
 		this.ctx = ctx;
 	}
 
-	public NetworkLoader createNetworkLoader(NetworkLoaderInterface i, int id)
+	public NetworkLoader createNetworkLoader(String id, NetworkLoaderInterface i)
 	{
 		/**argument can have different meanings, so it is arg
 		 *@arg1 = param/type/group
 		 *@arg2 = name/teacher
 		 *@arg3 = name in schedule objects*/
 
-		Lesson temp = Controller.items.get(id - LoaderCenter.NETWORK);
+		Lesson temp = Controller.items.get(id.replace(LoaderCenter.NETWORK, ""));
 
 		String arg1 = temp.group;
 		String arg2 = temp.teacher;
 		String arg3 = temp.name;
 		Calendar date = Calendar.getInstance();
 
+		Log.d("Shika", "Fabric: Making network loader with values "+ id + ", " + arg1 + ", " + arg2 + ", " + arg3);
+
 		if(temp.calendar != null)
 		{
-			date.setTime(temp.calendar);
-			date.setFirstDayOfWeek(Calendar.MONDAY);
+			date.setTimeInMillis(temp.calendar.getTime());
 			/*So it is Schedule*/
 			boolean isPersonalSchedule = (arg1 == null && arg2 == null && arg3 == null);
 
 			date.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
 
-			Lesson[] lessons = new Lesson[7];
+			Lesson[] lessons = new Lesson[2];
 			String dateFormat;
 
-			//Adding items
-			for(int it = 0; it < lessons.length; it++)
-			{
-				dateFormat = Lesson.convertDateToString(date);
+			lessons[0] = new Lesson(null, null, null, arg3, arg2, Lesson.convertDateToString(date), arg1, 0);
+			date.add(Calendar.DATE, 6);
+			lessons[1] = new Lesson(null, null, null, arg3, arg2, Lesson.convertDateToString(date), arg1, 0);
 
-				lessons[it] = new Lesson(null, null, null, arg3, arg2, dateFormat, arg1, 0);
-				date.add(Calendar.DATE, 1);
-			}
 			return new ScheduleNetworkLoader(id, ctx, i, isPersonalSchedule, lessons);
 		}
+
+		if(arg1.startsWith("Edit")) //It is Edit loader
+			return new EmptyNetworkLoader(id, ctx, i); //It doesn't need any network iloaders
 
 		if(arg2 == null)
 		{
@@ -69,7 +69,7 @@ public class LoaderFabric
 		return new ChooserNetworkLoader(id, ctx, i, arg1, arg2);
 	}
 
-	public LocalLoader createLocalLoader(LocalLoaderInterface i, int id, int downloaded)
+	public LocalLoader createLocalLoader(String id, LocalLoaderInterface i, int downloaded)
 	{
 		/**argument can have different meanings, so it is arg
 		 *@arg1 = param/type/group
@@ -81,6 +81,9 @@ public class LoaderFabric
 		String arg3 = temp.name;
 		Date date = temp.calendar;
 
+		if(downloaded == LoaderCenter.LOADER_CHECK)
+			return new ChooserCheckLoader(id, ctx, i);
+
 		if(date != null)
 		{
 			//This is Schedule
@@ -88,7 +91,7 @@ public class LoaderFabric
 			return new ScheduleLocalLoader(id, ctx, i, arg1, arg2, arg3, date, isPersonalSchedule);
 		}
 
-		if(arg1.contains("Edit")) //It is Edit loader
+		if(arg1.startsWith("Edit")) //It is Edit loader
 			return new EditLocalLoader(id, ctx, i);
 
 		if(arg2 == null)
@@ -99,5 +102,10 @@ public class LoaderFabric
 
 		//This is Chooser
 		return new ChooserLocalLoader(id, ctx, i, arg1, arg2);
+	}
+
+	public NetworkLoader createEmptyLoader(String id, NetworkLoaderInterface i)
+	{
+		return new EmptyNetworkLoader(id, ctx, i);
 	}
 }

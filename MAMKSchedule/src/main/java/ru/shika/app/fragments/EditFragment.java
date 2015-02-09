@@ -14,13 +14,13 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.*;
 import ru.shika.Application;
+import ru.shika.app.R;
 import ru.shika.app.adapters.EditListAdapter;
 import ru.shika.app.adapters.EditSimpleAdapter;
 import ru.shika.app.interfaces.ControllerInterface;
 import ru.shika.app.interfaces.EditInterface;
 import ru.shika.app.interfaces.LoaderCenterInterface;
 import ru.shika.app.interfaces.ViewInterface;
-import ru.shika.app.R;
 
 import java.util.ArrayList;
 
@@ -50,7 +50,7 @@ public class EditFragment extends Fragment implements EditInterface, ViewInterfa
 
 	private Animation editOpen, editClose;
 
-	private int id;
+	private String id;
 
 
 	@Override
@@ -109,15 +109,13 @@ public class EditFragment extends Fragment implements EditInterface, ViewInterfa
 		list = (ListView) view.findViewById(R.id.fragment_edit_list);
 		header = (TextView) view.findViewById(R.id.fragment_edit_list_header);
 
-		load();
-
 		if (wasInEditMode)
 		{
 			switchToEdit();
+			header.setVisibility(View.VISIBLE);
 		}
-
-		if (list.getAdapter() == null)
-			list.setAdapter(listAdapter);
+		else
+			switchToNormal();
 
 		list.setOnItemClickListener(new AdapterView.OnItemClickListener()
 		{
@@ -137,11 +135,12 @@ public class EditFragment extends Fragment implements EditInterface, ViewInterfa
 					return;
 				}
 
-				controller.editTypeSelected(titles[i + 1]);
+				controller.listChooserTypeSelected(titles[i + 1]);
 			}
 		});
 
 		id = controller.register(this);
+		load();
 	}
 
 	private void animationInit()
@@ -213,7 +212,7 @@ public class EditFragment extends Fragment implements EditInterface, ViewInterfa
 	}
 
 	@Override
-	public void showCheckboxes(boolean show)
+	public void showCheckboxes(final boolean show)
 	{
 		if (!show)
 			listAdapter.unCheck();
@@ -228,14 +227,23 @@ public class EditFragment extends Fragment implements EditInterface, ViewInterfa
 
 	private void load()
 	{
-		controller.load(this, "Edit", null, null);
+		controller.load(id, "Edit", null, null);
 	}
 
 	private void update(Object o)
 	{
+		if(o == null)
+			return;
+
 		ArrayList<Object> items = (ArrayList<Object>) o;
-		names = (ArrayList<ArrayList<String>>) items.get(0);
-		keys = (SparseArray<String>) items.get(1);
+
+		names.clear();
+		keys.clear();
+		names.addAll((ArrayList<ArrayList<String>>) items.get(0));
+		for(int i = 0; i < ((SparseArray) items.get(1)).size(); i++)
+		{
+			keys.append(((SparseArray<String>) items.get(1)).keyAt(i), ((SparseArray<String>) items.get(1)).valueAt(i));
+		}
 
 		getActivity().runOnUiThread(new Runnable()
 		{
@@ -243,6 +251,9 @@ public class EditFragment extends Fragment implements EditInterface, ViewInterfa
 			public void run()
 			{
 				listAdapter.notifyDataSetChanged();
+
+				if(!wasInEditMode)
+					switchToNormal();
 			}
 		});
 	}
@@ -268,6 +279,7 @@ public class EditFragment extends Fragment implements EditInterface, ViewInterfa
 		{
 			header.setText(R.string.edit_list_header);
 			header.setVisibility(View.VISIBLE);
+			list.setVisibility(View.VISIBLE);
 			add.setVisibility(View.GONE);
 			empty.setVisibility(View.GONE);
 		} else

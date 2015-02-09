@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import ru.shika.Application;
 import ru.shika.app.Controller;
 import ru.shika.app.DBHelper;
 import ru.shika.app.R;
@@ -53,6 +54,7 @@ public class DialogCallbackFragment extends android.support.v4.app.DialogFragmen
 		items = getArguments().getStringArray("items");
 
 		dbh = DBHelper.getInstance(getActivity());
+		callback = Application.getController();
 	}
 
 	@Override
@@ -72,6 +74,21 @@ public class DialogCallbackFragment extends android.support.v4.app.DialogFragmen
 		return rootView;
 	}
 
+	private void update(final ContentValues cv)
+	{
+		new Thread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				for (String item : items)
+					dbh.update("Courses", cv, "name = ? or courseId = ?", new String[]{item, item});
+
+				callback.dialogDone(Controller.Dialog.DIALOG_REMOVE);
+			}
+		}).start();
+	}
+
 	@Override
 	public void onClick(View view)
 	{
@@ -81,12 +98,9 @@ public class DialogCallbackFragment extends android.support.v4.app.DialogFragmen
 
 				ContentValues cv = new ContentValues();
 				cv.put("isEnrolled", 0);
-				for(String item : items)
-				{
-					dbh.update("Courses", cv, "where name = ? or courseId = ?", new String[]{item, item});
-				}
 
-				callback.dialogDone(Controller.Dialog.DIALOG_REMOVE);
+				update(cv);
+
 				dismiss();
 				break;
 			case R.id.dialog_no:

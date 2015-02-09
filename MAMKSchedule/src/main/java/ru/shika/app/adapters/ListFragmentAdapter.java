@@ -26,8 +26,6 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 	private ArrayList<Boolean> checkedItems;
 	private boolean showCheckboxes;
 
-	private int size;
-
 	public ListFragmentAdapter(SparseArray <String> keys, ArrayList<ArrayList<String>> names, boolean isCheckingList)
 	{
 		/*this.keys = new SparseArray<String>();
@@ -39,8 +37,6 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 
 		this.keys = keys;
 		this.names = names;
-
-		size = keys.size();
 
 		this.isCheckingList = isCheckingList;
 		showCheckboxes = false;
@@ -100,8 +96,9 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 	public void onBindViewHolder(ViewHolder viewHolder, int i)
 	{
 		String name = names.get(i).get(0);
-		/*for(int j = 1; j < size; j++)
-			name += "|"+names.get(i).get(j);*/
+		int size = names.get(i).size();
+		for(int j = 1; j < size; j++)
+			name += "|"+names.get(i).get(j);
 
 		viewHolder.name.setText(name);
 
