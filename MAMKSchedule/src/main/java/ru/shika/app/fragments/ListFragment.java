@@ -2,15 +2,15 @@ package ru.shika.app.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.TranslateAnimation;
@@ -28,7 +28,7 @@ import ru.shika.app.interfaces.ViewInterface;
 
 import java.util.ArrayList;
 
-public class ListFragment extends Fragment implements ViewInterface
+public class ListFragment extends Fragment implements ViewInterface, SearchView.OnQueryTextListener
 {
 	/**Fragment is used three times: in drawer menu and two types in edit
 	 * isEditFragment = false, fragmentType = true : drawer
@@ -41,6 +41,7 @@ public class ListFragment extends Fragment implements ViewInterface
 	//To sort them by course id
 	private SparseArray <String> keys; //Ids
 	private ArrayList <ArrayList <String>> names; //Full name
+	private ArrayList <Boolean> visible;
 
 	private ListFragmentAdapter adapter;
 	private RecyclerView list;
@@ -56,6 +57,10 @@ public class ListFragment extends Fragment implements ViewInterface
 	private TranslateAnimation appear, disappear;
 
 	private String id;
+
+	private String searchQuery;
+	private SearchView searchView;
+	private Thread searchFilterThread;
 
 	public static Fragment newInstance(String listType, boolean isEditFragment)
 	{
@@ -86,6 +91,9 @@ public class ListFragment extends Fragment implements ViewInterface
 	{
 		super.onCreate(savedInstanceState);
 
+		//We have own menu here
+		setHasOptionsMenu(true);
+
 		controller = Application.getController();
 		loader = Application.getController().getLoader();
 
@@ -93,6 +101,7 @@ public class ListFragment extends Fragment implements ViewInterface
 
 		keys = new SparseArray<String>();
 		names = new ArrayList<ArrayList<String>>();
+		visible = new ArrayList<Boolean>();
 
 		fragmentType = getArguments().getString("type");
 		typeName = null;
@@ -104,14 +113,16 @@ public class ListFragment extends Fragment implements ViewInterface
 			typeName = getArguments().getString("name");
 		}
 
+		searchQuery = "";
+
 		if(fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser") )
 		{
 			Log.d("Shika", "ListFragment: Checkboxes showed");
-			adapter = new ListFragmentAdapter(keys, names, true);
+			adapter = new ListFragmentAdapter(keys, names, visible, true);
 			adapter.showCheckboxes(true);
 		}
 		else
-			adapter = new ListFragmentAdapter(keys, names, false);
+			adapter = new ListFragmentAdapter(keys, names, visible, false);
 
 		id = controller.register(this);
 		load();
@@ -132,6 +143,8 @@ public class ListFragment extends Fragment implements ViewInterface
 			@Override
 			public void onItemClick(View view, int i)
 			{
+
+
 				if (isEditFragment && (fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser")) &&
 					adapter.isChecked(i))
 					return;
@@ -139,9 +152,9 @@ public class ListFragment extends Fragment implements ViewInterface
 				String item;
 				if (fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser"))
 				{
-					item = keys.get(i);
+					item = ((TextView) view.findViewById(R.id.fragment_list_id)).getText().toString();
 				} else
-					item = names.get(i).get(0);
+					item = ((TextView) view.findViewById(R.id.fragment_list_name)).getText().toString();
 
 				if (isEditFragment && typeName == null)
 				{
@@ -235,6 +248,23 @@ public class ListFragment extends Fragment implements ViewInterface
 
 		progressDrawable.setColorSchemeColors(getResources().getColor(R.color.light_blue));
 		progressView.setImageDrawable(progressDrawable);
+	}
+
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
+	{
+		inflater.inflate(R.menu.list, menu);
+
+		searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.search));
+		searchView.setOnQueryTextListener(this);
+
+		super.onCreateOptionsMenu(menu, inflater);
+	}
+
+	@Override
+	public void onPrepareOptionsMenu(Menu menu)
+	{
+		super.onPrepareOptionsMenu(menu);
 	}
 
 	@Override
@@ -339,6 +369,9 @@ public class ListFragment extends Fragment implements ViewInterface
 					}
 				}
 		});
+
+		filterItems(searchQuery);
+		searchFilterThread = Thread.currentThread();
 	}
 
 	private void updateChecks(SparseArray <String> tempKeys)
@@ -381,6 +414,51 @@ public class ListFragment extends Fragment implements ViewInterface
 				}
 			}
 		});
+	}
+
+	private void filterItems(String s)
+	{
+		int size = names.size();
+		visible.clear();
+
+		for(int i = 0; i < size; i++)
+		{
+			if(Thread.interrupted())
+			{
+				Log.d("Shika", "Filter thread is interrupted");
+				for(int j = 0; j < size; j++)
+					visible.add(true);
+
+				return;
+			}
+
+			boolean f = false;
+			int tsize = names.get(i).size();
+			for(int j = 0; j < tsize; j++)
+			{
+				if(names.get(i).get(j).toLowerCase().contains(s.toLowerCase()))
+				{
+					f = true;
+					break;
+				}
+			}
+
+			if(!f)
+				if(keys.get(i).toLowerCase().contains(s.toLowerCase()))
+					f = true;
+
+			visible.add(f);
+		}
+
+		if(getActivity() != null)
+			getActivity().runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					adapter.notifyDataSetChanged();
+				}
+			});
 	}
 
 	@Override
@@ -432,5 +510,31 @@ public class ListFragment extends Fragment implements ViewInterface
 						progressView.startAnimation(disappear);
 				}
 			});
+	}
+
+	@Override
+	public boolean onQueryTextSubmit(String s)
+	{
+		return true;
+	}
+
+	@Override
+	public boolean onQueryTextChange(final String s)
+	{
+		Log.d("Shika", "Text changed to " + s);
+		searchQuery = s;
+		if(searchFilterThread.isAlive())
+			searchFilterThread.interrupt();
+
+		searchFilterThread = new Thread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				filterItems(s);
+			}
+		});
+		searchFilterThread.start();
+		return false;
 	}
 }

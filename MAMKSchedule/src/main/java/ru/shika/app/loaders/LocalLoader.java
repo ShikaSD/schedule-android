@@ -55,6 +55,9 @@ abstract class LocalLoader implements Runnable
 				else
 					courseId = c.getString(id);
 
+				if(courseId.equals(""))
+					continue;
+
 				int index = -1;
 
 				for(int i = 0; i < keys.size(); i++)

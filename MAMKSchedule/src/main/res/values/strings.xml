@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+	<!-- Basic strings-->
     <string name="app_name">MAMK Schedule</string>
     <string name="action_settings">Settings</string>
 
+	<!-- Days in ViewGroupFragment-->
     <array name="days">
         <item>MON</item>
         <item>TUE</item>
@@ -14,6 +16,7 @@
         <item>SUN</item>
     </array>
 
+	<!--Some needed strings in app-->
     <string name = "no_lessons">There are no lessons that day</string>
     <string name = "updating">Updating…</string>
     <string name = "no_items">There are no items in that list</string>
@@ -22,6 +25,7 @@
     <string name = "dialog_delete_title">Delete courses</string>
     <string name = "dialog_delete_text">Do you want to delete these courses from your schedule?</string>
 
+	<!--Drawer items -->
     <string-array name="drawer_strings">
         <item name="schedule">My schedule</item>
         <item name="groups">Groups</item>
@@ -39,6 +43,7 @@
 
     <string name = "edit_empty">Your personal schedule is empty\nTry to add courses with button below</string>
 
+	<!--String from edit fragment -->
     <string name = "edit_header">Choose course by:</string>
     <string name = "edit_list_header">Chosen courses:</string>
     <string-array name = "edit_strings">
@@ -47,6 +52,7 @@
         <item>Names</item>
     </string-array>
 
+	<!--Strings for dialogs and buttons -->
     <string name = "add">ADD</string>
 
     <string name="open">Open</string>
@@ -57,6 +63,11 @@
     <string name = "dialog_text">Do you want to add this course?</string>
     <string name = "dialog_header">Course adding</string>
 
+	<string name = "info_dialog_text">version 0.9\n© Andrei Shikov</string>
+
+	<string name = "search_hint">Search for list items here</string>
+
+	<!-- Error strings-->
     <string name = "error_network_not_connected">Network error occurred. Please check your internet connection</string>
 
     <!--CalendarView strings -->
@@ -64,7 +75,5 @@
     <string name="invalid_date">Date must be between %1$s and %2$s.</string>
     <string name="month_name_format">MMMM yyyy</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
-	
-	<string name = "info_dialog_text">version 0.9\n© Andrei Shikov</string>
 
 </resources>

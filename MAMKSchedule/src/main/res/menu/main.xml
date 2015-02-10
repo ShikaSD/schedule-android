@@ -8,5 +8,7 @@
 		  android:icon="@drawable/ic_info"
 		  android:visible="true"
 		  android:title="Info"
-		  app:showAsAction="always"/>
+		  app:showAsAction="always"
+		  android:orderInCategory="10"
+		/>
 </menu>

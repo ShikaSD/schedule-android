@@ -37,6 +37,9 @@ public class ScheduleNetworkLoader extends NetworkLoader
 
 		if (!isPersonalSchedule)
 			query = prepareQuery();
+		else
+			//If we added some of the courses with the same code
+			updateCourses();
 	}
 
 	@Override
@@ -75,12 +78,6 @@ public class ScheduleNetworkLoader extends NetworkLoader
 	{
 		Cursor c = dbh.rawQuery("select * from Courses where isEnrolled = 1", null);
 
-		if (!c.moveToNext())
-		{
-			callback.showError(getString(R.string.no_courses)); //No chosen courses found
-			return;
-		}
-		//
 		int courseId = c.getColumnIndex("courseId");
 		int name = c.getColumnIndex("name");
 		int teacher = c.getColumnIndex("teacher");
@@ -88,7 +85,15 @@ public class ScheduleNetworkLoader extends NetworkLoader
 
 		ArrayList<ParseQuery<ParseObject>> queries = new ArrayList<ParseQuery<ParseObject>>();
 		queries.clear();
-		c.moveToFirst();
+
+		if(!c.moveToFirst())
+		{
+			//No courses found
+			error(getString(R.string.no_courses));
+			c.close();
+			return;
+		}
+
 		do
 		{
 			Log.d("Shika", "Name: " + c.getString(name) + ", courseId: " + c.getString(courseId) + ", date: " + items[0].date + ", " + items[1].date
@@ -212,5 +217,71 @@ public class ScheduleNetworkLoader extends NetworkLoader
 		callback.updateIsRunning(id, counter);
 
 		return null;
+	}
+
+	private void updateCourses()
+	{
+		Cursor c = dbh.rawQuery("select * from Courses where isEnrolled = 1", null);
+
+		if (!c.moveToFirst())
+		{
+			callback.showError(getString(R.string.no_courses)); //No chosen courses found
+			c.close();
+			return;
+		}
+
+		int courseId = c.getColumnIndex("courseId");
+		int name = c.getColumnIndex("name");
+
+		ArrayList <ParseQuery<ParseObject>> queries = new ArrayList<ParseQuery<ParseObject>>();
+		do
+		{
+			query = ParseQuery.getQuery("Courses");
+			query.whereEqualTo("courseId", c.getString(courseId));
+			queries.add(query);
+		}
+		while (c.moveToNext());
+
+		query = ParseQuery.or(queries);
+
+		try
+		{
+			result = (ArrayList <ParseObject>) query.find();
+
+			for(ParseObject object : result)
+			{
+				c.moveToFirst();
+				boolean f = false;
+
+				do
+				{
+					//Compare objects with existing
+					if(object.getString("courseId").equals(c.getString(courseId))
+						|| (object.getString("courseId").equals("") && object.getString("name").equals(c.getString(name))))
+					{
+						f = true;
+						break;
+					}
+				}
+				while (c.moveToNext());
+
+				if(f)
+					continue;
+
+				ContentValues cv = new ContentValues();
+				cv.put("courseId", object.getString("courseId"));
+				cv.put("name", object.getString("name"));
+				cv.put("isEnrolled", 1);
+
+				dbh.insert("Courses", null, cv);
+			}
+		}
+		catch (Exception e)
+		{
+			Log.d("Shika", e.getMessage());
+			error(getString(R.string.error_network_not_connected));
+		}
+
+		c.close();
 	}
 }

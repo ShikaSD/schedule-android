@@ -18,7 +18,6 @@ import java.util.*;
 
 public class Controller implements ControllerInterface, DialogCallback, ActionMode.Callback
 {
-	//TODO: fix viewgroup loading, add check new courses
 	public enum Dialog {
 		DIALOG_ADD, DIALOG_REMOVE
 	}
@@ -43,6 +42,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 
 	//For fragment changes
 	private String visibleFragmentTag;
+	private String visibleFragmentId;
 	private Stack<String> backStack;
 
 	private String[] tags;
@@ -89,6 +89,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 	public void activityDestroyed()
 	{
 		visibleFragmentTag = "";
+		visibleFragmentId = "";
 		backStack.clear();
 		globalDate = Calendar.getInstance();
 
@@ -191,6 +192,11 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 				{
 					fragment = new EditFragment();
 					editInterface = (EditFragment) fragment;
+
+					if(EditFragment.wasInEditMode)
+					{
+						MainActivity.isFunctionButtonVisible = false;
+					}
 				}
 				else
 				{
@@ -206,6 +212,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 		ft.commit();
 
 		visibleFragmentTag = name;
+		visibleFragmentId = name + arg1;
 
 		activity.setTitle(title);
 	}
@@ -293,11 +300,11 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 	@Override
 	public String register(ViewInterface i)
 	{
-		if(!viewInterfaces.containsKey(visibleFragmentTag))
-			viewInterfaces.put(visibleFragmentTag, i);
+		if(!viewInterfaces.containsKey(visibleFragmentId))
+			viewInterfaces.put(visibleFragmentId, i);
 
-		Log.d("Shika", "Controller: registered id = " + visibleFragmentTag);
-		return visibleFragmentTag;
+		Log.d("Shika", "Controller: registered id = " + visibleFragmentId);
+		return visibleFragmentId;
 	}
 
 	@Override
@@ -392,7 +399,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 	@Override
 	public void loadEnded(String id)
 	{
-		if(visibleFragmentTag.equals(id))
+		if(visibleFragmentId.equals(id))
 			activity.dismissProgress();
 	}
 

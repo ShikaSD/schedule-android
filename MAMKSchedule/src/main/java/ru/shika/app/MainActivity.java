@@ -20,7 +20,7 @@ import ru.shika.Application;
 import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
 import ru.shika.app.adapters.DrawerListAdapter;
-import ru.shika.app.fragments.InfoDialogFragment;
+import ru.shika.app.fragments.DialogInfoFragment;
 import ru.shika.app.interfaces.ActivityInterface;
 import ru.shika.app.interfaces.ControllerInterface;
 
@@ -253,50 +253,50 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 
         snackBarOpen = AnimationUtils.loadAnimation(this, R.anim.snackbar_appear);
         snackBarOpen.setAnimationListener(new Animation.AnimationListener()
-        {
-            @Override
-            public void onAnimationStart(Animation animation)
-            {
-                snackBar.setVisibility(View.VISIBLE);
-                snackBarButton.setVisibility(View.VISIBLE);
-                functionButton.startAnimation(buttonClose);
-                isFunctionButtonVisible = false;
-            }
+		{
+			@Override
+			public void onAnimationStart(Animation animation)
+			{
+				snackBar.setVisibility(View.VISIBLE);
+				snackBarButton.setVisibility(View.VISIBLE);
+				functionButton.startAnimation(buttonClose);
+				isFunctionButtonVisible = false;
+			}
 
-            @Override
-            public void onAnimationEnd(Animation animation)
-            {
+			@Override
+			public void onAnimationEnd(Animation animation)
+			{
 
-            }
+			}
 
-            @Override
-            public void onAnimationRepeat(Animation animation)
-            {
+			@Override
+			public void onAnimationRepeat(Animation animation)
+			{
 
-            }
-        });
+			}
+		});
 
         snackBarClose = AnimationUtils.loadAnimation(this, R.anim.snackbar_disappear);
         snackBarClose.setAnimationListener(new Animation.AnimationListener()
-        {
-            @Override
-            public void onAnimationStart(Animation animation)
-            {
-                functionButton.startAnimation(buttonOpen);
-            }
+		{
+			@Override
+			public void onAnimationStart(Animation animation)
+			{
+				functionButton.startAnimation(buttonOpen);
+			}
 
-            @Override
-            public void onAnimationEnd(Animation animation)
-            {
-                snackBar.setVisibility(View.GONE);
-            }
+			@Override
+			public void onAnimationEnd(Animation animation)
+			{
+				snackBar.setVisibility(View.GONE);
+			}
 
-            @Override
-            public void onAnimationRepeat(Animation animation)
-            {
+			@Override
+			public void onAnimationRepeat(Animation animation)
+			{
 
-            }
-        });
+			}
+		});
     }
 
     private void drawerInit()
@@ -432,20 +432,20 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     public void showError(final String msg)
     {
         runOnUiThread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
+		{
+			@Override
+			public void run()
+			{
 
-				if(msg.equals(getString(R.string.no_courses)))
+				if (msg.equals(getString(R.string.no_courses)))
 				{
 					showSnackBar(msg, getString(R.string.add));
 					return;
 				}
 
 				Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
-            }
-        });
+			}
+		});
     }
 
     public void showSnackBar(String text, String btnText)
@@ -513,13 +513,6 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 
         toggle.syncState();
     }
-
-    @Override
-    protected void onResume()
-    {
-        super.onResume();
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
@@ -535,7 +528,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 		switch (id)
 		{
 			case R.id.info:
-				DialogFragment fragment = new InfoDialogFragment();
+				DialogFragment fragment = new DialogInfoFragment();
 				fragment.show(getSupportFragmentManager(), "Info");
 				break;
 		}
@@ -674,11 +667,13 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         dp *= .75f;
         snackBarText.setMaxWidth((int) dp);
 
-        dp = getResources().getDisplayMetrics().widthPixels;
+        /*dp = getResources().getDisplayMetrics().widthPixels;
         dp *= .25f;
-        dp -= 45 * getResources().getDisplayMetrics().density;
+        dp -= 50 * getResources().getDisplayMetrics().density;
+		Log.d("Shika", dp + "");
         dp /= 2;
+		snackBarButton.setVisibility(View.VISIBLE);
         snackBarButton.setPadding((int) (dp * getResources().getDisplayMetrics().density), snackBarButton.getPaddingTop(),
-            (int) (dp * getResources().getDisplayMetrics().density), snackBarButton.getPaddingBottom());
+            (int) (dp * getResources().getDisplayMetrics().density), snackBarButton.getPaddingBottom());*/
     }
 }

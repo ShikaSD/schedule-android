@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import ru.shika.app.R;
 
-public class InfoDialogFragment extends DialogFragment implements View.OnClickListener
+public class DialogInfoFragment extends DialogFragment implements View.OnClickListener
 {
 	@Override
 	public void onCreate(Bundle savedInstanceState)

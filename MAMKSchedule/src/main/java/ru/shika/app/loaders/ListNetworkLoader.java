@@ -3,6 +3,7 @@ package ru.shika.app.loaders;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.util.Log;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import ru.shika.app.R;
@@ -50,14 +51,9 @@ public class ListNetworkLoader extends NetworkLoader
 		//Download parts
 		query.setLimit(LoaderCenter.ONE_PART);
 
+		Log.d("Shika", "last update at: " + lastUpdate);
 		if(lastUpdate.getTime() > 0)
-			query.whereGreaterThan("createdAt", lastUpdate);
-		else
-		{
-			//If we have something downloaded before
-			lastDownloaded = preferences.getString(type + "last", "");
-			query.whereGreaterThan("name", lastDownloaded);
-		}
+			query.whereGreaterThan("updatedAt", lastUpdate);
 	}
 
 	@Override

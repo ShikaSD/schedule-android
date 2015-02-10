@@ -20,13 +20,17 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 {
 	private SparseArray <String> keys;
 	private ArrayList <ArrayList <String>> names;
+	private ArrayList <Boolean> visible;
 
 	private int layoutId;
 	public boolean isCheckingList;
 	private ArrayList<Boolean> checkedItems;
 	private boolean showCheckboxes;
 
-	public ListFragmentAdapter(SparseArray <String> keys, ArrayList<ArrayList<String>> names, boolean isCheckingList)
+	private LinearLayout.LayoutParams invis;
+	LinearLayout.LayoutParams vis;
+
+	public ListFragmentAdapter(SparseArray <String> keys, ArrayList<ArrayList<String>> names, ArrayList <Boolean> visible, boolean isCheckingList)
 	{
 		/*this.keys = new SparseArray<String>();
 		this.names = new ArrayList<ArrayList<String>>();
@@ -35,8 +39,12 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 		for(int i = 0; i < size; i++)
 			this.keys.append(keys.keyAt(i), keys.valueAt(i));this.names.addAll(names);    */
 
+		invis = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0);
+		vis = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
 		this.keys = keys;
 		this.names = names;
+		this.visible = visible;
 
 		this.isCheckingList = isCheckingList;
 		showCheckboxes = false;
@@ -83,7 +91,7 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 	@Override
 	public long getItemId(int i)
 	{
-		return i;
+		return keys.get(i).hashCode();
 	}
 
 	@Override
@@ -95,6 +103,11 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
 	@Override
 	public void onBindViewHolder(ViewHolder viewHolder, int i)
 	{
+		if(visible.size() > i && !visible.get(i))
+			viewHolder.layout.setLayoutParams(invis);
+		else
+			viewHolder.layout.setLayoutParams(vis);
+
 		String name = names.get(i).get(0);
 		int size = names.get(i).size();
 		for(int j = 1; j < size; j++)

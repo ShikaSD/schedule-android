@@ -69,7 +69,7 @@ public class ScheduleLocalLoader extends LocalLoader
 		if(course != null)
 		{
 			Log.d("Shika", "Here is course schedule");
-			cursor = dbh.query("Schedule", null, "(courseId like ?' or lesson like ?) and " +
+			cursor = dbh.query("Schedule", null, "(courseId like ? or lesson like ?) and " +
 				"(date >= ? and date <= ?)", new String[]{course, course, startDate, endDate}, null, null, "start");
 		}
 	}
