@@ -13,6 +13,6 @@ public class EditLocalLoader extends LocalLoader
 	@Override
 	protected void load()
 	{
-		cursor = dbh.rawQuery("select courseId, name, isEnrolled from Courses where isEnrolled = 1", null);
+		cursor = dbh.rawQuery("select courseId, name, isEnrolled from Courses where isEnrolled = 1 order by name", null);
 	}
 }

@@ -104,6 +104,8 @@ abstract class NetworkLoader implements Runnable
 				cv.put("courseId", i.getString("courseId"));
 				cv.put("groups", i.getString("group"));
 				cv.put("teacher", i.getString("teacher"));
+				cv.put("startDate", i.getString("start"));
+				cv.put("endDate", i.getString("end"));
 			}
 
 			cv.put("name", i.getString("name"));

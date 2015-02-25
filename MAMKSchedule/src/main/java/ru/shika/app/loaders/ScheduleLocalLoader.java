@@ -97,11 +97,11 @@ public class ScheduleLocalLoader extends LocalLoader
 				int group = cursor.getColumnIndex("groups");
 				int courseId = cursor.getColumnIndex("courseId");
 
-				Log.d("Shika", cursor.getString(lesson)+ ", " + cursor.getString(teacher));
+				Log.d("Shika",  getClass().getName() + ": " + cursor.getString(lesson)+ ", " + cursor.getString(teacher));
 
 				do
 				{
-					Log.d("Shika", "name: " + cursor.getString(lesson) + ", group: " + cursor.getString(group));
+					Log.d("Shika", getClass().getName() + ": name: " + cursor.getString(lesson) + ", group: " + cursor.getString(group));
 					String id = cursor.getString(courseId);
 
 					boolean equals = false;

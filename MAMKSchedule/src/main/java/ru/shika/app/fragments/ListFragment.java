@@ -2,7 +2,6 @@ package ru.shika.app.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -253,10 +252,10 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
 	{
-		inflater.inflate(R.menu.list, menu);
+		//TODO:inflater.inflate(R.menu.list, menu);
 
-		searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.search));
-		searchView.setOnQueryTextListener(this);
+		//searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.search));
+		//searchView.setOnQueryTextListener(this);
 
 		super.onCreateOptionsMenu(menu, inflater);
 	}

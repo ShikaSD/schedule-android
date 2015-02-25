@@ -51,9 +51,9 @@ public class LoaderCenter implements NetworkLoaderInterface, LocalLoaderInterfac
 		if(nl != null) new Thread(nl).start();
 	}
 
-	public void load(String id, boolean isEmpty)
+	public void load(String id, boolean isChecksUpdate)
 	{
-		if(!isEmpty)
+		if(!isChecksUpdate)
 		{
 			load(id);
 			return;
@@ -158,6 +158,7 @@ public class LoaderCenter implements NetworkLoaderInterface, LocalLoaderInterfac
 
 		if(code == LoaderCode.CHECK)
 		{
+			Log.d("Shika", "Send signal to dismiss");
 			controllerInterface.getView(id).downloadEnd(); //To dismiss progressbar in view
 		}
 	}

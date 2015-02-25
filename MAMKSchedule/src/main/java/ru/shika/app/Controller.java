@@ -275,7 +275,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 
 			visibleFragmentTag = prevFragment;
 
-			if(visibleFragmentTag.equals(tags[4]))
+			if(visibleFragmentTag.equals(tags[tags.length - 1]) && !EditFragment.wasInEditMode)
 			{
 				activity.showFunctionButton();
 			}
@@ -384,7 +384,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 		if(arg1.contains("ViewGroup"))//it is schedule
 		{
 			arg1 = arg1.replace("ViewGroup", "");
-			if(arg1.equals("")) arg1 = null; //If it was empty, make it null
+			if(arg1.equals("") && arg1.equals("null")) arg1 = null; //If it was empty, make it null
 
 			temp = new Lesson(arg1, arg2, arg3, getDate());
 		}
@@ -491,7 +491,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 					@Override
 					public void run()
 					{
-						loaderCenter.load(visibleFragmentTag, true);
+						loaderCenter.load(visibleFragmentId, true);
 
 						//show message
 						showError("Course added to your schedule");
@@ -508,7 +508,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 					public void run()
 					{
 						actionMode.finish();
-						loaderCenter.load(visibleFragmentTag, true);
+						loaderCenter.load(visibleFragmentId, true);
 					}
 				});
 				break;

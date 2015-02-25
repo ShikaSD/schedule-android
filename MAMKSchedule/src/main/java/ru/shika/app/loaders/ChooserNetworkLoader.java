@@ -16,7 +16,7 @@ public class ChooserNetworkLoader extends NetworkLoader
 	{
 		super(id, context, callback, LoaderCode.CHOOSER);
 
-		this.type = type;
+		this.type = type.replace("Chooser", "");
 		this.name = name;
 	}
 
@@ -26,7 +26,7 @@ public class ChooserNetworkLoader extends NetworkLoader
 		if(!isNetworkConnection())
 			error(getString(R.string.error_network_not_connected));
 
-		query = ParseQuery.getQuery("Courses");
+		query = ParseQuery.getQuery("Course");
 	}
 
 	@Override
@@ -53,6 +53,7 @@ public class ChooserNetworkLoader extends NetworkLoader
 		catch (Exception e)
 		{
 			error(getString(R.string.error_network_not_connected));
+			e.printStackTrace();
 		}
 	}
 

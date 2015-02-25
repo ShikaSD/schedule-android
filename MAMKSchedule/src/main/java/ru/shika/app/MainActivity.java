@@ -21,6 +21,7 @@ import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
 import ru.shika.app.adapters.DrawerListAdapter;
 import ru.shika.app.fragments.DialogInfoFragment;
+import ru.shika.app.fragments.EditFragment;
 import ru.shika.app.interfaces.ActivityInterface;
 import ru.shika.app.interfaces.ControllerInterface;
 
@@ -107,6 +108,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
             public void onClick(View view)
             {
                 snackBar.startAnimation(snackBarClose);
+				showFunctionButton();
             }
         });
         snackBarButton.setOnClickListener(new View.OnClickListener()
@@ -259,7 +261,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 			{
 				snackBar.setVisibility(View.VISIBLE);
 				snackBarButton.setVisibility(View.VISIBLE);
-				functionButton.startAnimation(buttonClose);
+				dismissFunctionButton();
 				isFunctionButtonVisible = false;
 			}
 
@@ -282,7 +284,6 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 			@Override
 			public void onAnimationStart(Animation animation)
 			{
-				functionButton.startAnimation(buttonOpen);
 			}
 
 			@Override
@@ -574,10 +575,8 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         }
 
         private void replaceFragment(String tag)
-        {
-            showFragment(tag, tag);
-
-            functionButton.setVisibility(View.VISIBLE);
+		{
+            functionButton.setVisibility(View.INVISIBLE);
             if(tag.endsWith("Chooser") || tag.contains("Edit"))
             {
                 functionButton.setOnClickListener(addButtonClick);
@@ -594,6 +593,9 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
             }
             functionButton.setVisibility(View.INVISIBLE);
             isFunctionButtonVisible = true;
+			EditFragment.wasInEditMode = false;
+
+			showFragment(tag, tag);
         }
     }
 
@@ -664,7 +666,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     private void updateSnackBarSize()
     {
         float dp = getResources().getDisplayMetrics().widthPixels;
-        dp *= .75f;
+        dp *= .7f;
         snackBarText.setMaxWidth((int) dp);
 
         /*dp = getResources().getDisplayMetrics().widthPixels;

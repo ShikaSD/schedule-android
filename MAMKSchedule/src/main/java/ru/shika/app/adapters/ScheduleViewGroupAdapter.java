@@ -142,7 +142,7 @@ public class ScheduleViewGroupAdapter extends PagerAdapter
 		}
 		else
 		{
-			Log.d("Shika", "Adapter: in view " + position + " we have " + lessons.get(position).size() + " objects");
+			//Log.d("Shika", "Adapter: in view " + position + " we have " + lessons.get(position).size() + " objects");
 			empty.setVisibility(View.GONE);
 			recyclerView.setVisibility(View.VISIBLE);
 		}

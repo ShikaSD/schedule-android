@@ -75,6 +75,8 @@ public class LoaderFabric
 		 *@arg1 = param/type/group
 		 *@arg2 = name/teacher
 		 *@arg3 = name in schedule objects*/
+		Log.d("Shika", "Fabric: Making local loader with id "+ id);
+
 		Lesson temp = Controller.items.get(id);
 		String arg1 = temp.group;
 		String arg2 = temp.teacher;

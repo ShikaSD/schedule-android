@@ -1,7 +1,10 @@
 package ru.shika.app.loaders;
 
 import android.content.Context;
+import ru.shika.app.Lesson;
 import ru.shika.app.interfaces.LocalLoaderInterface;
+
+import java.util.Calendar;
 
 public class ChooserLocalLoader extends LocalLoader
 {
@@ -18,7 +21,9 @@ public class ChooserLocalLoader extends LocalLoader
 	@Override
 	protected void load()
 	{
-		cursor = dbh.rawQuery("select courseId, name, isEnrolled from Courses where groups like '%"+ name +"%' or teacher like '%"+ name +"%' " + "order by name", null);
+		String now = Lesson.convertDateToString(Calendar.getInstance());
+		cursor = dbh.rawQuery("select courseId, name, isEnrolled from Courses where (groups like '%"+ name +"%' or teacher like '%"+ name +"%') " +
+			"and  " + now + " >= startDate and " + now + " <= endDate order by name", null);
 	}
 
 }

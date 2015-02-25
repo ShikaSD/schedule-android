@@ -42,7 +42,7 @@ public class ListNetworkLoader extends NetworkLoader
 			return;
 		}
 
-		query = ParseQuery.getQuery(type);
+		query = ParseQuery.getQuery(type.substring(0, type.length() - 1));
 
 		//Some objects must not be included
 		query.whereDoesNotExist("last");

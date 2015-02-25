@@ -82,6 +82,8 @@ public class ScheduleNetworkLoader extends NetworkLoader
 		int name = c.getColumnIndex("name");
 		int teacher = c.getColumnIndex("teacher");
 		int group = c.getColumnIndex("groups");
+		int start = c.getColumnIndex("startDate");
+		int end = c.getColumnIndex("endDate");
 
 		ArrayList<ParseQuery<ParseObject>> queries = new ArrayList<ParseQuery<ParseObject>>();
 		queries.clear();
@@ -96,15 +98,18 @@ public class ScheduleNetworkLoader extends NetworkLoader
 
 		do
 		{
-			Log.d("Shika", "Name: " + c.getString(name) + ", courseId: " + c.getString(courseId) + ", date: " + items[0].date + ", " + items[1].date
+			Log.d("Shika", getClass().getName() + ": Name: " + c.getString(name) + ", courseId: " + c.getString(courseId) + ", date: " + items[0].date + ", " + items[1].date
 				+ ", group: " + c.getString(group));
 
-			ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Lessons");
+			if(c.getString(start).compareTo(items[1].date) > 0 || c.getString(end).compareTo(items[0].date) < 0)
+				continue;
+
+			ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Lesson");
 
 			query.whereEqualTo("name", c.getString(name));
 			query.whereEqualTo("courseId", c.getString(courseId));
-			query.whereGreaterThanOrEqualTo("date", items[0].date);
-			query.whereLessThanOrEqualTo("date", items[1].date);
+			query.whereGreaterThanOrEqualTo("dateString", items[0].date);
+			query.whereLessThanOrEqualTo("dateString", items[1].date);
 			query.whereEqualTo("teacher", c.getString(teacher));
 			query.whereEqualTo("group", c.getString(group));
 
@@ -112,11 +117,11 @@ public class ScheduleNetworkLoader extends NetworkLoader
 
 			if (queries.size() >= 10)
 			{
-				query = ParseQuery.or(queries);
+				this.query = ParseQuery.or(queries);
 
 				try
 				{
-					result = (ArrayList<ParseObject>) query.find();
+					result = (ArrayList<ParseObject>) this.query.find();
 					insertValues(null);
 				} catch (Exception e)
 				{
@@ -149,7 +154,7 @@ public class ScheduleNetworkLoader extends NetworkLoader
 	{
 		ArrayList<ParseQuery<ParseObject>> queries = new ArrayList<ParseQuery<ParseObject>>();
 
-		ParseQuery<ParseObject> query = ParseQuery.getQuery("Lessons");
+		ParseQuery<ParseObject> query = ParseQuery.getQuery("Lesson");
 
 		if (items[0] == null)
 		{
@@ -164,16 +169,16 @@ public class ScheduleNetworkLoader extends NetworkLoader
 		{
 			//We have to match in this case by course id and name, as there can be both
 			query.whereEqualTo("courseId", items[0].name);
-			query.whereGreaterThanOrEqualTo("date", items[0].date);
-			query.whereLessThanOrEqualTo("date", items[1].date);
+			query.whereGreaterThanOrEqualTo("dateString", items[0].date);
+			query.whereLessThanOrEqualTo("dateString", items[1].date);
 			queries.add(query);
 
-			query = ParseQuery.getQuery("Lessons");
+			query = ParseQuery.getQuery("Lesson");
 			query.whereEqualTo("name", items[0].name);
 		}
 
-		query.whereGreaterThanOrEqualTo("date", items[0].date);
-		query.whereLessThanOrEqualTo("date", items[1].date);
+		query.whereGreaterThanOrEqualTo("dateString", items[0].date);
+		query.whereLessThanOrEqualTo("dateString", items[1].date);
 
 		queries.add(query);
 
@@ -188,24 +193,24 @@ public class ScheduleNetworkLoader extends NetworkLoader
 		for (ParseObject i : result)
 		{
 			cv.put("groups", i.getString("group"));
-			cv.put("date", i.getString("date"));
+			cv.put("date", i.getString("dateString"));
 			cv.put("lesson", i.getString("name"));
 			cv.put("teacher", i.getString("teacher"));
 			cv.put("room", i.getString("room"));
-			cv.put("start", i.getString("start"));
-			cv.put("end", i.getString("end"));
-			cv.put("lessonId", i.getString("lessonId"));
+			cv.put("start", i.getString("startTimeString"));
+			cv.put("end", i.getString("endTimeString"));
 			cv.put("courseId", i.getString("courseId"));
 
 			counter++;
 
 			//If the same lesson is in the database
-			Cursor x = dbh.rawQuery("select * from Schedule where lessonId = ?", new String[]{i.getString
-				("lessonId")});
+			Cursor x = dbh.rawQuery("select * from Schedule where lesson = ? and teacher = ? and groups = ? and date = ? and start = ?",
+				new String[]{ i.getString("name"), i.getString("teacher"), i.getString("group"), i.getString("dateString"), i.getString("startTimeString")});
 			//check for equality
 			if(x.moveToFirst())
 			{
-				dbh.update("Schedule", cv, "lessonId = ?", new String[]{i.getString("lessonId")});
+				dbh.update("Schedule", cv, "lesson = ? and teacher = ? and groups = ? and date = ? and start = ?",
+					new String[]{ i.getString("name"), i.getString("teacher"), i.getString("group"), i.getString("dateString"), i.getString("startTimeString")});
 				x.close();
 				continue;
 			}
@@ -231,18 +236,32 @@ public class ScheduleNetworkLoader extends NetworkLoader
 		}
 
 		int courseId = c.getColumnIndex("courseId");
-		int name = c.getColumnIndex("name");
-
 		ArrayList <ParseQuery<ParseObject>> queries = new ArrayList<ParseQuery<ParseObject>>();
 		do
 		{
-			query = ParseQuery.getQuery("Courses");
+			query = ParseQuery.getQuery("Course");
 			query.whereEqualTo("courseId", c.getString(courseId));
 			queries.add(query);
+
+			if(queries.size() >= 10)
+			{
+				query = ParseQuery.or(queries);
+				insertCourses(c);
+				queries.clear();
+			}
 		}
 		while (c.moveToNext());
 
 		query = ParseQuery.or(queries);
+		insertCourses(c);
+
+		c.close();
+	}
+
+	private void insertCourses(Cursor c)
+	{
+		int courseId = c.getColumnIndex("courseId");
+		int name = c.getColumnIndex("name");
 
 		try
 		{
@@ -272,16 +291,16 @@ public class ScheduleNetworkLoader extends NetworkLoader
 				cv.put("courseId", object.getString("courseId"));
 				cv.put("name", object.getString("name"));
 				cv.put("isEnrolled", 1);
+				cv.put("startDate", object.getString("start"));
+				cv.put("endDate", object.getString("end"));
 
 				dbh.insert("Courses", null, cv);
 			}
 		}
 		catch (Exception e)
 		{
-			Log.d("Shika", e.getMessage());
+			Log.e("Shika", e.getMessage());
 			error(getString(R.string.error_network_not_connected));
 		}
-
-		c.close();
 	}
 }
