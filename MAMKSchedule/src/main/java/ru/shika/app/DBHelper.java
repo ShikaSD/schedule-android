@@ -15,7 +15,19 @@ public class DBHelper extends SQLiteOpenHelper
 	private Context context;
 	private String databaseName;
 
-	public DBHelper(Context ctx)
+	private static DBHelper instance;
+
+	public synchronized static DBHelper getInstance(Context ctx)
+	{
+		if(instance == null)
+		{
+			instance = new DBHelper(ctx);
+		}
+
+		return instance;
+	}
+
+	private DBHelper(Context ctx)
 	{
 		super(ctx, "scheduleDB", null, 1);
 
@@ -31,7 +43,7 @@ public class DBHelper extends SQLiteOpenHelper
 		sqLiteDatabase.execSQL("create table Groups (id integer primary key autoincrement, name text)");
 		sqLiteDatabase.execSQL("create table Teachers (id integer primary key autoincrement, name text)");
 		sqLiteDatabase.execSQL("create table Courses (id integer primary key autoincrement, name text, courseId text," +
-			"groups text, teacher text, isEnrolled integer)");
+			"groups text, teacher text, startDate text, endDate text, isEnrolled integer)");
 	}
 
 	@Override

@@ -68,9 +68,9 @@
 
                     android:layout_gravity="end"
                     android:id="@+id/calendar_container"
-                    android:visibility="gone">
+                    android:visibility="invisible">
 
-                    <ru.shika.android.CalendarPickerView
+                    <com.squareup.timessquare.CalendarPickerView
                         android:padding = "5dp"
                         android:layout_width = "@dimen/calendar_width"
                         android:layout_height = "match_parent"
