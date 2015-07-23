@@ -1,11 +1,12 @@
 package ru.shika.app.interfaces;
 
-public interface EditInterface
-{
-	void addClick();
-	void backPressed();
+public interface EditInterface {
+    void addClick();
 
-	void showCheckboxes(boolean show);
-	String[] getChecked();
+    void backPressed();
+
+    void showCheckboxes(boolean show);
+
+    String[] getChecked();
 
 }

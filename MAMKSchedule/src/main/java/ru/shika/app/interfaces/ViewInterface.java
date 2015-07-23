@@ -1,12 +1,13 @@
 package ru.shika.app.interfaces;
 
-public interface ViewInterface
-{
-	void downloadEnd();
-	void updateIsRunning();
+public interface ViewInterface {
+    void downloadEnd();
 
-	boolean visible();
+    void updateIsRunning();
 
-	void showProgress();
-	void dismissProgress();
+    boolean visible();
+
+    void showProgress();
+
+    void dismissProgress();
 }

@@ -2,31 +2,40 @@ package ru.shika.app.interfaces;
 
 import java.util.Calendar;
 
-public interface ControllerInterface
-{
-	void setActivity(ActivityInterface activity);
-	void activityDestroyed();
+public interface ControllerInterface {
+    void setActivity(ActivityInterface activity);
 
-	void showFragment(String name, String arg1);
-	void listItemSelected(String type, String item);
-	void listEditItemSelected(String type, String item);
-	void listChooserTypeSelected(String type);
+    void activityDestroyed();
 
-	void backPressed();
+    void showFragment(String name, String arg1);
 
-	void addClick();
+    void listItemSelected(String type, String item);
 
-	String register(ViewInterface i);
-	void unregister(String key);
-	ViewInterface getView(String id);
-	void setDateInterface(DateInterface i);
+    void listEditItemSelected(String type, String item);
 
-	Calendar getDate();
-	void dateChanged(long time);
+    void listChooserTypeSelected(String type);
 
-	void load(String key, String arg1, String arg2, String arg3);
-	void localLoad(String key, String arg1, String arg2, String arg3);
-	void loadEnded(String id);
+    void backPressed();
 
-	void showError(String msg);
+    void addClick();
+
+    String register(ViewInterface i);
+
+    void unregister(String key);
+
+    ViewInterface getView(String id);
+
+    void setDateInterface(DateInterface i);
+
+    Calendar getDate();
+
+    void dateChanged(long time);
+
+    void load(String key, String arg1, String arg2, String arg3);
+
+    void localLoad(String key, String arg1, String arg2, String arg3);
+
+    void loadEnded(String id);
+
+    void showError(String msg);
 }

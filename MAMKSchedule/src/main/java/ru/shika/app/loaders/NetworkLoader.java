@@ -15,128 +15,116 @@ import ru.shika.app.interfaces.NetworkLoaderInterface;
 
 import java.util.ArrayList;
 
-/**Downloading loader
- * downloads data from the server and add it to the local database*/
-abstract class NetworkLoader implements Runnable
-{
-	private Context ctx;
-	protected DBHelper dbh;
+/**
+ * Downloading loader
+ * downloads data from the server and add it to the local database
+ */
+abstract class NetworkLoader implements Runnable {
+    private Context ctx;
+    protected DBHelper dbh;
 
-	protected SharedPreferences preferences;
-	protected NetworkLoaderInterface callback;
+    protected SharedPreferences preferences;
+    protected NetworkLoaderInterface callback;
 
-	protected ArrayList <ParseObject> result;
-	protected ParseQuery <ParseObject> query;
+    protected ArrayList<ParseObject> result;
+    protected ParseQuery<ParseObject> query;
 
-	private boolean isErrorHappened;
+    private boolean isErrorHappened;
 
-	protected String id;
-	public LoaderCode code;
+    protected String id;
+    public LoaderCode code;
 
-	public NetworkLoader(String id, Context context, NetworkLoaderInterface callback, LoaderCode code)
-	{
-		Log.d("Shika", "Start downloading with id: " + id);
-		ctx = context;
-		this.callback = callback;
-		this.id = id;
-		this.code = code;
+    public NetworkLoader(String id, Context context, NetworkLoaderInterface callback, LoaderCode code) {
+        Log.d("Shika", "Start downloading with id: " + id);
+        ctx = context;
+        this.callback = callback;
+        this.id = id;
+        this.code = code;
 
-		dbh = DBHelper.getInstance(ctx);
-		preferences = ctx.getSharedPreferences(ctx.getString(R.string.app_name), Context.MODE_PRIVATE);
-		isErrorHappened = false;
-	}
+        dbh = DBHelper.getInstance(ctx);
+        preferences = ctx.getSharedPreferences(ctx.getString(R.string.app_name), Context.MODE_PRIVATE);
+        isErrorHappened = false;
+    }
 
-	protected boolean isNetworkConnection()
-	{
-		ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+    protected boolean isNetworkConnection() {
+        ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
-		return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-	}
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+    }
 
-	@Override
-	public void run()
-	{
-		//On every part of the system check the errors
-		if(!isErrorHappened)
-			prepareDownload();
+    @Override
+    public void run() {
+        //On every part of the system check the errors
+        if (!isErrorHappened) prepareDownload();
 
-		if(!isErrorHappened)
-			download();
+        if (!isErrorHappened) download();
 
-		if(!isErrorHappened)
-			postDownload();
-	}
+        if (!isErrorHappened) postDownload();
+    }
 
-	protected abstract void prepareDownload();
+    protected abstract void prepareDownload();
 
-	protected abstract void download();
+    protected abstract void download();
 
-	protected abstract void postDownload();
+    protected abstract void postDownload();
 
-	/**Inserts objects from Parse Objects to database
-	* Returns last inserted item*/
-	protected String insertValues(String type)
-	{
-		//We need to return last downloaded item here
-		String lastDownloaded = "";
-		ContentValues cv = new ContentValues();
+    /**
+     * Inserts objects from Parse Objects to database
+     * Returns last inserted item
+     */
+    protected String insertValues(String type) {
+        //We need to return last downloaded item here
+        String lastDownloaded = "";
+        ContentValues cv = new ContentValues();
 
-		int downloaded = 0;
+        int downloaded = 0;
 
-		for (ParseObject i : result)
-		{
-			lastDownloaded = i.getString("name");
+        for (ParseObject i : result) {
+            lastDownloaded = i.getString("name");
 
-			if (type.equals("Courses"))
-			{
-				//Check for equality (in another tables we don't have to do that part)
-				Cursor x = dbh.rawQuery("select count(*) from Courses where courseId = ? and name = ? and groups = ? and teacher = ?",
-					new String[]{i.getString("courseId"), i.getString("name"), i.getString("group"), i.getString("teacher")});
-				if (x.moveToFirst())
-					if (x.getInt(0) > 0)
-					{
-						x.close(); //It is equal to what we have, so we skip that
-						continue;
-					}
-				x.close();
+            if (type.equals("Courses")) {
+                //Check for equality (in another tables we don't have to do that part)
+                Cursor x = dbh.rawQuery("select count(*) from Courses where courseId = ? and name = ? and groups = ? and teacher = ?", new String[]{i.getString("courseId"), i.getString("name"), i.getString("group"), i.getString("teacher")});
+                if (x.moveToFirst()) if (x.getInt(0) > 0) {
+                    x.close(); //It is equal to what we have, so we skip that
+                    continue;
+                }
+                x.close();
 
-				cv.put("courseId", i.getString("courseId"));
-				cv.put("groups", i.getString("group"));
-				cv.put("teacher", i.getString("teacher"));
-				cv.put("startDate", i.getString("start"));
-				cv.put("endDate", i.getString("end"));
-			}
+                cv.put("courseId", i.getString("courseId"));
+                cv.put("groups", i.getString("group"));
+                cv.put("teacher", i.getString("teacher"));
+                cv.put("startDate", i.getString("start"));
+                cv.put("endDate", i.getString("end"));
+            }
 
-			cv.put("name", i.getString("name"));
+            cv.put("name", i.getString("name"));
 
-			dbh.insert(type, null, cv);
+            dbh.insert(type, null, cv);
 
-			downloaded++;
-		}
+            downloaded++;
+        }
 
-		//Send signal that we have downloaded something
-		callback.updateIsRunning(id, downloaded);
+        //Send signal that we have downloaded something
+        callback.updateIsRunning(id, downloaded);
 
-		return lastDownloaded;
-	}
+        return lastDownloaded;
+    }
 
-	protected void error(String msg)
-	{
-		isErrorHappened = true;
+    protected void error(String msg) {
+        isErrorHappened = true;
 
-		callback.showError(msg);
+        callback.showError(msg);
 
-		callback.downloadEnd(id, LoaderCenter.ERROR);
-	}
+        callback.downloadEnd(id, LoaderCenter.ERROR);
+    }
 
-	protected String getString(int id)
-	{
-		return ctx.getString(id);
-	}
+    protected String getString(int id) {
+        return ctx.getString(id);
+    }
 
-	public LoaderCode getCode()
-	{
-		return code;
-	}
+    public LoaderCode getCode() {
+        return code;
+    }
 }

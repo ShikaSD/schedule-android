@@ -1,49 +1,43 @@
 package ru.shika;
 
 import com.parse.Parse;
+import com.parse.ParseCrashReporting;
 import ru.shika.app.Controller;
 import ru.shika.app.DBHelper;
 
-public class Application extends android.app.Application
-{
-	private static Application instance;
-	private static Controller controller;
+public class Application extends android.app.Application {
+    private static Application instance;
+    private static Controller controller;
 
-	public static Application getInstance()
-	{
-		if(instance == null)
-			instance = new Application();
+    public static Application getInstance() {
+        if (instance == null) instance = new Application();
 
-		return instance;
-	}
+        return instance;
+    }
 
-	public static Controller getController()
-	{
-		if(controller == null)
-			controller = new Controller(instance);
+    public static Controller getController() {
+        if (controller == null) controller = new Controller(instance);
 
-		return controller;
-	}
+        return controller;
+    }
 
-	@Override
-	public void onCreate()
-	{
-		super.onCreate();
+    @Override
+    public void onCreate() {
+        super.onCreate();
 
-		//Parse init
-       /* if(!ParseCrashReporting.isCrashReportingEnabled())
-            ParseCrashReporting.enable(this);*/
+        //Parse init
+        if(!ParseCrashReporting.isCrashReportingEnabled())
+            ParseCrashReporting.enable(this);
 
-		Parse.initialize(this, "eR4X3CWg0H0dQiykPaWPymOLuceIj7XlCWu3SLLi", "tZ8L3pIHV1nXUmXj5GASyM2JdbwKFHUDYDuqhKR7");
+        Parse.initialize(this, "eR4X3CWg0H0dQiykPaWPymOLuceIj7XlCWu3SLLi", "tZ8L3pIHV1nXUmXj5GASyM2JdbwKFHUDYDuqhKR7");
 
-		instance = this;
-	}
+        instance = this;
+    }
 
-	@Override
-	public void onLowMemory()
-	{
-		super.onLowMemory();
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
 
-		DBHelper.getInstance(this).close();
-	}
+        DBHelper.getInstance(this).close();
+    }
 }

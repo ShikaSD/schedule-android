@@ -8,35 +8,30 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import ru.shika.app.R;
 
-public class DialogInfoFragment extends DialogFragment implements View.OnClickListener
-{
-	@Override
-	public void onCreate(Bundle savedInstanceState)
-	{
-		super.onCreate(savedInstanceState);
-		setStyle(DialogAddFragment.STYLE_NO_FRAME, R.style.AppTheme_Dialog);
-	}
+public class DialogInfoFragment extends DialogFragment implements View.OnClickListener {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setStyle(DialogAddFragment.STYLE_NO_FRAME, R.style.AppTheme_Dialog);
+    }
 
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-	{
-		View rootView = inflater.inflate(R.layout.fragment_dialog_info, container, false);
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_dialog_info, container, false);
 
-		Button yes = (Button) rootView.findViewById(R.id.dialog_yes);
-		yes.setOnClickListener(this);
+        Button yes = (Button) rootView.findViewById(R.id.dialog_yes);
+        yes.setOnClickListener(this);
 
-		return rootView;
-	}
+        return rootView;
+    }
 
-	@Override
-	public void onClick(View view)
-	{
-		switch (view.getId())
-		{
-			case R.id.dialog_yes:
-				dismiss();
-				break;
-		}
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.dialog_yes:
+                dismiss();
+                break;
+        }
 
-	}
+    }
 }

@@ -13,45 +13,40 @@ import ru.shika.app.R;
 
 import java.util.ArrayList;
 
-public class DrawerListAdapter extends BaseAdapter
-{
-	LayoutInflater inflater;
-	ArrayList<Lesson.DrawerItem> list;
-	public DrawerListAdapter(Context ctx, ArrayList<Lesson.DrawerItem> data)
-	{
-		list = data;
-		inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	}
+public class DrawerListAdapter extends BaseAdapter {
+    LayoutInflater inflater;
+    ArrayList<Lesson.DrawerItem> list;
 
-	@Override
-	public int getCount()
-	{
-		return list.size();
-	}
+    public DrawerListAdapter(Context ctx, ArrayList<Lesson.DrawerItem> data) {
+        list = data;
+        inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
 
-	@Override
-	public Object getItem(int i)
-	{
-		return list.get(i);
-	}
+    @Override
+    public int getCount() {
+        return list.size();
+    }
 
-	@Override
-	public long getItemId(int i)
-	{
-		return i;
-	}
+    @Override
+    public Object getItem(int i) {
+        return list.get(i);
+    }
 
-	@Override
-	public View getView(int i, View view, ViewGroup viewGroup)
-	{
-		View v = view;
-		if (v == null) {
-			v = inflater.inflate(R.layout.drawer_item, viewGroup, false);
-		}
+    @Override
+    public long getItemId(int i) {
+        return i;
+    }
 
-		((TextView) v.findViewById(R.id.drawerItemText)).setText(list.get(i).string);
-		((ImageView) v.findViewById(R.id.drawerItemIcon)).setImageDrawable(list.get(i).drawable);
+    @Override
+    public View getView(int i, View view, ViewGroup viewGroup) {
+        View v = view;
+        if (v == null) {
+            v = inflater.inflate(R.layout.drawer_item, viewGroup, false);
+        }
 
-		return v;
-	}
+        ((TextView) v.findViewById(R.id.drawerItemText)).setText(list.get(i).string);
+        ((ImageView) v.findViewById(R.id.drawerItemIcon)).setImageDrawable(list.get(i).drawable);
+
+        return v;
+    }
 }

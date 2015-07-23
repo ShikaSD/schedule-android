@@ -2,22 +2,26 @@ package ru.shika.app.interfaces;
 
 import android.support.v4.app.FragmentManager;
 
-public interface ActivityInterface
-{
-	void showError(String msg);
+public interface ActivityInterface {
+    void showError(String msg);
 
-	void showProgress();
-	void dismissProgress();
+    void showProgress();
 
-	void showFunctionButton();
-	void dismissFunctionButton();
+    void dismissProgress();
 
-	void backPressed();
+    void showFunctionButton();
 
-	FragmentManager getSupportFragmentManager();
-	void runOnUiThread(Runnable run);
-	void setTitle(String title);
-	String getActionTitle();
+    void dismissFunctionButton();
 
-	void notifyDateChanged();
+    void backPressed();
+
+    FragmentManager getSupportFragmentManager();
+
+    void runOnUiThread(Runnable run);
+
+    void setTitle(String title);
+
+    String getActionTitle();
+
+    void notifyDateChanged();
 }

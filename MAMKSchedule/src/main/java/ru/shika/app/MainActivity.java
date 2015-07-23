@@ -30,8 +30,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 
-public class MainActivity extends ActionBarActivity implements ActivityInterface
-{
+public class MainActivity extends ActionBarActivity implements ActivityInterface {
     private ControllerInterface controller;
 
     Toolbar toolbar;
@@ -80,8 +79,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     private String[] titles;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
@@ -102,39 +100,31 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 
         updateSnackBarSize();
 
-        snackBar.setOnClickListener(new View.OnClickListener()
-        {
+        snackBar.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view)
-            {
+            public void onClick(View view) {
                 snackBar.startAnimation(snackBarClose);
-				showFunctionButton();
+                showFunctionButton();
             }
         });
-        snackBarButton.setOnClickListener(new View.OnClickListener()
-        {
+        snackBarButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view)
-            {
+            public void onClick(View view) {
                 ((onDrawerItemClickListener) drawerList.getOnItemClickListener()).replaceFragment("Edit schedule");
             }
         });
 
         //Init listeners
-        calendarButtonClick = new View.OnClickListener()
-        {
+        calendarButtonClick = new View.OnClickListener() {
             @Override
-            public void onClick(View view)
-            {
+            public void onClick(View view) {
                 onCalendarClick(view);
             }
         };
-        addButtonClick = new View.OnClickListener()
-        {
+        addButtonClick = new View.OnClickListener() {
             @Override
-            public void onClick(View view)
-            {
-               controller.addClick();
+            public void onClick(View view) {
+                controller.addClick();
             }
         };
 
@@ -156,152 +146,125 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig)
-    {
+    public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         updateSnackBarSize();
     }
 
-    private void animationsInit()
-    {
+    private void animationsInit() {
         buttonOpen = AnimationUtils.loadAnimation(this, R.anim.function_button_open);
-        buttonOpen.setAnimationListener(new Animation.AnimationListener()
-        {
+        buttonOpen.setAnimationListener(new Animation.AnimationListener() {
             @Override
-            public void onAnimationStart(Animation animation)
-            {
+            public void onAnimationStart(Animation animation) {
                 functionButton.setVisibility(View.VISIBLE);
                 isFunctionButtonVisible = true;
             }
 
             @Override
-            public void onAnimationEnd(Animation animation)
-            {
+            public void onAnimationEnd(Animation animation) {
 
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation)
-            {
+            public void onAnimationRepeat(Animation animation) {
 
             }
         });
 
         buttonClose = AnimationUtils.loadAnimation(this, R.anim.function_button_close);
-        buttonClose.setAnimationListener(new Animation.AnimationListener()
-        {
+        buttonClose.setAnimationListener(new Animation.AnimationListener() {
             @Override
-            public void onAnimationStart(Animation animation)
-            {
+            public void onAnimationStart(Animation animation) {
 
             }
 
             @Override
-            public void onAnimationEnd(Animation animation)
-            {
+            public void onAnimationEnd(Animation animation) {
                 functionButton.setVisibility(View.GONE);
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation)
-            {
+            public void onAnimationRepeat(Animation animation) {
 
             }
         });
 
         calendarOpen = AnimationUtils.loadAnimation(this, R.anim.calendar_open);
-        calendarOpen.setAnimationListener(new Animation.AnimationListener()
-        {
+        calendarOpen.setAnimationListener(new Animation.AnimationListener() {
             @Override
-            public void onAnimationStart(Animation animation)
-            {
+            public void onAnimationStart(Animation animation) {
                 calendarContainer.setVisibility(View.VISIBLE);
                 calendar.clearFocus();
             }
 
             @Override
-            public void onAnimationEnd(Animation animation)
-            {
+            public void onAnimationEnd(Animation animation) {
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation)
-            {
+            public void onAnimationRepeat(Animation animation) {
 
             }
         });
 
         calendarClose = AnimationUtils.loadAnimation(this, R.anim.calendar_close);
-        calendarClose.setAnimationListener(new Animation.AnimationListener()
-        {
+        calendarClose.setAnimationListener(new Animation.AnimationListener() {
             @Override
-            public void onAnimationStart(Animation animation)
-            {
+            public void onAnimationStart(Animation animation) {
 
             }
 
             @Override
-            public void onAnimationEnd(Animation animation)
-            {
+            public void onAnimationEnd(Animation animation) {
                 calendarContainer.setVisibility(View.GONE);
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation)
-            {
+            public void onAnimationRepeat(Animation animation) {
 
             }
         });
 
         snackBarOpen = AnimationUtils.loadAnimation(this, R.anim.snackbar_appear);
-        snackBarOpen.setAnimationListener(new Animation.AnimationListener()
-		{
-			@Override
-			public void onAnimationStart(Animation animation)
-			{
-				snackBar.setVisibility(View.VISIBLE);
-				snackBarButton.setVisibility(View.VISIBLE);
-				dismissFunctionButton();
-				isFunctionButtonVisible = false;
-			}
+        snackBarOpen.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                snackBar.setVisibility(View.VISIBLE);
+                snackBarButton.setVisibility(View.VISIBLE);
+                dismissFunctionButton();
+                isFunctionButtonVisible = false;
+            }
 
-			@Override
-			public void onAnimationEnd(Animation animation)
-			{
+            @Override
+            public void onAnimationEnd(Animation animation) {
 
-			}
+            }
 
-			@Override
-			public void onAnimationRepeat(Animation animation)
-			{
+            @Override
+            public void onAnimationRepeat(Animation animation) {
 
-			}
-		});
+            }
+        });
 
         snackBarClose = AnimationUtils.loadAnimation(this, R.anim.snackbar_disappear);
-        snackBarClose.setAnimationListener(new Animation.AnimationListener()
-		{
-			@Override
-			public void onAnimationStart(Animation animation)
-			{
-			}
+        snackBarClose.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
 
-			@Override
-			public void onAnimationEnd(Animation animation)
-			{
-				snackBar.setVisibility(View.GONE);
-			}
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                snackBar.setVisibility(View.GONE);
+            }
 
-			@Override
-			public void onAnimationRepeat(Animation animation)
-			{
+            @Override
+            public void onAnimationRepeat(Animation animation) {
 
-			}
-		});
+            }
+        });
     }
 
-    private void drawerInit()
-    {
+    private void drawerInit() {
         //Drawer items
         ArrayList<Lesson.DrawerItem> drawerItems;
         TypedArray drawables;
@@ -313,8 +276,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         drawerItems = new ArrayList<Lesson.DrawerItem>();
 
         //Init drawer list
-        for (int i = 0; i < titles.length; i++)
-        {
+        for (int i = 0; i < titles.length; i++) {
             drawerItems.add(new Lesson.DrawerItem(titles[i], drawables.getDrawable(i)));
         }
         //Recycle that array after using
@@ -328,34 +290,29 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         drawerList.setOnItemClickListener(new onDrawerItemClickListener());
 
         //Init actionbar toggle(left button)
-        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close)
-        {
+        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close) {
             @Override
-            public void onDrawerSlide(View view, float v)
-            {
+            public void onDrawerSlide(View view, float v) {
                 super.onDrawerSlide(view, v);
             }
 
             @Override
-            public void onDrawerOpened(View view)
-            {
+            public void onDrawerOpened(View view) {
                 super.onDrawerOpened(view);
 
-                if(isFunctionButtonVisible) functionButton.startAnimation(buttonClose);
-                if(calendarContainer.getVisibility() == View.VISIBLE) calendarContainer.startAnimation(calendarClose);
+                if (isFunctionButtonVisible) functionButton.startAnimation(buttonClose);
+                if (calendarContainer.getVisibility() == View.VISIBLE) calendarContainer.startAnimation(calendarClose);
             }
 
             @Override
-            public void onDrawerClosed(View view)
-            {
+            public void onDrawerClosed(View view) {
                 super.onDrawerClosed(view);
 
-                if(isFunctionButtonVisible) functionButton.startAnimation(buttonOpen);
+                if (isFunctionButtonVisible) functionButton.startAnimation(buttonOpen);
             }
 
             @Override
-            public void onDrawerStateChanged(int i)
-            {
+            public void onDrawerStateChanged(int i) {
                 super.onDrawerStateChanged(i);
             }
         };
@@ -367,14 +324,13 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 
     private void createProgressView() {
         final DisplayMetrics metrics = getResources().getDisplayMetrics();
-        mCircleWidth = (int) (56 * metrics.density) ;
+        mCircleWidth = (int) (56 * metrics.density);
         mCircleHeight = (int) (56 * metrics.density);
 
-        progress = new CircleImageView(this, getResources().getColor(R.color.white), 56/2);
+        progress = new CircleImageView(this, getResources().getColor(R.color.white), 56 / 2);
         progressDrawable = new MaterialProgressDrawable(this, progress);
 
-        FrameLayout.LayoutParams lParams =
-            new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        FrameLayout.LayoutParams lParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         lParams.gravity = Gravity.CENTER;
         progress.setLayoutParams(lParams);
 
@@ -386,8 +342,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         progress.setVisibility(View.GONE);
     }
 
-    private void createFunctionButton()
-    {
+    private void createFunctionButton() {
         Resources resources = getResources();
         final float density = resources.getDisplayMetrics().density;
 
@@ -400,8 +355,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 
         functionButton = new CircleImageView(this, getResources().getColor(R.color.orange_accent), (int) (circleDiameter / 2 / density));
 
-        RelativeLayout.LayoutParams lParams =
-            new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
+        RelativeLayout.LayoutParams lParams = new RelativeLayout.LayoutParams(mCircleWidth, mCircleHeight);
         lParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         lParams.setMargins(0, 0, (int) (xPosition), (int) (yPosition));
@@ -415,50 +369,42 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         functionButton.setClickable(true);
 
         functionButton.setImageDrawable(resources.getDrawable(R.drawable.ic_calendar));
-        ((ViewGroup)(findViewById(R.id.activity_container))).addView(functionButton);
+        ((ViewGroup) (findViewById(R.id.activity_container))).addView(functionButton);
 
         functionButton.setOnClickListener(calendarButtonClick);
         isFunctionButtonVisible = true;
     }
 
-    private void showFragment(String name, String arg1)
-    {
-		if(snackBar.getVisibility() == View.VISIBLE)
-			snackBar.startAnimation(snackBarClose);
+    private void showFragment(String name, String arg1) {
+        if (snackBar.getVisibility() == View.VISIBLE) snackBar.startAnimation(snackBarClose);
 
         controller.showFragment(name, arg1);
     }
 
     @Override
-    public void showError(final String msg)
-    {
-        runOnUiThread(new Runnable()
-		{
-			@Override
-			public void run()
-			{
+    public void showError(final String msg) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
 
-				if (msg.equals(getString(R.string.no_courses)))
-				{
-					showSnackBar(msg, getString(R.string.add));
-					return;
-				}
+                if (msg.equals(getString(R.string.no_courses))) {
+                    showSnackBar(msg, getString(R.string.add));
+                    return;
+                }
 
-				Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
-			}
-		});
+                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    public void showSnackBar(String text, String btnText)
-    {
+    public void showSnackBar(String text, String btnText) {
         snackBarText.setText(text);
         snackBarButton.setText(btnText);
 
         snackBar.startAnimation(snackBarOpen);
     }
 
-    private void calendarInit()
-    {
+    private void calendarInit() {
         Calendar until = Calendar.getInstance();
         until.add(Calendar.MONTH, 5);
         until.setFirstDayOfWeek(Calendar.MONDAY);
@@ -469,17 +415,13 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         calendar = (CalendarPickerView) findViewById(R.id.calendar_view);
         Calendar today = Calendar.getInstance();
 
-        if(today.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)
-            today.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+        if (today.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) today.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
 
-        calendar.init(from.getTime(), until.getTime())
-            .withSelectedDate(today.getTime());
+        calendar.init(from.getTime(), until.getTime()).withSelectedDate(today.getTime());
 
-        calendar.setOnDateSelectedListener(new CalendarPickerView.OnDateSelectedListener()
-        {
+        calendar.setOnDateSelectedListener(new CalendarPickerView.OnDateSelectedListener() {
             @Override
-            public void onDateSelected(Date date)
-            {
+            public void onDateSelected(Date date) {
                 controller.dateChanged(date.getTime());
 
                 calendar.selectDate(date, true);
@@ -488,59 +430,51 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
             }
 
             @Override
-            public void onDateUnselected(Date date)
-            {
+            public void onDateUnselected(Date date) {
 
             }
         });
 
         calendarContainer = (CardView) findViewById(R.id.calendar_container);
 
-        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
-            calendarContainer.getLayoutParams().width = (int) getResources().getDimension(R.dimen.calendar_width);
-        else
-            calendarContainer.getLayoutParams().width = FrameLayout.LayoutParams.MATCH_PARENT;
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) calendarContainer.getLayoutParams().width = (int) getResources().getDimension(R.dimen.calendar_width);
+        else calendarContainer.getLayoutParams().width = FrameLayout.LayoutParams.MATCH_PARENT;
     }
 
     @Override
-    protected void onPostCreate(Bundle savedInstanceState)
-    {
+    protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
-		Controller.isActivityRunning = true;
-		dismissProgress(); //Sometimes it is running somehow O_O
+        Controller.isActivityRunning = true;
+        dismissProgress(); //Sometimes it is running somehow O_O
 
-		showFragment("My schedule", "My schedule");
+        showFragment("My schedule", "My schedule");
 
         toggle.syncState();
     }
+
     @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
+    public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
+    public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-		switch (id)
-		{
-			case R.id.info:
-				DialogFragment fragment = new DialogInfoFragment();
-				fragment.show(getSupportFragmentManager(), "Info");
-				break;
-		}
+        switch (id) {
+            case R.id.info:
+                DialogFragment fragment = new DialogInfoFragment();
+                fragment.show(getSupportFragmentManager(), "Info");
+                break;
+        }
         return super.onOptionsItemSelected(item);
     }
 
     @Override
-    public void onBackPressed()
-    {
-        if(calendarContainer.getVisibility() == View.VISIBLE)
-        {
+    public void onBackPressed() {
+        if (calendarContainer.getVisibility() == View.VISIBLE) {
             calendarContainer.startAnimation(calendarClose);
             functionButton.startAnimation(buttonOpen);
             return;
@@ -551,41 +485,33 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 
     //If in controller we have to find back pressed
     @Override
-    public void backPressed()
-    {
+    public void backPressed() {
         super.onBackPressed();
     }
 
     @Override
-    protected void onDestroy()
-    {
+    protected void onDestroy() {
         super.onDestroy();
-		controller.activityDestroyed();
+        controller.activityDestroyed();
     }
 
-    private class onDrawerItemClickListener implements ListView.OnItemClickListener
-    {
+    private class onDrawerItemClickListener implements ListView.OnItemClickListener {
         @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-        {
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             replaceFragment(titles[position]);
 
             getSupportActionBar().setTitle(titles[position]);
             drawerLayout.closeDrawer(drawerList);
         }
 
-        private void replaceFragment(String tag)
-		{
+        private void replaceFragment(String tag) {
             functionButton.setVisibility(View.INVISIBLE);
-            if(tag.endsWith("Chooser") || tag.contains("Edit"))
-            {
+            if (tag.endsWith("Chooser") || tag.contains("Edit")) {
                 functionButton.setOnClickListener(addButtonClick);
                 functionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_new));
                 int p = (int) getResources().getDimension(R.dimen.function_button_add_padding);
                 functionButton.setPadding(p, p, p, p);
-            }
-            else
-            {
+            } else {
                 functionButton.setOnClickListener(calendarButtonClick);
                 functionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_calendar));
                 int p = (int) getResources().getDimension(R.dimen.function_button_padding);
@@ -593,37 +519,31 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
             }
             functionButton.setVisibility(View.INVISIBLE);
             isFunctionButtonVisible = true;
-			EditFragment.wasInEditMode = false;
+            EditFragment.wasInEditMode = false;
 
-			showFragment(tag, tag);
+            showFragment(tag, tag);
         }
     }
 
-    public void onCalendarClick(View view)
-    {
-        if(calendarContainer.getVisibility() != View.VISIBLE)
-        {
+    public void onCalendarClick(View view) {
+        if (calendarContainer.getVisibility() != View.VISIBLE) {
             calendarContainer.startAnimation(calendarOpen);
             functionButton.startAnimation(buttonClose);
         }
     }
 
     @Override
-    public void showProgress()
-    {
+    public void showProgress() {
         container.setVisibility(View.GONE);
         progress.setVisibility(View.VISIBLE);
         progressDrawable.start();
     }
 
     @Override
-    public void dismissProgress()
-    {
-        runOnUiThread(new Runnable()
-        {
+    public void dismissProgress() {
+        runOnUiThread(new Runnable() {
             @Override
-            public void run()
-            {
+            public void run() {
                 progressDrawable.stop();
                 progress.setVisibility(View.GONE);
                 container.setVisibility(View.VISIBLE);
@@ -632,39 +552,31 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     }
 
     @Override
-    public void showFunctionButton()
-    {
-		if(functionButton.getVisibility() != View.VISIBLE)
-			functionButton.startAnimation(buttonOpen);
+    public void showFunctionButton() {
+        if (functionButton.getVisibility() != View.VISIBLE) functionButton.startAnimation(buttonOpen);
     }
 
     @Override
-    public void dismissFunctionButton()
-    {
-		if(functionButton.getVisibility() == View.VISIBLE)
-        	functionButton.startAnimation(buttonClose);
+    public void dismissFunctionButton() {
+        if (functionButton.getVisibility() == View.VISIBLE) functionButton.startAnimation(buttonClose);
     }
 
     @Override
-    public void setTitle(String title)
-    {
+    public void setTitle(String title) {
         getSupportActionBar().setTitle(title);
     }
 
     @Override
-    public String getActionTitle()
-    {
+    public String getActionTitle() {
         return getSupportActionBar().getTitle().toString();
     }
 
     @Override
-    public void notifyDateChanged()
-    {
+    public void notifyDateChanged() {
         calendar.selectDate(controller.getDate().getTime());
     }
 
-    private void updateSnackBarSize()
-    {
+    private void updateSnackBarSize() {
         float dp = getResources().getDisplayMetrics().widthPixels;
         dp *= .7f;
         snackBarText.setMaxWidth((int) dp);
