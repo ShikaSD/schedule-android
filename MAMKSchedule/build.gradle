@@ -1,5 +1,4 @@
 apply plugin: 'com.parse'
-apply from: 'signing.gradle'
 
 buildscript {
     repositories {
@@ -8,16 +7,20 @@ buildscript {
         maven {
             url 'https://maven.parse.com/repo'
         }
+        maven { url 'https://maven.fabric.io/public' }
     }
     dependencies {
         classpath 'com.parse.tools:gradle:1.+'
         classpath 'com.android.tools.build:gradle:1.1.1'
+        classpath 'io.fabric.tools:gradle:1.+'
     }
 }
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
 
 repositories {
     jcenter()
+    maven { url 'https://maven.fabric.io/public' }
 }
 
 parse {
@@ -30,18 +33,30 @@ parse {
 android {
     compileSdkVersion 21
     buildToolsVersion "22.0.1"
-
     defaultConfig {
         applicationId "ru.shika.mamkschedule"
         minSdkVersion 10
         targetSdkVersion 21
         versionCode 0
-        versionName "0.9"
-
+        versionName "0.5"
         buildTypes {
             release {
                 proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             }
+        }
+    }
+    signingConfigs {
+        release {
+            storeFile file('C:/Ghjuf/Android/keystore/keystore.jks')
+            storePassword "Oo3WcEf"
+            keyAlias "Shika"
+            keyPassword "Oo3WcEf"
+        }
+    }
+    buildTypes {
+        release {
+            debuggable true
+            signingConfig signingConfigs.release
         }
     }
 }
@@ -52,9 +67,11 @@ dependencies {
     compile 'com.android.support:appcompat-v7:22.+'
     compile 'com.android.support:cardview-v7:22.+'
     compile 'com.android.support:recyclerview-v7:22.+'
-
     compile 'com.parse.bolts:bolts-android:1.+'
     //compile fileTree(dir: 'libs', include: 'Parse-*.jar')
     //compile fileTree(dir: 'libs', include: 'ParseCrashReporting-*.jar')
     //compile 'com.nineoldandroids:library:2.4.0.+'
+    compile('com.crashlytics.sdk.android:crashlytics:2.5.0@aar') {
+        transitive = true;
+    }
 }

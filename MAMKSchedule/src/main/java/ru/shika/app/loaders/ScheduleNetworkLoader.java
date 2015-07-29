@@ -87,7 +87,7 @@ public class ScheduleNetworkLoader extends NetworkLoader {
         do {
             Log.d("Shika", getClass().getName() + ": Name: " + c.getString(name) + ", courseId: " + c.getString(courseId) + ", date: " + items[0].date + ", " + items[1].date + ", group: " + c.getString(group));
 
-            if (c.getString(start).compareTo(items[1].date) > 0 || c.getString(end).compareTo(items[0].date) < 0) continue;
+            if (c.getString(end).compareTo(items[0].date) < 0) continue;
 
             ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Lesson");
 
@@ -114,10 +114,14 @@ public class ScheduleNetworkLoader extends NetworkLoader {
             }
         } while (c.moveToNext());
 
-        if (queries.size() > 0) query = ParseQuery.or(queries);
+        if (queries.size() > 0) this.query = ParseQuery.or(queries);
+        else {
+            this.query = ParseQuery.getQuery("Lesson"); //Get empty one
+            this.query.whereDoesNotExist("name");
+        }
 
         try {
-            result = (ArrayList<ParseObject>) query.find();
+            result = (ArrayList<ParseObject>) this.query.find();
             insertValues(null);
         } catch (Exception e) {
             Log.d("Shika", e.getMessage());

@@ -1,7 +1,6 @@
 package ru.shika;
 
 import com.parse.Parse;
-import com.parse.ParseCrashReporting;
 import ru.shika.app.Controller;
 import ru.shika.app.DBHelper;
 
@@ -24,10 +23,6 @@ public class Application extends android.app.Application {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        //Parse init
-        if(!ParseCrashReporting.isCrashReportingEnabled())
-            ParseCrashReporting.enable(this);
 
         Parse.initialize(this, "eR4X3CWg0H0dQiykPaWPymOLuceIj7XlCWu3SLLi", "tZ8L3pIHV1nXUmXj5GASyM2JdbwKFHUDYDuqhKR7");
 

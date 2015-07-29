@@ -15,7 +15,9 @@ import android.view.*;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.*;
+import com.crashlytics.android.Crashlytics;
 import com.squareup.timessquare.CalendarPickerView;
+import io.fabric.sdk.android.Fabric;
 import ru.shika.Application;
 import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
@@ -81,6 +83,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         setContentView(R.layout.main);
 
         controller = Application.getController();

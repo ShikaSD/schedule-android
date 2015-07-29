@@ -20,7 +20,7 @@ public class ChooserLocalLoader extends LocalLoader {
     protected void load() {
         String now = Lesson.convertDateToString(Calendar.getInstance());
         cursor = dbh.rawQuery("select courseId, name, isEnrolled from Courses where (groups like '%" + name + "%' or teacher like '%" + name + "%') " +
-            "and  " + now + " >= startDate and " + now + " <= endDate order by name", null);
+            "and  " + now + " <= endDate order by name", null);
     }
 
 }
