@@ -405,7 +405,8 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
 
     @Override
     public void updateIsRunning() {
-        showProgress();
+        if(((ArrayList<Object>) loader.getData(id)).size() <= 3)
+            showProgress();
 
         update(loader.getData(id));
         loader.ready(id);
@@ -418,17 +419,19 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
 
     @Override
     public void showProgress() {
-        if (getActivity() != null) getActivity().runOnUiThread(new Runnable() {
+        if (getActivity() != null)
+            getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (progressView.getVisibility() != View.VISIBLE) progressView.startAnimation(appear);
+                if (progressView.getVisibility() == View.GONE) progressView.startAnimation(appear);
             }
         });
     }
 
     @Override
     public void dismissProgress() {
-        if (getActivity() != null) getActivity().runOnUiThread(new Runnable() {
+        if (getActivity() != null)
+            getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (progressView.getVisibility() == View.VISIBLE) progressView.startAnimation(disappear);

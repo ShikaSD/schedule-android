@@ -133,11 +133,6 @@ public class LoaderCenter implements NetworkLoaderInterface, LocalLoaderInterfac
 
         if (controllerInterface.getView(id) != null) //It can be removed here
             controllerInterface.getView(id).updateIsRunning();
-
-        if (code == LoaderCode.CHECK) {
-            //Log.d("Shika", "Send signal to dismiss");
-            controllerInterface.getView(id).downloadEnd(); //To dismiss progressbar in view
-        }
     }
 
     @Override
