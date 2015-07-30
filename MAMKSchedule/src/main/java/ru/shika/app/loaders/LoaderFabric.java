@@ -1,7 +1,6 @@
 package ru.shika.app.loaders;
 
 import android.content.Context;
-import android.util.Log;
 import ru.shika.app.Controller;
 import ru.shika.app.Lesson;
 import ru.shika.app.interfaces.LocalLoaderInterface;
@@ -30,7 +29,7 @@ public class LoaderFabric {
         String arg3 = temp.name;
         Calendar date = Calendar.getInstance();
 
-        Log.d("Shika", "Fabric: Making network loader with values " + id + ", " + arg1 + ", " + arg2 + ", " + arg3);
+        //Log.d("Shika", "Fabric: Making network loader with values " + id + ", " + arg1 + ", " + arg2 + ", " + arg3);
 
         if (temp.calendar != null) {
             date.setTimeInMillis(temp.calendar.getTime());
@@ -69,7 +68,7 @@ public class LoaderFabric {
          *@arg1 = param/type/group
          *@arg2 = name/teacher
          *@arg3 = name in schedule objects*/
-        Log.d("Shika", "Fabric: Making local loader with id " + id);
+        //Log.d("Shika", "Fabric: Making local loader with id " + id);
 
         Lesson temp = Controller.items.get(id);
         String arg1 = temp.group;

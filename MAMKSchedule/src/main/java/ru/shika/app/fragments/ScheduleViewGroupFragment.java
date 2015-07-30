@@ -93,7 +93,7 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
         date = Calendar.getInstance();
         date.setTime(controller.getDate().getTime());
         date.setFirstDayOfWeek(Calendar.MONDAY);
-        Log.d("Shika", "Date in fragment: " + date.getTime());
+        //Log.d("Shika", "Date in fragment: " + date.getTime());
         dayOfWeek = getWeekDay(date);
 
         animationInit();
@@ -216,7 +216,7 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
     private void update(Object o) {
         if (o == null) return;
 
-        Log.d("Shika", "In ViewGroup fragment is found " + o);
+        //Log.d("Shika", "In ViewGroup fragment is found " + o);
         int size = lessonsArr.size();
 
         for (int i = 0; i < size; i++) {

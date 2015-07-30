@@ -85,7 +85,7 @@ public class ScheduleNetworkLoader extends NetworkLoader {
         }
 
         do {
-            Log.d("Shika", getClass().getName() + ": Name: " + c.getString(name) + ", courseId: " + c.getString(courseId) + ", date: " + items[0].date + ", " + items[1].date + ", group: " + c.getString(group));
+            //Log.d("Shika", getClass().getName() + ": Name: " + c.getString(name) + ", courseId: " + c.getString(courseId) + ", date: " + items[0].date + ", " + items[1].date + ", group: " + c.getString(group));
 
             if (c.getString(end).compareTo(items[0].date) < 0) continue;
 

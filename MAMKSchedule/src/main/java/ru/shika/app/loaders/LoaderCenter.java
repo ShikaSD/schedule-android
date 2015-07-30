@@ -1,7 +1,6 @@
 package ru.shika.app.loaders;
 
 import android.content.Context;
-import android.util.Log;
 import ru.shika.app.interfaces.ControllerInterface;
 import ru.shika.app.interfaces.LoaderCenterInterface;
 import ru.shika.app.interfaces.LocalLoaderInterface;
@@ -68,11 +67,11 @@ public class LoaderCenter implements NetworkLoaderInterface, LocalLoaderInterfac
 
     @Override
     public void updateIsRunning(String id, int amount) {
-        Log.d("Shika", "Update with id: " + id);
+        //Log.d("Shika", "Update with id: " + id);
         if (id.startsWith(NETWORK)) id = id.replace(NETWORK, "");
 
         if (amount == FOUND_NOTHING) {
-            Log.d("Shika", "Nothing found with id: " + id);
+            //Log.d("Shika", "Nothing found with id: " + id);
             return;
         }
 
@@ -88,7 +87,7 @@ public class LoaderCenter implements NetworkLoaderInterface, LocalLoaderInterfac
 
     @Override
     public void downloadEnd(String id, int code) {
-        Log.d("Shika", "Download end with id: " + id);
+        //Log.d("Shika", "Download end with id: " + id);
         //Delete thread from active ids
         if (activeItems.contains(id)) {
             int size = activeItems.size();
@@ -108,7 +107,7 @@ public class LoaderCenter implements NetworkLoaderInterface, LocalLoaderInterfac
 
     @Override
     public void receiveData(String id, LoaderCode code, Object o) {
-        Log.d("Shika", "Loading from database ended with id: " + id);
+        //Log.d("Shika", "Loading from database ended with id: " + id);
         if (id.startsWith(NETWORK)) {
             showError("Internal error: too many threads");
             return;
@@ -136,7 +135,7 @@ public class LoaderCenter implements NetworkLoaderInterface, LocalLoaderInterfac
             controllerInterface.getView(id).updateIsRunning();
 
         if (code == LoaderCode.CHECK) {
-            Log.d("Shika", "Send signal to dismiss");
+            //Log.d("Shika", "Send signal to dismiss");
             controllerInterface.getView(id).downloadEnd(); //To dismiss progressbar in view
         }
     }

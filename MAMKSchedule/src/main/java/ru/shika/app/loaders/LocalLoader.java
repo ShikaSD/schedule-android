@@ -2,7 +2,6 @@ package ru.shika.app.loaders;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import ru.shika.app.DBHelper;
@@ -20,7 +19,7 @@ abstract class LocalLoader implements Runnable {
     protected Cursor cursor;
 
     public LocalLoader(String id, Context ctx, LocalLoaderInterface callback, LoaderCode code) {
-        Log.d("Shika", "Start loading from database with id: " + id);
+        //Log.d("Shika", "Start loading from database with id: " + id);
         dbh = DBHelper.getInstance(ctx);
 
         this.id = id;

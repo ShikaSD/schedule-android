@@ -2,6 +2,7 @@ package ru.shika.app.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -111,7 +112,7 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
         searchQuery = "";
 
         if (fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser")) {
-            Log.d("Shika", "ListFragment: Checkboxes showed");
+            //Log.d("Shika", "ListFragment: Checkboxes showed");
             adapter = new ListFragmentAdapter(keys, names, visible, true);
             adapter.showCheckboxes(true);
         } else adapter = new ListFragmentAdapter(keys, names, visible, false);
@@ -222,10 +223,14 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        //TODO:inflater.inflate(R.menu.list, menu);
+        if(id.equals("CoursesCourses")) {
+            super.onCreateOptionsMenu(menu, inflater);
+            return;
+        }
 
-        //searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.search));
-        //searchView.setOnQueryTextListener(this);
+        inflater.inflate(R.menu.list, menu);
+        searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.search));
+        searchView.setOnQueryTextListener(this);
 
         super.onCreateOptionsMenu(menu, inflater);
     }
@@ -243,7 +248,7 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
     }
 
     private void load() {
-        Log.d("Shika", "ListFragment: Start loading with values: " + fragmentType + ", " + typeName);
+        //Log.d("Shika", "ListFragment: Start loading with values: " + fragmentType + ", " + typeName);
         controller.load(id, fragmentType, typeName, null);
     }
 
@@ -438,7 +443,7 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
 
     @Override
     public boolean onQueryTextChange(final String s) {
-        Log.d("Shika", "Text changed to " + s);
+        //Log.d("Shika", "Text changed to " + s);
         searchQuery = s;
         if (searchFilterThread.isAlive()) searchFilterThread.interrupt();
 

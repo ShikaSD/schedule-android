@@ -6,7 +6,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.view.ActionMode;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -103,7 +102,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
          *@arg2 = name/teacher
          *@arg3 = name in schedule objects*/
 
-        Log.d("Shika", "Controller: showFragment with " + name + " : " + arg1 + " last visible was " + visibleFragmentTag);
+        //Log.d("Shika", "Controller: showFragment with " + name + " : " + arg1 + " last visible was " + visibleFragmentTag);
 
         if (isActivityProgressRunning) dismissActivityProgress();
 
@@ -174,7 +173,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
                     }
 
             ft.add(R.id.main_container, fragment, name);
-            Log.d("Shika", "Controller: New Fragment made");
+            //Log.d("Shika", "Controller: New Fragment made");
         }
 
         ft.attach(fragment);
@@ -257,7 +256,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
     public String register(ViewInterface i) {
         if (!viewInterfaces.containsKey(visibleFragmentId)) viewInterfaces.put(visibleFragmentId, i);
 
-        Log.d("Shika", "Controller: registered id = " + visibleFragmentId);
+        //Log.d("Shika", "Controller: registered id = " + visibleFragmentId);
         return visibleFragmentId;
     }
 
@@ -302,7 +301,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
          *@arg2 = name/teacher
          *@arg3 = name in schedule objects*/
 
-        Log.d("Shika", "Controller: start loading with id: " + key + ", and args: " + arg1 + ", " + arg2 + ", " + arg3);
+        //Log.d("Shika", "Controller: start loading with id: " + key + ", and args: " + arg1 + ", " + arg2 + ", " + arg3);
 
         Lesson temp;
         if (arg1.contains("ViewGroup"))//it is schedule

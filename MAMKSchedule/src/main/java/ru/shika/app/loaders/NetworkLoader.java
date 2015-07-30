@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import ru.shika.app.DBHelper;
@@ -35,7 +34,7 @@ abstract class NetworkLoader implements Runnable {
     public LoaderCode code;
 
     public NetworkLoader(String id, Context context, NetworkLoaderInterface callback, LoaderCode code) {
-        Log.d("Shika", "Start downloading with id: " + id);
+        //Log.d("Shika", "Start downloading with id: " + id);
         ctx = context;
         this.callback = callback;
         this.id = id;
