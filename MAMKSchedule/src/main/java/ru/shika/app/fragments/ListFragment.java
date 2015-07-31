@@ -138,10 +138,12 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
                 if (isEditFragment && (fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser")) &&
                     adapter.isChecked(i)) return;
 
-                String item;
+                String item = "";
                 if (fragmentType.startsWith("Courses") || fragmentType.endsWith("Chooser")) {
                     item = ((TextView) view.findViewById(R.id.fragment_list_id)).getText().toString();
-                } else item = ((TextView) view.findViewById(R.id.fragment_list_name)).getText().toString();
+                }
+                if(item.equals(""))
+                    item = ((TextView) view.findViewById(R.id.fragment_list_name)).getText().toString();
 
                 if (isEditFragment && typeName == null) {
                     controller.listEditItemSelected(fragmentType, item);

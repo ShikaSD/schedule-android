@@ -78,7 +78,10 @@ public class EditListAdapter extends BaseAdapter {
 
         ((TextView) v.findViewById(R.id.fragment_list_name)).setText(name);
 
-        if (!keys.get(i).equals(names.get(i).get(0))) ((TextView) v.findViewById(R.id.fragment_list_id)).setText(keys.get(i));
+        if (!keys.get(i).equals(names.get(i).get(0)))
+            ((TextView) v.findViewById(R.id.fragment_list_id)).setText(keys.get(i));
+        else
+            ((TextView) v.findViewById(R.id.fragment_list_id)).setText("");
 
         if (isCheckingList) {
             if (i > checkedItems.size() - 1) while (checkedItems.size() - 1 < i) checkedItems.add(Boolean.FALSE);

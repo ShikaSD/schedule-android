@@ -64,6 +64,7 @@
     <string name = "dialog_header">Course adding</string>
 
 	<string name = "info_dialog_text">© Andrei Shikov\nversion </string>
+    <string name = "contact">\nContacts: \n\tVK: vk.com/shikaxd \n\tE-mail: andrei.shikov@mamk.fi</string>
 
 	<string name = "search_hint">Search for list items here</string>
 

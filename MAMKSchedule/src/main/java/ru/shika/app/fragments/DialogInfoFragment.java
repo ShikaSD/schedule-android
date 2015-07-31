@@ -21,7 +21,9 @@ public class DialogInfoFragment extends DialogFragment implements View.OnClickLi
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_dialog_info, container, false);
 
-        ((TextView) rootView.findViewById(R.id.dialog_text)).setText(getString(R.string.info_dialog_text) + ' ' + BuildConfig.VERSION_NAME);
+        ((TextView) rootView.findViewById(R.id.dialog_text)).setText(
+            getString(R.string.info_dialog_text) + ' ' + BuildConfig.VERSION_NAME
+        );
 
         Button yes = (Button) rootView.findViewById(R.id.dialog_yes);
         yes.setOnClickListener(this);

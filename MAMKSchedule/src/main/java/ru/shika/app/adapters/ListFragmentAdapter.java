@@ -104,7 +104,9 @@ public class ListFragmentAdapter extends RecyclerView.Adapter<ListFragmentAdapte
         else viewHolder.courseId.setText("");
 
         if (isCheckingList) {
-            if (i > checkedItems.size() - 1) while (checkedItems.size() - 1 < i) checkedItems.add(Boolean.FALSE);
+            if (i > checkedItems.size() - 1)
+                while (checkedItems.size() - 1 < i)
+                    checkedItems.add(Boolean.FALSE);
 
             viewHolder.check.setChecked(checkedItems.get(i));
 
