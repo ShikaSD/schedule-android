@@ -78,6 +78,7 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 
         controller = Application.getController();
         controller.setDateInterface(this);
+        id = controller.register(this);
         loader = Application.getController().getLoader();
 
         group = teacher = course = null;
@@ -116,7 +117,6 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
         viewPager = (ViewPager) view.findViewById(R.id.pager);
         tabLayout = (SlidingTabLayout) view.findViewById(R.id.tabs);
 
-        id = controller.register(this);
         load();
     }
 

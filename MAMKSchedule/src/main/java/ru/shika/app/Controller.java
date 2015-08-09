@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.view.ActionMode;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -256,7 +257,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
     public String register(ViewInterface i) {
         if (!viewInterfaces.containsKey(visibleFragmentId)) viewInterfaces.put(visibleFragmentId, i);
 
-        //Log.d("Shika", "Controller: registered id = " + visibleFragmentId);
+        Log.d("Shika", "Controller: registered id = " + visibleFragmentId);
         return visibleFragmentId;
     }
 

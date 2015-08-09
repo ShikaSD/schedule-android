@@ -68,9 +68,6 @@ dependencies {
     compile 'com.android.support:cardview-v7:22.+'
     compile 'com.android.support:recyclerview-v7:22.+'
     compile 'com.parse.bolts:bolts-android:1.+'
-    //compile fileTree(dir: 'libs', include: 'Parse-*.jar')
-    //compile fileTree(dir: 'libs', include: 'ParseCrashReporting-*.jar')
-    //compile 'com.nineoldandroids:library:2.4.0.+'
     compile('com.crashlytics.sdk.android:crashlytics:2.5.0@aar') {
         transitive = true;
     }
