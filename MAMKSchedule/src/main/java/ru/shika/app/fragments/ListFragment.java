@@ -450,7 +450,8 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
     public boolean onQueryTextChange(final String s) {
         //Log.d("Shika", "Text changed to " + s);
         searchQuery = s;
-        if (searchFilterThread.isAlive()) searchFilterThread.interrupt();
+        if (searchFilterThread != null && searchFilterThread.isAlive())
+            searchFilterThread.interrupt();
 
         searchFilterThread = new Thread(new Runnable() {
             @Override
