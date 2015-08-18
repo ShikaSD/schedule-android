@@ -124,6 +124,9 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 
         backStack.push(visibleFragmentTag);
 
+        visibleFragmentTag = name;
+        visibleFragmentId = name + arg1;
+
         fragment = fm.findFragmentByTag(name);
 
         for (String tag : tags)
@@ -179,9 +182,6 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 
         ft.attach(fragment);
         ft.commit();
-
-        visibleFragmentTag = name;
-        visibleFragmentId = name + arg1;
 
         activity.setTitle(title);
     }

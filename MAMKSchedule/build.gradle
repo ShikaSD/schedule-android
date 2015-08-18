@@ -23,13 +23,6 @@ repositories {
     maven { url 'https://maven.fabric.io/public' }
 }
 
-parse {
-    applicationId "eR4X3CWg0H0dQiykPaWPymOLuceIj7XlCWu3SLLi"
-    masterKey "AafJe4bHembFbmp1GxJzobtsLTNQE4u3SXAhgDB0"
-    uploadSymbols true
-    retries 3
-}
-
 android {
     compileSdkVersion 21
     buildToolsVersion "22.0.1"
@@ -37,7 +30,7 @@ android {
         applicationId "ru.shika.mamkschedule"
         minSdkVersion 10
         targetSdkVersion 21
-        versionCode 0
+        versionCode 2
         versionName "0.5"
         buildTypes {
             release {
@@ -47,22 +40,21 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('C:/Ghjuf/Android/keystore/keystore.jks')
             storePassword "Oo3WcEf"
             keyAlias "Shika"
             keyPassword "Oo3WcEf"
+            storeFile file('../keystore/keystore.jks')
         }
     }
     buildTypes {
         release {
-            debuggable true
-            signingConfig signingConfigs.release
+            debuggable false
         }
     }
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:support-v4:22.+'
     compile 'com.android.support:appcompat-v7:22.+'
     compile 'com.android.support:cardview-v7:22.+'

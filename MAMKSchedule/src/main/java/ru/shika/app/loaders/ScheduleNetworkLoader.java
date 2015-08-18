@@ -215,18 +215,19 @@ public class ScheduleNetworkLoader extends NetworkLoader {
 
             if (queries.size() >= 10) {
                 query = ParseQuery.or(queries);
-                insertCourses(c);
+                insertCourses();
                 queries.clear();
             }
         } while (c.moveToNext());
 
         query = ParseQuery.or(queries);
-        insertCourses(c);
+        insertCourses();
 
         c.close();
     }
 
-    private void insertCourses(Cursor c) {
+    private void insertCourses() {
+        Cursor c = dbh.rawQuery("select * from Courses where isEnrolled = 1", null);
         int courseId = c.getColumnIndex("courseId");
         int name = c.getColumnIndex("name");
 
@@ -260,5 +261,6 @@ public class ScheduleNetworkLoader extends NetworkLoader {
             Log.e("Shika", e.getMessage());
             error(getString(R.string.error_network_not_connected));
         }
+        c.close();
     }
 }
