@@ -36,7 +36,7 @@ import java.util.ArrayList;
 /**
  * Fancy progress indicator for Material theme.
  *
- * @hide 
+ * @hide
  */
 public class MaterialProgressDrawable extends Drawable implements Animatable {
     private static final Interpolator LINEAR_INTERPOLATOR = new LinearInterpolator();
@@ -46,7 +46,9 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
 
     @Retention(RetentionPolicy.CLASS)
     @IntDef({LARGE, DEFAULT})
-    public @interface ProgressDrawableSize {}
+    public @interface ProgressDrawableSize {
+    }
+
     // Maps to ProgressBar.Large style
     public static final int LARGE = 0;
     // Maps to ProgressBar default style
@@ -62,30 +64,44 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
     private static final float CENTER_RADIUS_LARGE = 12.5f;
     private static final float STROKE_WIDTH_LARGE = 3f;
 
-    private final int[] COLORS = new int[] {
-        Color.BLUE
+    private final int[] COLORS = new int[]{
+            Color.BLUE
     };
 
-    /** The duration of a single progress spin in milliseconds. */
+    /**
+     * The duration of a single progress spin in milliseconds.
+     */
     private static final int ANIMATION_DURATION = 1000 * 80 / 60;
 
-    /** The number of points in the progress "star". */
+    /**
+     * The number of points in the progress "star".
+     */
     private static final float NUM_POINTS = 5f;
-    /** The list of animators operating on this drawable. */
+    /**
+     * The list of animators operating on this drawable.
+     */
     private final ArrayList<Animation> mAnimators = new ArrayList<Animation>();
 
-    /** The indicator ring, used to manage animation state. */
+    /**
+     * The indicator ring, used to manage animation state.
+     */
     private final Ring mRing;
 
-    /** Canvas rotation in degrees. */
+    /**
+     * Canvas rotation in degrees.
+     */
     private float mRotation;
 
-    /** Layout info for the arrowhead in dp */
+    /**
+     * Layout info for the arrowhead in dp
+     */
     private static final int ARROW_WIDTH = 10;
     private static final int ARROW_HEIGHT = 5;
     private static final float ARROW_OFFSET_ANGLE = 5;
 
-    /** Layout info for the arrowhead for the large spinner in dp */
+    /**
+     * Layout info for the arrowhead for the large spinner in dp
+     */
     private static final int ARROW_WIDTH_LARGE = 12;
     private static final int ARROW_HEIGHT_LARGE = 6;
     private static final float MAX_PROGRESS_ARC = .8f;
@@ -110,7 +126,7 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
     }
 
     private void setSizeParameters(double progressCircleWidth, double progressCircleHeight,
-            double centerRadius, double strokeWidth, float arrowWidth, float arrowHeight) {
+                                   double centerRadius, double strokeWidth, float arrowWidth, float arrowHeight) {
         final Ring ring = mRing;
         final DisplayMetrics metrics = mResources.getDisplayMetrics();
         final float screenDensity = metrics.density;
@@ -153,7 +169,7 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
      * Set the start and end trim for the progress spinner arc.
      *
      * @param startAngle start angle
-     * @param endAngle end angle
+     * @param endAngle   end angle
      */
     public void setStartEndTrim(float startAngle, float endAngle) {
         mRing.setStartTrim(startAngle);
@@ -174,7 +190,7 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
      */
     public void setBackgroundColor(int color) {
         mRing.setBackgroundColor(color);
-     }
+    }
 
     /**
      * Set the colors used in the progress animation from color resources.
@@ -292,7 +308,7 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
             }
         };
         finishRingAnimation.setInterpolator(EASE_INTERPOLATOR);
-        finishRingAnimation.setDuration(ANIMATION_DURATION/2);
+        finishRingAnimation.setDuration(ANIMATION_DURATION / 2);
         finishRingAnimation.setAnimationListener(new Animation.AnimationListener() {
 
             @Override
@@ -330,7 +346,7 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
 
                 final float startTrim = startingTrim
                         + (MAX_PROGRESS_ARC * END_CURVE_INTERPOLATOR
-                                .getInterpolation(interpolatedTime));
+                        .getInterpolation(interpolatedTime));
                 ring.setStartTrim(startTrim);
 
                 final float rotation = startingRotation + (0.25f * interpolatedTime);
@@ -435,7 +451,7 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
         /**
          * Set the dimensions of the arrowhead.
          *
-         * @param width Width of the hypotenuse of the arrow head
+         * @param width  Width of the hypotenuse of the arrow head
          * @param height Height of the arrow point
          */
         public void setArrowDimensions(float width, float height) {
@@ -459,7 +475,7 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
                 mCirclePaint.setColor(mBackgroundColor);
                 mCirclePaint.setAlpha(0);
                 c.drawCircle(bounds.exactCenterX(), bounds.exactCenterY(), bounds.width() / 2,
-                    mCirclePaint);
+                        mCirclePaint);
             }
 
             mPaint.setColor(mColors[mColorIndex]);
@@ -514,7 +530,7 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
 
         /**
          * @param index Index into the color array of the color to display in
-         *            the progress spinner.
+         *              the progress spinner.
          */
         public void setColorIndex(int index) {
             mColorIndex = index;
@@ -620,7 +636,7 @@ public class MaterialProgressDrawable extends Drawable implements Animatable {
 
         /**
          * @param centerRadius Inner radius in px of the circle the progress
-         *            spinner arc traces.
+         *                     spinner arc traces.
          */
         public void setCenterRadius(double centerRadius) {
             mRingCenterRadius = centerRadius;
