@@ -83,7 +83,7 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 
         group = teacher = course = null;
 
-        lessonsArr = new ArrayList<ArrayList<Lesson>>();
+        lessonsArr = new ArrayList<>();
         for (int i = 0; i < 7; i++)
             lessonsArr.add(new ArrayList<Lesson>());
 
@@ -192,6 +192,7 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 
         //Init tabs
         tabLayout.setViewPager(viewPager);
+        tabLayout.setDates(getWeekDates(date));
         tabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.orange_accent));
         tabLayout.setBackgroundColor(getResources().getColor(R.color.light_blue));
         tabLayout.setDividerColors(getResources().getColor(R.color.light_blue));
@@ -240,12 +241,16 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
         if (date.get(Calendar.WEEK_OF_YEAR) != controller.getDate().get(Calendar.WEEK_OF_YEAR)) {
             date.setTimeInMillis(controller.getDate().getTimeInMillis()); //As we need it to load the same date that we need
             load();
-        } else date.setTimeInMillis(controller.getDate().getTimeInMillis());
+        }
+        else
+            date.setTimeInMillis(controller.getDate().getTimeInMillis());
 
         date.setFirstDayOfWeek(Calendar.MONDAY);
+
         dayOfWeek = getWeekDay(date);
 
         viewPager.setCurrentItem(dayOfWeek);
+        tabLayout.setDates(getWeekDates(date));
     }
 
     @Override
@@ -288,18 +293,25 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 
 
     public void setDayOfWeek(int day) {
-        //Log.d("Shika", "ViewGroup: we had here date: " + date.getTime());
+        Log.d("Shika", "ViewGroup: we had here date: " + date.getTime());
 
         Calendar temp = Calendar.getInstance(); //To avoid change to another week
         temp.setTime(date.getTime());
-        temp.set(Calendar.DAY_OF_WEEK, getWeekDay(day));
         temp.setFirstDayOfWeek(Calendar.MONDAY);
+        Log.d("Shika", "Date: " + temp.getTime());
+        temp.set(Calendar.DAY_OF_WEEK, getWeekDay(day));
+        if(date.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)
+            temp.add(Calendar.WEEK_OF_YEAR, -1);
+        Log.d("Shika", "Date: " + temp.getTime());
 
-        if (date.get(Calendar.WEEK_OF_YEAR) != temp.get(Calendar.WEEK_OF_YEAR)) temp.set(Calendar.WEEK_OF_YEAR, date.get(Calendar.WEEK_OF_YEAR));
+        if (date.get(Calendar.WEEK_OF_YEAR) != temp.get(Calendar.WEEK_OF_YEAR)
+                && date.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY)
+            temp.set(Calendar.WEEK_OF_YEAR, date.get(Calendar.WEEK_OF_YEAR));
+        Log.d("Shika", "Date: " + temp.getTime());
 
         dayOfWeek = day;
 
-        //Log.d("Shika", "ViewGroup: and now it is: " + temp.getTime());
+        Log.d("Shika", "ViewGroup: and now it is: " + temp.getTime());
 
         controller.dateChanged(temp.getTimeInMillis());
     }
@@ -346,6 +358,21 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
             default:
                 return Calendar.WEDNESDAY;//Random
         }
+    }
+
+    private String[] getWeekDates(Calendar date) {
+        String[] dates = new String[7];
+
+        Calendar iterDate = Calendar.getInstance();
+        iterDate.setTimeInMillis(date.getTimeInMillis());
+        iterDate.add(Calendar.DAY_OF_WEEK, -1 * getWeekDay(date));
+
+        for (int i = 0; i < dates.length; i++) {
+            dates[i] = iterDate.get(Calendar.DAY_OF_MONTH) + "";
+            iterDate.add(Calendar.DAY_OF_WEEK, 1);
+        }
+
+        return dates;
     }
 
     public static void CursorLog(Cursor cursor) {

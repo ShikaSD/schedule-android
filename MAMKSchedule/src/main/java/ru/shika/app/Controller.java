@@ -65,6 +65,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 
         //Init fragment stack
         visibleFragmentTag = "";
+        visibleFragmentId = "";
         backStack = new Stack<String>();
         tags = ctx.getResources().getStringArray(R.array.drawer_strings);
 
@@ -84,8 +85,6 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 
     @Override
     public void activityDestroyed() {
-        visibleFragmentTag = "";
-        visibleFragmentId = "";
         backStack.clear();
         globalDate = Calendar.getInstance();
 
@@ -114,15 +113,15 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 
         FragmentManager fm = activity.getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
-        Fragment fragment;
+        Fragment fragment = fm.findFragmentByTag(visibleFragmentTag);
 
-        if (visibleFragmentTag.endsWith("ViewGroup") || visibleFragmentTag.endsWith("Chooser")) {
-            ft.remove(fm.findFragmentByTag(visibleFragmentTag));
-        } else {
-            if (!visibleFragmentTag.equals("")) ft.detach(fm.findFragmentByTag(visibleFragmentTag));
+        if(fragment != null) {
+            if (visibleFragmentTag.endsWith("ViewGroup") || visibleFragmentTag.endsWith("Chooser"))
+                ft.remove(fragment);
+            else if (!visibleFragmentTag.equals("")) ft.detach(fm.findFragmentByTag(visibleFragmentTag));
+
+            backStack.push(visibleFragmentTag);
         }
-
-        backStack.push(visibleFragmentTag);
 
         visibleFragmentTag = name;
         visibleFragmentId = name + arg1;
@@ -182,6 +181,11 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
 
         ft.attach(fragment);
         ft.commit();
+
+        if(fragment.isHidden()) {
+            ft.show(fragment);
+            ft.commit();
+        }
 
         activity.setTitle(title);
     }

@@ -220,8 +220,10 @@ public class ScheduleNetworkLoader extends NetworkLoader {
             }
         } while (c.moveToNext());
 
-        query = ParseQuery.or(queries);
-        insertCourses();
+        if(queries.size() > 0) {
+            query = ParseQuery.or(queries);
+            insertCourses();
+        }
 
         c.close();
     }

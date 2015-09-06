@@ -382,6 +382,9 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         if (snackBar.getVisibility() == View.VISIBLE) snackBar.startAnimation(snackBarClose);
 
         controller.showFragment(name, arg1);
+
+        if(findViewById(R.id.main_container).getVisibility() != View.VISIBLE)
+            findViewById(R.id.main_container).setVisibility(View.VISIBLE);
     }
 
     @Override

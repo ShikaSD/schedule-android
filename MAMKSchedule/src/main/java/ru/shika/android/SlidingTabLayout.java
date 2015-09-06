@@ -23,10 +23,12 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 import ru.shika.app.R;
@@ -70,6 +72,10 @@ public class SlidingTabLayout extends HorizontalScrollView {
     private static final int TITLE_OFFSET_DIPS = 24;
     private static final int TAB_VIEW_PADDING_DIPS = 16;
     private static final int TAB_VIEW_TEXT_SIZE_SP = 12;
+    private static final int TAB_VIEW_UNSELECTED_MARGIN_DIPS = 5;
+
+    private static final int TAB_VIEW_TEXT_SIZE_SELECTED_SP = 10;
+    private static final int TAB_VIEW_PADDING_SELECTED_DIPS = 16;
 
     private int mTitleOffset;
 
@@ -78,6 +84,8 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
     private ViewPager mViewPager;
     private ViewPager.OnPageChangeListener mViewPagerPageChangeListener;
+
+    private String[] dates;
 
     public final SlidingTabStrip mTabStrip;
 
@@ -167,6 +175,18 @@ public class SlidingTabLayout extends HorizontalScrollView {
     }
 
     /**
+     * Sets the dates for show in selected view
+     */
+    public void setDates(String[] dates) {
+        this.dates = dates;
+
+        int selectedPage = mViewPager.getCurrentItem();
+        //Set date along with the weekday name
+        if(mTabStrip.getChildCount() < selectedPage)
+            selectView((TextView) mTabStrip.getChildAt(selectedPage), selectedPage);
+    }
+
+    /**
      * Create a default view to be used for tabs. This is called if a custom tab view is not set via
      * {@link #setCustomTabView(int, int)}.
      */
@@ -193,11 +213,50 @@ public class SlidingTabLayout extends HorizontalScrollView {
             // If we're running on ICS or newer, enable all-caps to match the Action Bar tab style
             textView.setAllCaps(true);
         }
-
-        int padding = (int) (TAB_VIEW_PADDING_DIPS * getResources().getDisplayMetrics().density);
-        textView.setPadding(padding, padding, padding, padding);
+        setPadding(textView, -1);
 
         return textView;
+    }
+
+    protected void selectView(TextView view, int selectedPage) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+            ViewCompat.setAlpha(view, 1f);
+        else
+            view.setTextColor(getResources().getColor(R.color.white));
+
+        view.setText(mViewPager.getAdapter().getPageTitle(selectedPage) + "\n" + dates[selectedPage]);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, TAB_VIEW_TEXT_SIZE_SELECTED_SP);
+        setPadding(
+                view, (int)(TAB_VIEW_PADDING_SELECTED_DIPS * getResources().getDisplayMetrics().density)
+        );
+    }
+
+    protected void setPadding(TextView view) {
+        setPadding(view, -1);
+    }
+
+    protected void setPadding(TextView view, int padding) {
+        float density = getResources().getDisplayMetrics().density;
+
+        if(padding == -1) {
+            padding = (int) (TAB_VIEW_PADDING_DIPS * density);
+            view.setPadding(padding, padding, padding, padding);
+
+            MarginLayoutParams params = (MarginLayoutParams) view.getLayoutParams();
+            int topMargin = (int) (TAB_VIEW_UNSELECTED_MARGIN_DIPS * density);
+            if(params != null) {
+                params.setMargins(0, topMargin, 0, 0);
+                view.setLayoutParams(params);
+            }
+            return;
+        }
+
+        MarginLayoutParams params = (MarginLayoutParams) view.getLayoutParams();
+        if(params != null) {
+            params.setMargins(0, 0, 0, 0);
+            view.setLayoutParams(params);
+        }
+        view.setPadding(padding, padding, padding, padding);
     }
 
     private void populateTabStrip() {
@@ -291,17 +350,25 @@ public class SlidingTabLayout extends HorizontalScrollView {
             if (mScrollState == ViewPager.SCROLL_STATE_SETTLING)
                 selectedPage = mSelectedPage;
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            TextView selectedView = (TextView) mTabStrip.getChildAt(selectedPage);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
                 for (int i = 0; i < tabStripChildCount; i++)
                     ViewCompat.setAlpha(mTabStrip.getChildAt(i), .7f);
-
-                ViewCompat.setAlpha(mTabStrip.getChildAt(selectedPage), 1f);
-            } else {
+            else
                 for (int i = 0; i < tabStripChildCount; i++)
-                    ((TextView) mTabStrip.getChildAt(i)).setTextColor(getResources().getColor(R.color.transparent_white));
+                    ((TextView) mTabStrip.getChildAt(i)).setTextColor(
+                            getResources().getColor(R.color.transparent_white)
+                    );
 
-                ((TextView) mTabStrip.getChildAt(selectedPage)).setTextColor(getResources().getColor(R.color.white));
+            for (int i = 0; i < tabStripChildCount; i++) {
+                TextView view = (TextView) mTabStrip.getChildAt(i);
+                view.setText(mViewPager.getAdapter().getPageTitle(i));
+                view.setTextSize(TypedValue.COMPLEX_UNIT_SP, TAB_VIEW_TEXT_SIZE_SP);
+                setPadding(view);
             }
+
+            selectView(selectedView, selectedPage);
         }
 
         @Override
