@@ -116,7 +116,7 @@ public class LoaderCenter implements NetworkLoaderInterface, LocalLoaderInterfac
         if (activeItems.contains(id)) {
             int size = activeItems.size();
             for (int i = 0; i < size; i++) {
-                if (activeItems.get(i).equals(id)) {
+                if (activeItems.get(i) != null && activeItems.get(i).equals(id)) {
                     activeItems.remove(i);
                     break;
                 }

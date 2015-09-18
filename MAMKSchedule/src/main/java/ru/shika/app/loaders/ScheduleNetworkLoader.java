@@ -107,7 +107,7 @@ public class ScheduleNetworkLoader extends NetworkLoader {
                     result = (ArrayList<ParseObject>) this.query.find();
                     insertValues(null);
                 } catch (Exception e) {
-                    Log.e("Shika", e.getMessage());
+                    Log.e("Shika", e.getMessage() + "");
                     error(getString(R.string.error_network_not_connected));
                 }
                 queries.clear();
@@ -124,7 +124,7 @@ public class ScheduleNetworkLoader extends NetworkLoader {
             result = (ArrayList<ParseObject>) this.query.find();
             insertValues(null);
         } catch (Exception e) {
-            Log.d("Shika", e.getMessage());
+            Log.e("Shika", e.getMessage() + "");
             error(getString(R.string.error_network_not_connected));
         }
 
@@ -260,7 +260,7 @@ public class ScheduleNetworkLoader extends NetworkLoader {
                 dbh.insert("Courses", null, cv);
             }
         } catch (Exception e) {
-            Log.e("Shika", e.getMessage());
+            Log.e("Shika", e.getMessage() + "");
             error(getString(R.string.error_network_not_connected));
         }
         c.close();

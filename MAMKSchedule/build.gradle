@@ -24,14 +24,14 @@ repositories {
 }
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "22.0.1"
+    compileSdkVersion 22
+    buildToolsVersion "23.0.1"
     defaultConfig {
         applicationId "ru.shika.mamkschedule"
         minSdkVersion 10
-        targetSdkVersion 21
-        versionCode 3
-        versionName "0.5.1"
+        targetSdkVersion 22
+        versionCode 5
+        versionName "0.5.2"
         buildTypes {
             release {
                 proguardFiles getDefaultProguardFile('proguard-android.txt'),

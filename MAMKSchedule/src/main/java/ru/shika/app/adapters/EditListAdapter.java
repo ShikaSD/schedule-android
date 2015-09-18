@@ -18,7 +18,6 @@ import java.util.Comparator;
 public class EditListAdapter extends BaseAdapter {
     private SparseArray<String> keys;
     private ArrayList<ArrayList<String>> names;
-    private Context context;
     private LayoutInflater layoutInflater;
 
     private int layoutId;
@@ -37,14 +36,13 @@ public class EditListAdapter extends BaseAdapter {
         this.keys = keys;
         this.names = names;
 
-        context = ctx;
         layoutInflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
         this.isCheckingList = isCheckingList;
         showCheckboxes = false;
         if (isCheckingList) {
             layoutId = R.layout.list_checkable_item;
-            checkedItems = new ArrayList<Boolean>(keys.size());
+            checkedItems = new ArrayList<>(keys.size());
             Collections.fill(checkedItems, Boolean.FALSE);
         } else layoutId = R.layout.fragment_list_item;
     }
@@ -66,9 +64,17 @@ public class EditListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
+
         View v = view;
         if (v == null) {
             v = layoutInflater.inflate(layoutId, viewGroup, false);
+        }
+
+        if(i >= getCount()) {
+            ((TextView) v.findViewById(R.id.fragment_list_id)).setText("");
+            ((TextView) v.findViewById(R.id.fragment_list_name)).setText("");
+            v.findViewById(R.id.list_checkbox).setVisibility(View.GONE);
+            return v;
         }
 
         int size = names.get(i).size();

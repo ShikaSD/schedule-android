@@ -53,10 +53,10 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
     public Controller(Context ctx) {
         this.ctx = ctx;
 
-        items = new Hashtable<String, Lesson>();
+        items = new Hashtable<>();
 
         loaderCenter = new LoaderCenter(ctx, this);
-        viewInterfaces = new HashMap<String, ViewInterface>();
+        viewInterfaces = new HashMap<>();
         dateInterface = null;
         editInterface = null;
 
@@ -66,7 +66,7 @@ public class Controller implements ControllerInterface, DialogCallback, ActionMo
         //Init fragment stack
         visibleFragmentTag = "";
         visibleFragmentId = "";
-        backStack = new Stack<String>();
+        backStack = new Stack<>();
         tags = ctx.getResources().getStringArray(R.array.drawer_strings);
 
         //Init action mode

@@ -50,6 +50,9 @@ public class ScheduleListAdapter extends RecyclerView.Adapter<ScheduleListAdapte
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
+        if(position >= getItemCount())
+            return;
+
         holder.start.setText(lessons.get(position).start);
         holder.end.setText(lessons.get(position).end);
         holder.room.setText(lessons.get(position).room);

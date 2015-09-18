@@ -2,7 +2,6 @@ package ru.shika.app.fragments;
 
 import android.content.ContentValues;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -73,7 +72,7 @@ public class DialogAddFragment extends android.support.v4.app.DialogFragment imp
             public void run() {
                 int res = dbh.update("Courses", cv, where, args);
 
-                Log.d("Shika", where + " :rows changed - " + res);
+                //Log.d("Shika", where + " :rows changed - " + res);
                 callback.dialogDone(Controller.Dialog.DIALOG_ADD);
             }
         }).start();

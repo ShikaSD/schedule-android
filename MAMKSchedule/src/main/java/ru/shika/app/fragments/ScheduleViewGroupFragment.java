@@ -293,25 +293,21 @@ public class ScheduleViewGroupFragment extends Fragment implements ViewInterface
 
 
     public void setDayOfWeek(int day) {
-        Log.d("Shika", "ViewGroup: we had here date: " + date.getTime());
+        //Log.d("Shika", "ViewGroup: we had here date: " + date.getTime());
 
         Calendar temp = Calendar.getInstance(); //To avoid change to another week
         temp.setTime(date.getTime());
         temp.setFirstDayOfWeek(Calendar.MONDAY);
-        Log.d("Shika", "Date: " + temp.getTime());
         temp.set(Calendar.DAY_OF_WEEK, getWeekDay(day));
-        if(date.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)
-            temp.add(Calendar.WEEK_OF_YEAR, -1);
-        Log.d("Shika", "Date: " + temp.getTime());
 
         if (date.get(Calendar.WEEK_OF_YEAR) != temp.get(Calendar.WEEK_OF_YEAR)
                 && date.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY)
             temp.set(Calendar.WEEK_OF_YEAR, date.get(Calendar.WEEK_OF_YEAR));
-        Log.d("Shika", "Date: " + temp.getTime());
+        //Log.d("Shika", "Date: " + temp.getTime());
 
         dayOfWeek = day;
 
-        Log.d("Shika", "ViewGroup: and now it is: " + temp.getTime());
+        //Log.d("Shika", "ViewGroup: and now it is: " + temp.getTime());
 
         controller.dateChanged(temp.getTimeInMillis());
     }
