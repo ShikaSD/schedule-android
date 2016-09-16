@@ -1,6 +1,6 @@
-MAMKSchedule
+Schedule (android frontend)
 ============
 The schedule of Mikkeli AMK 
 
 
-Server part is based on parse.com API.
+Server part is [here](https://github.com/ShikaSD/schedule-back)
