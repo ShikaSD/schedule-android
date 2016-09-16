@@ -1,19 +1,58 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
+
     repositories {
         jcenter()
+        mavenCentral()
+        maven { url 'https://maven.fabric.io/repo' }
     }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:1.0.0'
 
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+    dependencies {
+        classpath "com.android.tools.build:gradle:2.2.0-rc1"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.3"
+        classpath "io.fabric.tools:gradle:1.+"
+        classpath "io.realm:realm-gradle-plugin:1.0.1"
     }
 }
 
 allprojects {
     repositories {
         jcenter()
+        mavenCentral()
+        maven { url 'https://maven.fabric.io/repo' }
     }
+    ext {
+        versions = [
+            android_support : '24.2.0',
+            crashlytics     : '2.6.3',
+            kotlin          : '1.0.3',
+            retrofit        : '2.1.0',
+            rxkotlin        : '0.60.0',
+            dagger          : '2.2',
+            android_times   : '1.6.5',
+            time            : '1.0.4'
+        ]
+        deps = [
+            "com.android.support:support-v4:${versions.android_support}",
+            "com.android.support:appcompat-v7:${versions.android_support}",
+            "com.android.support:cardview-v7:${versions.android_support}",
+            "com.android.support:recyclerview-v7:${versions.android_support}",
+            "com.android.support:design:${versions.android_support}",
+            "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
+            "com.squareup.retrofit2:retrofit:${versions.retrofit}",
+            "io.reactivex:rxkotlin:${versions.rxkotlin}",
+            "com.google.dagger:dagger:${versions.dagger}",
+            "com.squareup:android-times-square:${versions.android_times}@aar",
+            "com.jakewharton.threetenabp:threetenabp:${versions.time}"
+        ]
+        deps_with_transitive = [
+            "com.crashlytics.sdk.android:crashlytics:${versions.crashlytics}@aar"
+        ]
+        deps_apt = [
+            "com.google.dagger:dagger-compiler:${versions.dagger}"
+        ]
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
