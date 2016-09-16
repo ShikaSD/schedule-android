@@ -1,4 +1,4 @@
-package ru.shika.app.ui
+package ru.shika.app
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle

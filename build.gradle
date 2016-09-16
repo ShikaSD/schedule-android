@@ -29,7 +29,8 @@ allprojects {
             rxkotlin        : '0.60.0',
             dagger          : '2.2',
             android_times   : '1.6.5',
-            time            : '1.0.4'
+            time            : '1.0.4',
+            kandroid        : '0.6.12'
         ]
         deps = [
             "com.android.support:support-v4:${versions.android_support}",
@@ -42,7 +43,8 @@ allprojects {
             "io.reactivex:rxkotlin:${versions.rxkotlin}",
             "com.google.dagger:dagger:${versions.dagger}",
             "com.squareup:android-times-square:${versions.android_times}@aar",
-            "com.jakewharton.threetenabp:threetenabp:${versions.time}"
+            "com.jakewharton.threetenabp:threetenabp:${versions.time}",
+            "com.pawegio.kandroid:kandroid:${versions.kandroid}@aar"
         ]
         deps_with_transitive = [
             "com.crashlytics.sdk.android:crashlytics:${versions.crashlytics}@aar"
