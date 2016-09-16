@@ -1,7 +1,5 @@
 package ru.shika
 
-import com.jakewharton.threetenabp.AndroidThreeTen
-
 
 /**
  * Base application class
