@@ -9,6 +9,5 @@
 		  android:visible="true"
 		  android:title="Info"
 		  app:showAsAction="always"
-		  android:orderInCategory="10"
-		/>
+		  android:orderInCategory="10"/>
 </menu>

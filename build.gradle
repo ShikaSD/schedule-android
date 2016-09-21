@@ -7,7 +7,7 @@ buildscript {
     }
 
     dependencies {
-        classpath "com.android.tools.build:gradle:2.2.0-rc1"
+        classpath "com.android.tools.build:gradle:2.2.0"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.3"
         classpath "io.fabric.tools:gradle:1.+"
         classpath "io.realm:realm-gradle-plugin:1.0.1"
@@ -28,7 +28,7 @@ allprojects {
             retrofit        : '2.1.0',
             rxkotlin        : '0.60.0',
             dagger          : '2.2',
-            android_times   : '1.6.5',
+            calendar        : '1.4.0',
             time            : '1.0.4',
             kandroid        : '0.6.12'
         ]
@@ -42,7 +42,7 @@ allprojects {
             "com.squareup.retrofit2:retrofit:${versions.retrofit}",
             "io.reactivex:rxkotlin:${versions.rxkotlin}",
             "com.google.dagger:dagger:${versions.dagger}",
-            "com.squareup:android-times-square:${versions.android_times}@aar",
+            "com.prolificinteractive:material-calendarview:${versions.calendar}",
             "com.jakewharton.threetenabp:threetenabp:${versions.time}",
             "com.pawegio.kandroid:kandroid:${versions.kandroid}@aar"
         ]

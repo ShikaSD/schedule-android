@@ -18,7 +18,7 @@
 		android:layout_height = "match_parent"
 		android:padding="5dp"
 		android:clickable="true"
-		android:background="@color/white">
+		android:background="@android:color/white">
 
 		<TextView
 			android:layout_width = "wrap_content"

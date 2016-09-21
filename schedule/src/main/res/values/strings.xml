@@ -26,25 +26,14 @@
     <string name="dialog_delete_text">Do you want to delete these courses from your schedule?
     </string>
 
-    <!--Drawer items -->
-    <string-array name="drawer_strings">
-        <item name="schedule">My schedule</item>
-        <item name="groups">Groups</item>
-        <item name="teachers">Teachers</item>
-        <item name="courses">Courses</item>
-        <item name="edit">Edit schedule</item>
-    </string-array>
-    <string-array name="drawer_drawables">
-        <item>@drawable/ic_schedule</item>
-        <item>@drawable/ic_groups</item>
-        <item>@drawable/ic_teachers</item>
-        <item>@drawable/ic_courses</item>
-        <item>@drawable/ic_edit</item>
-    </string-array>
+<!--Drawer items -->
+    <string name="drawer_item_schedule">My schedule</string>
+    <string name="drawer_item_groups">Groups</string>
+    <string name="drawer_item_teachers">Teachers</string>
+    <string name="drawer_item_courses">Courses</string>
+    <string name="drawer_item_edit_schedule">Edit schedule</string>
 
-    <string name="edit_empty">Your personal schedule is empty\nTry to add courses with button
-        below
-    </string>
+    <string name="edit_empty">Your personal schedule is empty\nTry to add courses with button below</string>
 
     <!--String from edit fragment -->
     <string name="edit_header">Choose course by:</string>

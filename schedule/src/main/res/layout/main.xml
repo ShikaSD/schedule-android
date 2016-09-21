@@ -1,105 +1,58 @@
-<RelativeLayout
+<merge
     android:layout_height = "match_parent"
     android:layout_width="match_parent"
-    android:id="@+id/activity_container"
-    xmlns:android = "http://schemas.android.com/apk/res/android"
-    xmlns:app = "http://schemas.android.com/apk/res-auto"
-    xmlns:card_view = "http://schemas.android.com/apk/res-auto">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawerLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/drawer_layout"
-        android:layout_below="@+id/toolbar">
+        android:layout_height="match_parent">
 
         <FrameLayout
-            android:layout_width = "match_parent"
-            android:layout_height = "match_parent"
-            android:id="@+id/main_container_parent">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="?attr/actionBarSize"
+                android:layout_margin="0dp"
+
+                android:background="?attr/colorPrimary"
+                android:foreground="?android:windowContentOverlay"
+                app:theme="@style/ThemeOverlay.AppCompat.ActionBar">
+            </android.support.v7.widget.Toolbar>
 
             <RelativeLayout
-                android:layout_width = "match_parent"
-                android:layout_height = "match_parent"
-                android:id="@+id/main_container"/>
+                android:id="@+id/mainContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
 
-                <RelativeLayout
-                    style="@style/AppTheme.SnackBar"
-                    android:id="@+id/snackbar"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:layout_gravity = "bottom"
-                    android:visibility="gone">
+            <android.support.v7.widget.CardView
+                android:id="@+id/calendarContainer"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
 
-                    <TextView
-                        android:layout_width = "wrap_content"
-                        android:layout_height = "wrap_content"
-                        android:id="@+id/snackbar_text"
-                        style="@style/AppTheme.SnackBar.Text"
-                        android:textSize="14sp"
-                        android:textColor="@color/white"
-                        android:text="@string/no_courses"
-                        android:layout_alignParentTop="false"
-                        android:layout_alignParentBottom="false"
-                        android:layout_centerVertical="true"/>
+                app:cardCornerRadius="4dp"
+                app:cardElevation="4dp"
 
-                    <TextView
-                        android:layout_width = "wrap_content"
-                        android:layout_height = "match_parent"
-                        android:id="@+id/snackbar_button"
-                        style="@style/AppTheme.SnackBar.Button"
-                        android:text="@string/add"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:focusableInTouchMode="true"
-                        android:gravity="center"
-                        android:layout_gravity="center_vertical"
-                        android:layout_centerVertical="true"
-                        android:layout_alignParentTop="false"
-                        android:layout_alignParentBottom="false"
-                        android:layout_toRightOf="@+id/snackbar_text"/>
-                </RelativeLayout>
-
-                <android.support.v7.widget.CardView
-                    android:layout_height="wrap_content"
-                    android:layout_width="match_parent"
-
-                    card_view:cardCornerRadius="4dp"
-                    app:cardElevation="4dp"
-
-                    android:layout_gravity="end"
-                    android:id="@+id/calendar_container"
-                    android:visibility="invisible">
-
-                    <com.squareup.timessquare.CalendarPickerView
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:background="@color/white"
-                        android:padding="5dp"
-                        android:scrollbars="none"
-                        android:layout_gravity="center_horizontal"
-                        android:id="@+id/calendar_view"/>
-
+                android:layout_gravity="end"
+                android:visibility="invisible">
             </android.support.v7.widget.CardView>
 
         </FrameLayout>
 
-        <ListView
-            android:id="@+id/drawer_list"
-            android:layout_width = "240dp"
-            android:layout_height = "match_parent"
+        <android.support.design.widget.NavigationView
+            android:id="@+id/drawerContents"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
             android:layout_gravity="start"
-            android:choiceMode="singleChoice"
-            android:divider="@color/black"
-            android:dividerHeight="0dp"
-            android:background="@color/white"/>
+            app:itemTextColor="@color/drawer_menu_item_text_color_list"
+            app:itemIconTint="@color/drawer_menu_item_text_color_list"
+            app:headerLayout="@layout/drawer_header"
+            app:menu="@menu/main_drawer_menu"/>
 
     </android.support.v4.widget.DrawerLayout>
-
-    <android.support.v7.widget.Toolbar
-        android:layout_margin="0dp"
-        style="@style/AppTheme.Toolbar"
-        android:id="@+id/toolbar"
-        android:foreground="?android:windowContentOverlay"
-        app:theme="@style/ThemeOverlay.AppCompat.ActionBar">
-    </android.support.v7.widget.Toolbar>
-</RelativeLayout>
+</merge>
