@@ -2,5 +2,6 @@
 <resources>
 	<style name="AppTheme" parent="BaseTheme">
 		<item name="android:navigationBarColor">@color/dark_blue</item>
+		<item name="android:colorAccent">?attr/colorAccent</item>
 	</style>
 </resources>

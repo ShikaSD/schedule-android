@@ -9,3 +9,4 @@ gen
 *.iml
 /MAMKSchedule/signing.gradle
 keystore
+fabric.properties

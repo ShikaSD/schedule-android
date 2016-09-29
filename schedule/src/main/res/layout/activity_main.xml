@@ -1,0 +1,67 @@
+<merge
+    android:layout_height = "match_parent"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/colorPrimary"
+                android:foreground="?android:windowContentOverlay">
+
+                <android.support.v7.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="?attr/actionBarSize"
+                    android:layout_margin="0dp"
+
+                    android:background="?attr/colorPrimary">
+
+                </android.support.v7.widget.Toolbar>
+
+                <!--<com.prolificinteractive.materialcalendarview.MaterialCalendarView
+                    android:id="@+id/calendar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+
+                    app:mcv_calendarMode="month"
+                    app:mcv_arrowColor="@android:color/white"
+                    app:mcv_dateTextAppearance="@style/TextAppearance.AppCompat.Body1"
+                    app:mcv_showOtherDates="decorated_disabled"
+                    app:mcv_firstDayOfWeek="monday"
+
+                    android:layout_marginTop="?attr/actionBarSize"/>-->
+
+            </FrameLayout>
+
+            <RelativeLayout
+                android:id="@+id/mainContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="?attr/actionBarSize"/>
+
+        </FrameLayout>
+
+        <android.support.design.widget.NavigationView
+            android:id="@+id/drawerContents"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            app:itemTextColor="@color/drawer_menu_item_text_color_list"
+            app:itemIconTint="@color/drawer_menu_item_text_color_list"
+            app:headerLayout="@layout/drawer_header"
+            app:menu="@menu/main_drawer_menu"/>
+
+    </android.support.v4.widget.DrawerLayout>
+</merge>
