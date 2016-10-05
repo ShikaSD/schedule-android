@@ -2,6 +2,7 @@ package ru.shika.app.main.ui.activity
 
 import android.os.Bundle
 import android.support.v7.app.ActionBarDrawerToggle
+import com.pawegio.kandroid.fromApi
 import kotlinx.android.synthetic.main.activity_main.drawerContents
 import kotlinx.android.synthetic.main.activity_main.drawerLayout
 import kotlinx.android.synthetic.main.activity_main.toolbar
@@ -10,6 +11,7 @@ import ru.shika.app.common.di.ActivityComponent
 import ru.shika.app.common.di.ActivityModule
 import ru.shika.app.common.ui.BaseActivity
 import ru.shika.app.main.ui.fragment.GroupFragment
+import ru.shika.app.main.ui.fragment.TeacherFragment
 import ru.shika.mamkschedule.R
 
 @ActivityScope
@@ -24,7 +26,9 @@ class MainActivity : BaseActivity() {
 
         injectDependencies()
 
-        setMultitaskTitle()
+        fromApi(21) {
+            setMultitaskTitle()
+        }
         initView()
     }
 
@@ -34,9 +38,11 @@ class MainActivity : BaseActivity() {
     }
 
     private fun openGroupFragment() {
-        val transaction = supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.mainContainer, GroupFragment())
-        transaction.commit()
+        replaceFragment(GroupFragment())
+    }
+
+    private fun openTeacherFragment() {
+        replaceFragment(TeacherFragment())
     }
 
     private fun injectDependencies() {
@@ -73,17 +79,11 @@ class MainActivity : BaseActivity() {
 
             it.isChecked = true
             when(it.itemId) {
-                R.id.drawer_item_group -> {
-                    openGroupFragment()
-                }
+                R.id.drawer_item_group -> openGroupFragment()
+                R.id.drawer_item_teacher -> openTeacherFragment()
             }
             true
         }
-
-        /*calendar.state().edit()
-            .setMinimumDate(CalendarDay.from(2015, 9, 1))
-            .setMaximumDate(CalendarDay.from(2017, 1, 1))
-            .commit()*/
 
         toggle.syncState()
     }

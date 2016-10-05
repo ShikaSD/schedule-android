@@ -11,9 +11,10 @@ import ru.shika.app.annotations.ActivityScope
 import ru.shika.app.common.adapter.SimpleListAdapter
 import ru.shika.app.common.ui.BaseFragment
 import ru.shika.app.main.data.model.Group
+import ru.shika.app.main.data.model.Teacher
 import ru.shika.app.main.ui.activity.MainActivity
-import ru.shika.app.main.ui.presenter.GroupFragmentPresenter
-import ru.shika.app.main.ui.view.GroupFragmentView
+import ru.shika.app.main.ui.presenter.TeacherFragmentPresenter
+import ru.shika.app.main.ui.view.TeacherFragmentView
 import ru.shika.mamkschedule.R
 import javax.inject.Inject
 
@@ -21,11 +22,11 @@ import javax.inject.Inject
  * Fragment showing the list of [Group]
  */
 @ActivityScope
-class GroupFragment() : BaseFragment(), GroupFragmentView {
+class TeacherFragment() : BaseFragment(), TeacherFragmentView {
 
-    @Inject lateinit var groupPresenter: GroupFragmentPresenter
+    @Inject lateinit var teacherPresenter: TeacherFragmentPresenter
 
-    private lateinit var groupListAdapter: SimpleListAdapter<Group>
+    private lateinit var teacherListAdapter: SimpleListAdapter<Teacher>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         injectDependencies()
@@ -45,24 +46,24 @@ class GroupFragment() : BaseFragment(), GroupFragmentView {
 
         initView()
 
-        groupPresenter.loadGroups()
+        teacherPresenter.loadTeachers()
     }
 
     private fun initView() {
         listView.layoutManager = LinearLayoutManager(activity)
-        groupListAdapter = SimpleListAdapter(activity)
-        listView.adapter = groupListAdapter
-        refreshLayout.setOnRefreshListener { groupPresenter.loadGroups() }
+        teacherListAdapter = SimpleListAdapter(activity)
+        listView.adapter = teacherListAdapter
+        refreshLayout.setOnRefreshListener { teacherPresenter.loadTeachers() }
     }
 
     private fun injectDependencies() {
         (activity as MainActivity).activityComponent?.inject(this)
     }
 
-    override fun getPresenter() = groupPresenter
+    override fun getPresenter() = teacherPresenter
 
-    override fun showGroups(groups: List<Group>) {
-        groupListAdapter.setItems(groups)
+    override fun showTeachers(teachers: List<Teacher>) {
+        teacherListAdapter.setItems(teachers)
     }
 
     override fun showError(it: Throwable) {
@@ -77,3 +78,4 @@ class GroupFragment() : BaseFragment(), GroupFragmentView {
         refreshLayout.isRefreshing = false
     }
 }
+

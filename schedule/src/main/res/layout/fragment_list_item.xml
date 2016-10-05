@@ -14,7 +14,7 @@
 	android:paddingRight="16dp">
 
 	<TextView
-		android:id="@+id/item_list_main"
+		android:id="@+id/item_list_label"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 
@@ -24,7 +24,7 @@
 		android:text="@string/test_string"/>
 
 	<TextView
-		android:id="@+id/item_list_id"
+		android:id="@+id/item_list_info"
 		android:layout_width="wrap_content"
 	  	android:layout_height="wrap_content"
 

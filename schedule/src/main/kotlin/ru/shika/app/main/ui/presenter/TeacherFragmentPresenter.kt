@@ -3,7 +3,7 @@ package ru.shika.app.main.ui.presenter
 import ru.shika.app.annotations.ActivityScope
 import ru.shika.app.common.presenter.BasePresenter
 import ru.shika.app.main.data.ScheduleRepository
-import ru.shika.app.main.ui.view.GroupFragmentView
+import ru.shika.app.main.ui.view.TeacherFragmentView
 import rx.internal.util.SubscriptionList
 import javax.inject.Inject
 
@@ -11,17 +11,17 @@ import javax.inject.Inject
  * Presenter for [GroupFragment]
  */
 @ActivityScope
-class GroupFragmentPresenter @Inject constructor(
+class TeacherFragmentPresenter @Inject constructor(
     private val repo: ScheduleRepository,
     helper: SubscriptionList
-) : BasePresenter<GroupFragmentView>(helper) {
+) : BasePresenter<TeacherFragmentView>(helper) {
 
-    fun loadGroups() {
+    fun loadTeachers() {
         view.showProgress()
 
         helper.add(
-            repo.getGroups().subscribe({
-                view.showGroups(it)
+            repo.getTeachers().subscribe({
+                view.showTeachers(it)
             }, {
                 view.showError(it)
             }, {

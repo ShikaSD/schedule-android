@@ -1,14 +1,14 @@
 package ru.shika.app.main.ui.view
 
 import ru.shika.app.common.presenter.BaseView
-import ru.shika.app.main.data.model.Group
+import ru.shika.app.main.data.model.Teacher
 
 /**
- * View for [GroupFragment]
+ * View for [TeacherFragment]
  */
-interface GroupFragmentView : BaseView {
+interface TeacherFragmentView : BaseView {
 
-    fun showGroups(groups: List<Group>): Unit
+    fun showTeachers(teachers: List<Teacher>): Unit
 
     fun showError(it: Throwable)
 
