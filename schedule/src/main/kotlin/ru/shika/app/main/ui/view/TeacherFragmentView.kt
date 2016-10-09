@@ -4,7 +4,7 @@ import ru.shika.app.common.presenter.BaseView
 import ru.shika.app.main.data.model.Teacher
 
 /**
- * View for [TeacherFragment]
+ * View for [TeacherFragment] to link with the presenter
  */
 interface TeacherFragmentView : BaseView {
 

@@ -4,7 +4,7 @@ import ru.shika.app.common.presenter.BaseView
 import ru.shika.app.main.data.model.Group
 
 /**
- * View for [GroupFragment]
+ * View for [GroupFragment] to link with the presenter
  */
 interface GroupFragmentView : BaseView {
 

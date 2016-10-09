@@ -11,6 +11,7 @@ import ru.shika.app.common.di.ActivityComponent
 import ru.shika.app.common.di.ActivityModule
 import ru.shika.app.common.ui.BaseActivity
 import ru.shika.app.main.ui.fragment.GroupFragment
+import ru.shika.app.main.ui.fragment.RoomFragment
 import ru.shika.app.main.ui.fragment.TeacherFragment
 import ru.shika.mamkschedule.R
 
@@ -32,6 +33,14 @@ class MainActivity : BaseActivity() {
         initView()
     }
 
+    override fun onStart() {
+        super.onStart()
+
+        if(activityComponent == null) {
+            injectDependencies()
+        }
+    }
+
     override fun onStop() {
         super.onStop()
         releaseComponent()
@@ -43,6 +52,10 @@ class MainActivity : BaseActivity() {
 
     private fun openTeacherFragment() {
         replaceFragment(TeacherFragment())
+    }
+
+    private fun openRoomFragment() {
+        replaceFragment(RoomFragment())
     }
 
     private fun injectDependencies() {

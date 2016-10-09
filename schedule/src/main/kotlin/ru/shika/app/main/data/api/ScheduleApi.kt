@@ -14,4 +14,6 @@ class ScheduleApi @Inject constructor(
     fun getGroups() = restApi.getGroups(token)
 
     fun getTeachers() = restApi.getTeachers(token)
+
+    fun getRooms() = restApi.getRooms(token)
 }

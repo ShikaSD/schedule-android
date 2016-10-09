@@ -4,6 +4,7 @@ import dagger.Subcomponent
 import ru.shika.app.annotations.ActivityScope
 import ru.shika.app.main.ui.activity.MainActivity
 import ru.shika.app.main.ui.fragment.GroupFragment
+import ru.shika.app.main.ui.fragment.RoomFragment
 import ru.shika.app.main.ui.fragment.TeacherFragment
 
 /**
@@ -19,4 +20,6 @@ interface ActivityComponent {
     fun inject(fragment: GroupFragment)
 
     fun inject(fragment: TeacherFragment)
+
+    fun inject(fragment: RoomFragment)
 }

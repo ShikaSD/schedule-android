@@ -4,6 +4,7 @@ import ru.shika.app.annotations.ActivityScope
 import ru.shika.app.common.repo.BaseRepository
 import ru.shika.app.main.data.api.ScheduleApi
 import ru.shika.app.main.data.model.Group
+import ru.shika.app.main.data.model.Room
 import ru.shika.app.main.data.model.Teacher
 import rx.Observable
 import javax.inject.Inject
@@ -26,10 +27,15 @@ class ScheduleRepository @Inject constructor(
         .distinctUntilChanged()
         .applySchedulers()
 
+    fun getRooms() = getRoomsFromCache()
+        .mergeWith(getRoomsFromNetwork())
+        .distinctUntilChanged()
+        .applySchedulers()
+
     private fun getTeachersFromCache() = Observable.fromCallable {
         withRealm { realm ->
             realm.copyFromRealm(
-                realm.where(Teacher::class.java).findAll()
+                realm.where(Teacher::class.java).findAllSorted("name")
             )
         }
     }
@@ -46,7 +52,7 @@ class ScheduleRepository @Inject constructor(
 
     private fun getGroupsFromCache() = Observable.fromCallable {
         withRealm { realm ->
-            val results = realm.where(Group::class.java).findAll()
+            val results = realm.where(Group::class.java).findAllSorted("name")
             realm.copyFromRealm(results)
         }
     }
@@ -56,6 +62,22 @@ class ScheduleRepository @Inject constructor(
             withRealm { realm ->
                 realm.executeTransaction {
                     it.delete(Group::class.java)
+                    it.insertOrUpdate(models)
+                }
+            }
+        }
+
+    private fun getRoomsFromCache() = Observable.fromCallable {
+        withRealm { realm ->
+            realm.copyFromRealm(realm.where(Room::class.java).findAllSorted("name"))
+        }
+    }
+
+    private fun getRoomsFromNetwork() = api.getRooms()
+        .doOnNext { models ->
+            withRealm { realm ->
+                realm.executeTransaction {
+                    it.delete(Room::class.java)
                     it.insertOrUpdate(models)
                 }
             }
