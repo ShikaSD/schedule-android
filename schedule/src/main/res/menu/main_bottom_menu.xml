@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/bottom_item_my_schedule"
+        android:icon="@drawable/ic_schedule"
+        android:title="@string/bottom_item_schedule"
+        android:checked="true"/>
+
+    <item
+        android:id="@+id/bottom_item_group"
+        android:icon="@drawable/ic_groups"
+        android:title="@string/bottom_item_groups"/>
+
+    <item
+        android:id="@+id/bottom_item_teacher"
+        android:icon="@drawable/ic_teachers"
+        android:title="@string/bottom_item_teachers"/>
+
+    <item
+        android:id="@+id/bottom_item_room"
+        android:icon="@drawable/ic_rooms"
+        android:title="@string/bottom_item_rooms"/>
+</menu>

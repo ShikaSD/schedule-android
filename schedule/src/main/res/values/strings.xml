@@ -27,11 +27,10 @@
     </string>
 
 <!--Drawer items -->
-    <string name="drawer_item_schedule">My schedule</string>
-    <string name="drawer_item_groups">Groups</string>
-    <string name="drawer_item_teachers">Teachers</string>
-    <string name="drawer_item_courses">Courses</string>
-    <string name="drawer_item_edit_schedule">Edit schedule</string>
+    <string name="bottom_item_schedule">My schedule</string>
+    <string name="bottom_item_groups">Groups</string>
+    <string name="bottom_item_teachers">Teachers</string>
+    <string name="bottom_item_rooms">Rooms</string>
 
     <string name="edit_empty">Your personal schedule is empty\nTry to add courses with button below</string>
 

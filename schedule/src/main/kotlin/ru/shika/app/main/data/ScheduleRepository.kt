@@ -19,24 +19,25 @@ class ScheduleRepository @Inject constructor(
 
     fun getGroups() = getGroupsFromCache()
         .mergeWith(getGroupsFromNetwork())
+        .map { it.sortedBy { it.name } }
         .distinctUntilChanged()
         .applySchedulers()
 
     fun getTeachers() = getTeachersFromCache()
         .mergeWith(getTeachersFromNetwork())
+        .map { it.sortedBy { it.name } }
         .distinctUntilChanged()
         .applySchedulers()
 
     fun getRooms() = getRoomsFromCache()
         .mergeWith(getRoomsFromNetwork())
+        .map { it.sortedBy { it.name } }
         .distinctUntilChanged()
         .applySchedulers()
 
     private fun getTeachersFromCache() = Observable.fromCallable {
         withRealm { realm ->
-            realm.copyFromRealm(
-                realm.where(Teacher::class.java).findAllSorted("name")
-            )
+            realm.copyFromRealm(realm.where(Teacher::class.java).findAll())
         }
     }
 
@@ -52,7 +53,7 @@ class ScheduleRepository @Inject constructor(
 
     private fun getGroupsFromCache() = Observable.fromCallable {
         withRealm { realm ->
-            val results = realm.where(Group::class.java).findAllSorted("name")
+            val results = realm.where(Group::class.java).findAll()
             realm.copyFromRealm(results)
         }
     }
@@ -69,7 +70,7 @@ class ScheduleRepository @Inject constructor(
 
     private fun getRoomsFromCache() = Observable.fromCallable {
         withRealm { realm ->
-            realm.copyFromRealm(realm.where(Room::class.java).findAllSorted("name"))
+            realm.copyFromRealm(realm.where(Room::class.java).findAll())
         }
     }
 

@@ -32,8 +32,6 @@ class TeacherFragment() : BaseFragment(), TeacherFragmentView {
         injectDependencies()
 
         super.onCreate(savedInstanceState)
-
-        getPresenter().view = this
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedState: Bundle?): View? {
@@ -43,6 +41,8 @@ class TeacherFragment() : BaseFragment(), TeacherFragmentView {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+
+        getPresenter().view = this
 
         initView()
 
