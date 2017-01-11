@@ -8,3 +8,4 @@ gradle
 gen
 *.iml
 /MAMKSchedule/signing.gradle
+/keystore/

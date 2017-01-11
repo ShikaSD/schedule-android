@@ -17,15 +17,17 @@
 package ru.shika.android;
 
 import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.*;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RadialGradient;
+import android.graphics.Shader;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.support.v4.view.ViewCompat;
 import android.view.animation.Animation;
-import android.widget.ImageView;
 
-public class CircleImageView extends ImageView {
+public class CircleImageView extends android.support.v7.widget.AppCompatImageView {
 
     private static final int KEY_SHADOW_COLOR = 0x4E000000;
     private static final int FILL_SHADOW_COLOR = 0x3D000000;
@@ -107,10 +109,9 @@ public class CircleImageView extends ImageView {
     /**
      * Update the background color of the circle image view.
      */
-    public void setBackgroundColor(int colorRes) {
+    public void setBackgroundColor(int color) {
         if (getBackground() instanceof ShapeDrawable) {
-            final Resources res = getResources();
-            ((ShapeDrawable) getBackground()).getPaint().setColor(res.getColor(colorRes));
+            ((ShapeDrawable) getBackground()).getPaint().setColor(color);
         }
     }
 
