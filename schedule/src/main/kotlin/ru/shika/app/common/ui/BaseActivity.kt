@@ -12,7 +12,7 @@ import ru.shika.mamkschedule.R
 /**
  * Basic activity application-wide
  */
-open class BaseActivity() : AppCompatActivity() {
+open class BaseActivity : AppCompatActivity() {
 
     protected fun getApp() = application as Application
 

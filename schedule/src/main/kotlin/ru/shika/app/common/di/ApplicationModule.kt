@@ -5,8 +5,11 @@ import com.google.gson.ExclusionStrategy
 import com.google.gson.FieldAttributes
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.jakewharton.threetenabp.AndroidThreeTen
 import dagger.Module
 import dagger.Provides
+import io.realm.Realm
+import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory
@@ -23,6 +26,16 @@ import javax.inject.Singleton
  */
 @Module
 class ApplicationModule(private val context: Context) {
+
+    init {
+        Realm.init(context)
+        AndroidThreeTen.init(context)
+        Realm.setDefaultConfiguration(
+            RealmConfiguration.Builder()
+                .deleteRealmIfMigrationNeeded()
+                .schemaVersion(BuildConfig.VERSION_CODE.toLong())
+                .build())
+    }
 
     @Provides
     @Singleton

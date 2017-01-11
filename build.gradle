@@ -7,10 +7,11 @@ buildscript {
     }
 
     dependencies {
-        classpath "com.android.tools.build:gradle:2.2.2"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.4"
+        classpath "com.android.tools.build:gradle:2.3.0-beta1"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.6"
         classpath "io.fabric.tools:gradle:1.+"
-        classpath "io.realm:realm-gradle-plugin:1.2.0"
+        classpath "io.realm:realm-gradle-plugin:2.2.2"
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.6.2'
     }
 }
 
@@ -23,7 +24,7 @@ allprojects {
     }
     ext {
         versions = [
-            android_support : '25.0.0',
+            android_support : '25.1.0',
             crashlytics     : '2.6.3',
             kotlin          : '1.0.4',
             retrofit        : '2.1.0',
@@ -33,7 +34,6 @@ allprojects {
             calendar        : '1.4.0',
             time            : '1.0.4',
             kandroid        : '0.6.12',
-            ripple          : '2.0.0',
             gson            : '2.7'
         ]
         deps = [
@@ -52,7 +52,6 @@ allprojects {
             "com.prolificinteractive:material-calendarview:${versions.calendar}",
             "com.jakewharton.threetenabp:threetenabp:${versions.time}",
             "com.pawegio.kandroid:kandroid:${versions.kandroid}@aar",
-            "com.github.ozodrukh:RippleDrawable:${versions.ripple}",
             "com.google.code.gson:gson:${versions.gson}"
         ]
         deps_with_transitive = [
