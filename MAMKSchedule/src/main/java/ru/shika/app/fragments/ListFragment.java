@@ -10,12 +10,19 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
-import android.view.*;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.TranslateAnimation;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+
 import ru.shika.Application;
 import ru.shika.android.CircleImageView;
 import ru.shika.android.MaterialProgressDrawable;
@@ -25,8 +32,6 @@ import ru.shika.app.adapters.ListFragmentAdapter;
 import ru.shika.app.interfaces.ControllerInterface;
 import ru.shika.app.interfaces.LoaderCenterInterface;
 import ru.shika.app.interfaces.ViewInterface;
-
-import java.util.ArrayList;
 
 public class ListFragment extends Fragment implements ViewInterface, SearchView.OnQueryTextListener {
     /**
@@ -263,6 +268,9 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
         SparseArray<String> tempKeys = (SparseArray<String>) items.get(1);
         final SparseBooleanArray checks = (items.size() > 2) ? (SparseBooleanArray) items.get(2) : null;
 
+        final SparseArray<String> keys = this.keys;
+        final ArrayList<ArrayList<String>> names = this.names;
+
         if (items.size() > 3) //It is checks update
         {
             updateChecks(tempKeys);
@@ -302,7 +310,7 @@ public class ListFragment extends Fragment implements ViewInterface, SearchView.
                 }
             }
 
-            if (!isAdded)//If we haven't found the key, add new
+            if (!isAdded) //If we haven't found the key, add new
             {
                 keys.append(names.size(), tempKeys.valueAt(i));//It id now id previous size of name(last element)
                 names.add(tempNames.get(tempKeys.keyAt(i)));
